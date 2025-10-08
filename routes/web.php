@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\Auth\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,38 +17,48 @@ use App\Http\Controllers\ProjectController;
 |
 */
 
+// Public routes
 Route::get('/', function () {
     return Inertia::render('Welcome');
+})->name('welcome');
+
+// Authentication routes
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+    Route::post('/register', [AuthController::class, 'register']);
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard', [
-        'projects' => [],
-        'stats' => [
-            'totalProjects' => 0,
-            'activeProjects' => 0,
-            'pendingTasks' => 0,
-            'teamMembers' => 1
-        ]
-    ]);
-})->name('dashboard');
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
-Route::get('/projects', function () {
-    return Inertia::render('Projects/Index', [
-        'projects' => []
-    ]);
-})->name('projects.index');
+// Protected routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/dashboard', function () {
+        return Inertia::render('Dashboard', [
+            'projects' => [],
+            'stats' => [
+                'totalProjects' => 0,
+                'activeProjects' => 0,
+                'pendingTasks' => 0,
+                'teamMembers' => 1
+            ]
+        ]);
+    })->name('dashboard');
 
-Route::get('/projects/create', function () {
-    return Inertia::render('Projects/Create');
-})->name('projects.create');
+    Route::get('/projects', function () {
+        return Inertia::render('Projects/Index', [
+            'projects' => []
+        ]);
+    })->name('projects.index');
 
-// Temporarily comment out auth-protected routes
-// Route::middleware(['auth:sanctum'])->group(function () {
-//     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/projects/create', function () {
+        return Inertia::render('Projects/Create');
+    })->name('projects.create');
     
-//     // Projects
-//     Route::resource('projects', ProjectController::class);
+    // Projects resource routes
+    // Route::resource('projects', ProjectController::class);
+});
 //     Route::post('/projects/{project}/members', [ProjectController::class, 'addMember'])->name('projects.members.add');
 // });
 
