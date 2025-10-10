@@ -36,15 +36,6 @@ class AuthController extends Controller
     }
 
     /**
-     * Test Supabase connection
-     */
-    public function testSupabase()
-    {
-        $result = $this->supabase->testConnection();
-        return response()->json($result);
-    }
-
-    /**
      * Handle user login - Supabase only
      */
     public function login(Request $request)

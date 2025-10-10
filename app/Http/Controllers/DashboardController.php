@@ -4,13 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\Services\SupabaseService;
+use App\Services\SupabaseServiceEnhanced;
 
 class DashboardController extends Controller
 {
     protected $supabase;
 
-    public function __construct(SupabaseService $supabase)
+    public function __construct(SupabaseServiceEnhanced $supabase)
     {
         $this->supabase = $supabase;
     }

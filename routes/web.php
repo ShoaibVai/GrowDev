@@ -6,7 +6,6 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\EmailConfirmationController;
-use App\Http\Controllers\SupabaseTestController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,9 +22,6 @@ use App\Http\Controllers\SupabaseTestController;
 Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('welcome');
-
-// Test route for Supabase connection
-Route::get('/test-supabase', [AuthController::class, 'testSupabase'])->name('test.supabase');
 
 // Authentication routes
 Route::middleware('guest')->group(function () {
@@ -68,21 +64,9 @@ Route::middleware(['auth'])->group(function () {
     })->name('projects.create');
     
     // Projects resource routes
-    // Route::resource('projects', ProjectController::class);
+    Route::resource('projects', ProjectController::class);
+    Route::post('/projects/{project}/members', [ProjectController::class, 'addMember'])->name('projects.members.add');
 });
-
-// Supabase Test Routes (with CSRF exemption for testing)
-Route::group(['prefix' => 'supabase-test'], function () {
-    Route::get('/', [SupabaseTestController::class, 'index'])->name('supabase.test');
-    Route::get('/connection', [SupabaseTestController::class, 'testConnection']);
-    Route::post('/signup', [SupabaseTestController::class, 'testSignup']);
-    Route::post('/signin', [SupabaseTestController::class, 'testSignin']);
-    Route::get('/users', [SupabaseTestController::class, 'listUsers']);
-    Route::get('/schema', [SupabaseTestController::class, 'checkSchema']);
-    Route::post('/profile', [SupabaseTestController::class, 'getProfile']);
-});
-
-//     Route::post('/projects/{project}/members', [ProjectController::class, 'addMember'])->name('projects.members.add');
 // });
 
 // Remove the auth.php requirement for now

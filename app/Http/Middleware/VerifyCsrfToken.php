@@ -12,6 +12,6 @@ class VerifyCsrfToken extends Middleware
      * @var array<int, string>
      */
     protected $except = [
-        'supabase-test/*',
+        // Add any API routes that need CSRF exemption here
     ];
 }
