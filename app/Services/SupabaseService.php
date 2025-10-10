@@ -19,13 +19,135 @@ class SupabaseService
     }
 
     /**
+     * Test connection to Supabase
+     */
+    public function testConnection()
+    {
+        try {
+            $response = Http::withOptions([
+                'verify' => false, // Disable SSL verification for local development
+            ])->withHeaders([
+                'apikey' => $this->apiKey,
+                'Content-Type' => 'application/json',
+            ])->get($this->baseUrl . '/rest/v1/');
+            
+            return [
+                'success' => $response->successful(),
+                'status' => $response->status(),
+                'response' => $response->json()
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Sign up with email and password
+     */
+    public function signUp($email, $password, $metadata = [])
+    {
+        try {
+            $response = Http::withOptions([
+                'verify' => false, // Disable SSL verification for local development
+            ])->withHeaders([
+                'apikey' => $this->apiKey,
+                'Content-Type' => 'application/json',
+            ])->post($this->baseUrl . '/auth/v1/signup', [
+                'email' => $email,
+                'password' => $password,
+                'data' => $metadata
+            ]);
+
+            Log::info('Supabase signup response', [
+                'status' => $response->status(),
+                'body' => $response->json()
+            ]);
+
+            return $response->json();
+        } catch (\Exception $e) {
+            Log::error('Supabase signup error', ['error' => $e->getMessage()]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Sign in with email and password
+     */
+    public function signIn($email, $password)
+    {
+        try {
+            $response = Http::withOptions([
+                'verify' => false, // Disable SSL verification for local development
+            ])->withHeaders([
+                'apikey' => $this->apiKey,
+                'Content-Type' => 'application/json',
+            ])->post($this->baseUrl . '/auth/v1/token?grant_type=password', [
+                'email' => $email,
+                'password' => $password,
+            ]);
+
+            Log::info('Supabase signin response', [
+                'status' => $response->status(),
+                'body' => $response->json()
+            ]);
+
+            return $response->json();
+        } catch (\Exception $e) {
+            Log::error('Supabase signin error', ['error' => $e->getMessage()]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Sign out user
+     */
+    public function signOut($accessToken)
+    {
+        try {
+            $response = Http::withHeaders([
+                'apikey' => $this->apiKey,
+                'Authorization' => 'Bearer ' . $accessToken,
+                'Content-Type' => 'application/json',
+            ])->post($this->baseUrl . '/auth/v1/logout');
+
+            return $response->json();
+        } catch (\Exception $e) {
+            Log::error('Supabase signout error', ['error' => $e->getMessage()]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Get current user
+     */
+    public function getUser($accessToken)
+    {
+        try {
+            $response = Http::withHeaders([
+                'apikey' => $this->apiKey,
+                'Authorization' => 'Bearer ' . $accessToken,
+            ])->get($this->baseUrl . '/auth/v1/user');
+
+            return $response->json();
+        } catch (\Exception $e) {
+            Log::error('Supabase getUser error', ['error' => $e->getMessage()]);
+            throw $e;
+        }
+    }
+
+    /**
      * Get HTTP client with authentication headers
      */
     private function getClient($useServiceKey = false)
     {
         $key = $useServiceKey ? $this->serviceKey : $this->apiKey;
         
-        return Http::withHeaders([
+        return Http::withOptions([
+            'verify' => false, // Disable SSL verification for local development
+        ])->withHeaders([
             'apikey' => $key,
             'Authorization' => 'Bearer ' . $key,
             'Content-Type' => 'application/json',

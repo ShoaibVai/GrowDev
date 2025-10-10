@@ -5,6 +5,8 @@ use Inertia\Inertia;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Auth\EmailConfirmationController;
+use App\Http\Controllers\SupabaseTestController;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,6 +24,9 @@ Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('welcome');
 
+// Test route for Supabase connection
+Route::get('/test-supabase', [AuthController::class, 'testSupabase'])->name('test.supabase');
+
 // Authentication routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -29,6 +34,12 @@ Route::middleware('guest')->group(function () {
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
 });
+
+// Email confirmation routes (accessible to all)
+Route::get('/auth/confirm', [EmailConfirmationController::class, 'confirm'])->name('auth.confirm');
+Route::get('/auth/callback', [EmailConfirmationController::class, 'callback'])->name('auth.callback');
+Route::get('/email/verify', [EmailConfirmationController::class, 'show'])->name('verification.notice');
+Route::post('/email/resend', [EmailConfirmationController::class, 'resend'])->name('verification.resend');
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
@@ -59,6 +70,18 @@ Route::middleware(['auth'])->group(function () {
     // Projects resource routes
     // Route::resource('projects', ProjectController::class);
 });
+
+// Supabase Test Routes (with CSRF exemption for testing)
+Route::group(['prefix' => 'supabase-test'], function () {
+    Route::get('/', [SupabaseTestController::class, 'index'])->name('supabase.test');
+    Route::get('/connection', [SupabaseTestController::class, 'testConnection']);
+    Route::post('/signup', [SupabaseTestController::class, 'testSignup']);
+    Route::post('/signin', [SupabaseTestController::class, 'testSignin']);
+    Route::get('/users', [SupabaseTestController::class, 'listUsers']);
+    Route::get('/schema', [SupabaseTestController::class, 'checkSchema']);
+    Route::post('/profile', [SupabaseTestController::class, 'getProfile']);
+});
+
 //     Route::post('/projects/{project}/members', [ProjectController::class, 'addMember'])->name('projects.members.add');
 // });
 

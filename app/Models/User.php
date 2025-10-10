@@ -2,45 +2,62 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Contracts\Auth\Authenticatable;
 
-class User extends Authenticatable
+// This is a placeholder User model for compatibility with Laravel's auth system
+// All authentication is handled by Supabase - this model represents Supabase users
+class User implements Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'supabase_id',
-    ];
-
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
-
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'password' => 'hashed',
-    ];
+    public $id;
+    public $email;
+    public $name;
+    public $supabase_id;
+    public $email_verified_at;
+    
+    public function __construct($attributes = [])
+    {
+        foreach ($attributes as $key => $value) {
+            $this->$key = $value;
+        }
+    }
+    
+    public function getAuthIdentifierName()
+    {
+        return 'id';
+    }
+    
+    public function getAuthIdentifier()
+    {
+        return $this->id;
+    }
+    
+    public function getAuthPassword()
+    {
+        return null; // Supabase handles passwords
+    }
+    
+    public function getRememberToken()
+    {
+        return null;
+    }
+    
+    public function setRememberToken($value)
+    {
+        // Not implemented for Supabase auth
+    }
+    
+    public function getRememberTokenName()
+    {
+        return null;
+    }
+    
+    public function __get($key)
+    {
+        return isset($this->$key) ? $this->$key : null;
+    }
+    
+    public function __set($key, $value)
+    {
+        $this->$key = $value;
+    }
 }
