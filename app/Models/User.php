@@ -23,6 +23,12 @@ class User extends Authenticatable
         'email',
         'password',
         'totp_secret',
+        'phone_number',
+        'professional_summary',
+        'location',
+        'website',
+        'linkedin_url',
+        'github_url',
     ];
 
     /**
@@ -55,5 +61,37 @@ class User extends Authenticatable
     public function projects(): HasMany
     {
         return $this->hasMany(Project::class);
+    }
+
+    /**
+     * Get the work experiences for the user.
+     */
+    public function workExperiences(): HasMany
+    {
+        return $this->hasMany(WorkExperience::class)->orderBy('order');
+    }
+
+    /**
+     * Get the educations for the user.
+     */
+    public function educations(): HasMany
+    {
+        return $this->hasMany(Education::class)->orderBy('order');
+    }
+
+    /**
+     * Get the skills for the user.
+     */
+    public function skills(): HasMany
+    {
+        return $this->hasMany(Skill::class)->orderBy('order');
+    }
+
+    /**
+     * Get the certifications for the user.
+     */
+    public function certifications(): HasMany
+    {
+        return $this->hasMany(Certification::class)->orderBy('order');
     }
 }
