@@ -4,11 +4,49 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+        <title>{{ config('app.name', 'Laravel') }} - Welcome</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
+        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+
+        <!-- Styles / Scripts -->
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    </head>
+    <body class="font-sans antialiased bg-gray-50">
+        <div class="min-h-screen flex flex-col items-center justify-center">
+            <div class="max-w-md w-full space-y-8 p-8">
+                <!-- Logo/Title -->
+                <div class="text-center">
+                    <h1 class="text-4xl font-bold text-gray-900 mb-2">Welcome to GrowDev</h1>
+                    <p class="text-gray-600">Manage your projects efficiently</p>
+                </div>
+
+                <!-- Welcome Page Buttons -->
+                <div class="space-y-4 mt-8">
+                    @if (Route::has('register'))
+                        <a href="{{ route('register') }}" 
+                           class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150">
+                            Create Profile
+                        </a>
+                    @endif
+
+                    @if (Route::has('login'))
+                        <a href="{{ route('login') }}" 
+                           class="w-full flex justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150">
+                            Log in
+                        </a>
+                    @endif
+                </div>
+
+                <!-- Additional Info -->
+                <div class="text-center text-sm text-gray-500 mt-6">
+                    <p>Secure • Fast • Reliable</p>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
 
         <!-- Styles / Scripts -->
         @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
