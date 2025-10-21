@@ -18,6 +18,9 @@ Route::middleware('guest')->group(function () {
     Route::post('register', [RegisteredUserController::class, 'store'])
         ->middleware('throttle:5,1'); // Rate limit: 5 attempts per minute
 
+    Route::get('register/totp-setup', [RegisteredUserController::class, 'totpSetup'])
+        ->name('register.totp-setup');
+
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 
@@ -31,8 +34,8 @@ Route::middleware('guest')->group(function () {
         ->middleware('throttle:3,1') // Rate limit: 3 attempts per minute
         ->name('password.email');
 
-    Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
-        ->name('password.reset');
+    Route::get('reset-password', [NewPasswordController::class, 'create'])
+        ->name('password.reset.form');
 
     Route::post('reset-password', [NewPasswordController::class, 'store'])
         ->name('password.store');

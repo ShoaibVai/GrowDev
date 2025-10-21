@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
+use PragmaRX\Google2FA\Google2FA;
 
 class RegisteredUserController extends Controller
 {
@@ -35,15 +36,43 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        // Generate TOTP secret
+        $google2fa = new Google2FA();
+        $totpSecret = $google2fa->generateSecretKey();
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'totp_secret' => $totpSecret,
         ]);
 
         event(new Registered($user));
 
-        // Redirect to login page instead of auto-login
-        return redirect(route('login'))->with('success', 'Registration successful! Please log in with your credentials.');
+        // Generate QR code URL for authenticator apps
+        $qrCodeUrl = $google2fa->getQRCodeUrl(
+            config('app.name'),
+            $user->email,
+            $totpSecret
+        );
+
+        // Redirect to a page showing the TOTP secret and QR code
+        return redirect()->route('register.totp-setup')
+            ->with('totp_secret', $totpSecret)
+            ->with('qr_code_url', $qrCodeUrl)
+            ->with('user_email', $user->email);
+    }
+
+    /**
+     * Display the TOTP setup page after registration.
+     */
+    public function totpSetup(): View|RedirectResponse
+    {
+        // Ensure the user came from registration
+        if (!session()->has('totp_secret')) {
+            return redirect()->route('login');
+        }
+
+        return view('auth.totp-setup');
     }
 }

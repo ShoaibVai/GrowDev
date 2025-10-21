@@ -3,15 +3,19 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use PragmaRX\Google2FA\Google2FA;
 
 class PasswordResetLinkController extends Controller
 {
     /**
-     * Display the password reset link request view.
+     * Display the password reset authentication view.
+     * Users authenticate with email + TOTP code (no email sent).
      */
     public function create(): View
     {
@@ -19,7 +23,7 @@ class PasswordResetLinkController extends Controller
     }
 
     /**
-     * Handle an incoming password reset link request.
+     * Authenticate user with email and TOTP code, then redirect to password reset form.
      *
      * @throws \Illuminate\Validation\ValidationException
      */
@@ -27,18 +31,42 @@ class PasswordResetLinkController extends Controller
     {
         $request->validate([
             'email' => ['required', 'email'],
+            'totp_code' => ['required', 'string', 'size:6'],
         ]);
 
-        // We will send the password reset link to this user. Once we have attempted
-        // to send the link, we will examine the response then see the message we
-        // need to show to the user. Finally, we'll send out a proper response.
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
+        // Find user by email
+        $user = User::where('email', $request->email)->first();
+        
+        if (!$user) {
+            throw ValidationException::withMessages([
+                'email' => 'No account found with this email address.',
+            ]);
+        }
 
-        return $status == Password::RESET_LINK_SENT
-                    ? back()->with('status', __($status))
-                    : back()->withInput($request->only('email'))
-                        ->withErrors(['email' => __($status)]);
+        // Check if user has TOTP secret
+        if (!$user->totp_secret) {
+            throw ValidationException::withMessages([
+                'email' => 'This account does not have two-factor authentication set up. Please contact support.',
+            ]);
+        }
+
+        // Verify TOTP code
+        $google2fa = new Google2FA();
+        $valid = $google2fa->verifyKey($user->totp_secret, $request->totp_code);
+
+        if (!$valid) {
+            throw ValidationException::withMessages([
+                'totp_code' => 'The verification code is invalid or has expired. Please try again.',
+            ]);
+        }
+
+        // TOTP verified successfully - redirect to password reset form
+        // Store user ID in session to allow password change
+        session([
+            'password_reset_verified_user' => $user->id,
+            'password_reset_verified_at' => now(),
+        ]);
+
+        return redirect()->route('password.reset.form')->with('status', 'Authentication successful! You can now reset your password.');
     }
 }
