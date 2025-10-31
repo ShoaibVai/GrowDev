@@ -41,6 +41,32 @@ A modern Laravel application with TOTP-based authentication and professional CV 
 - Composer
 - Node.js & NPM (optional, for frontend build)
 
+### 🚀 Quick Start (Windows)
+If you're on Windows, run the automated setup script from the project root:
+
+```bash
+setup.bat
+```
+
+The script will:
+- Copy `.env.example` to `.env` (if it does not already exist)
+- Install PHP (Composer) and Node dependencies
+- Generate the application key
+- Create the default SQLite database (`database/database.sqlite`)
+- Run all migrations and seed the IEEE documentation templates
+- Clear cached configuration, view, and route files
+
+### 🚀 Quick Start (macOS/Linux)
+From the project root, run the following one-liner:
+
+```bash
+composer install && npm install && php artisan migrate --seed
+```
+
+### 🤝 Collaborator Checklist
+- Run `setup.bat` on Windows machines or `composer install && npm install && php artisan migrate --seed` on macOS/Linux.
+- If you prefer MySQL over the bundled SQLite database, update the connection details in `.env` and rerun `php artisan migrate:fresh --seed`.
+
 ### Setup Steps
 
 1. **Clone the repository**

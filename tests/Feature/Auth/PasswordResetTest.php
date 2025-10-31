@@ -3,9 +3,9 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
-use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Hash;
+use PragmaRX\Google2FA\Google2FA;
 use Tests\TestCase;
 
 class PasswordResetTest extends TestCase
@@ -21,53 +21,65 @@ class PasswordResetTest extends TestCase
 
     public function test_reset_password_link_can_be_requested(): void
     {
-        Notification::fake();
+        $google2fa = new Google2FA();
+        $secret = $google2fa->generateSecretKey();
 
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'totp_secret' => $secret,
+        ]);
 
-        $this->post('/forgot-password', ['email' => $user->email]);
+        $response = $this->post('/forgot-password', [
+            'email' => $user->email,
+            'totp_code' => $google2fa->getCurrentOtp($secret),
+        ]);
 
-        Notification::assertSentTo($user, ResetPassword::class);
+        $response
+            ->assertSessionHas('status')
+            ->assertRedirect(route('password.reset.form'));
     }
 
     public function test_reset_password_screen_can_be_rendered(): void
     {
-        Notification::fake();
+        $google2fa = new Google2FA();
+        $secret = $google2fa->generateSecretKey();
 
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'totp_secret' => $secret,
+        ]);
 
-        $this->post('/forgot-password', ['email' => $user->email]);
+        $this->post('/forgot-password', [
+            'email' => $user->email,
+            'totp_code' => $google2fa->getCurrentOtp($secret),
+        ]);
 
-        Notification::assertSentTo($user, ResetPassword::class, function ($notification) {
-            $response = $this->get('/reset-password/'.$notification->token);
+        $response = $this->get('/reset-password');
 
-            $response->assertStatus(200);
-
-            return true;
-        });
+        $response->assertStatus(200);
     }
 
-    public function test_password_can_be_reset_with_valid_token(): void
+    public function test_password_can_be_reset_after_totp_verification(): void
     {
-        Notification::fake();
+        $google2fa = new Google2FA();
+        $secret = $google2fa->generateSecretKey();
 
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'totp_secret' => $secret,
+        ]);
 
-        $this->post('/forgot-password', ['email' => $user->email]);
+        $this->post('/forgot-password', [
+            'email' => $user->email,
+            'totp_code' => $google2fa->getCurrentOtp($secret),
+        ]);
 
-        Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user) {
-            $response = $this->post('/reset-password', [
-                'token' => $notification->token,
-                'email' => $user->email,
-                'password' => 'password',
-                'password_confirmation' => 'password',
-            ]);
+        $response = $this->post('/reset-password', [
+            'password' => 'new-password',
+            'password_confirmation' => 'new-password',
+        ]);
 
-            $response
-                ->assertSessionHasNoErrors()
-                ->assertRedirect(route('login'));
+        $response
+            ->assertSessionHas('status')
+            ->assertRedirect(route('login'));
 
-            return true;
-        });
+        $this->assertTrue(Hash::check('new-password', $user->fresh()->password));
     }
 }

@@ -22,7 +22,8 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
-        $user = Auth::user();
+    $user = Auth::user();
+    $originalEmail = $user->email;
 
         return view('profile.edit', [
             'user' => $user,
@@ -38,7 +39,8 @@ class ProfileController extends Controller
      */
     public function update(Request $request): RedirectResponse
     {
-        $user = Auth::user();
+    $user = Auth::user();
+    $originalEmail = $user->email;
 
         // Validate all CV data
         $validated = $request->validate([
@@ -93,9 +95,9 @@ class ProfileController extends Controller
         ]);
 
         // Use transaction to ensure data integrity
-        DB::transaction(function () use ($user, $validated) {
-            // Update user profile
-            $user->update([
+        DB::transaction(function () use ($user, $validated, $originalEmail) {
+            // Update user profile and reset verification when email changes
+            $user->fill([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'phone_number' => $validated['phone_number'] ?? null,
@@ -105,6 +107,12 @@ class ProfileController extends Controller
                 'linkedin_url' => $validated['linkedin_url'] ?? null,
                 'github_url' => $validated['github_url'] ?? null,
             ]);
+
+            if ($validated['email'] !== $originalEmail) {
+                $user->email_verified_at = null;
+            }
+
+            $user->save();
 
             // Update work experiences
             $this->syncWorkExperiences($user, $validated['work_experiences'] ?? []);
@@ -275,6 +283,27 @@ class ProfileController extends Controller
                 ]);
             }
         }
+    }
+
+    /**
+     * Remove the authenticated user's account after password confirmation.
+     */
+    public function destroy(Request $request): RedirectResponse
+    {
+        $request->validateWithBag('userDeletion', [
+            'password' => ['required', 'current_password'],
+        ]);
+
+        $user = $request->user();
+
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        $user->delete();
+
+        return redirect('/');
     }
 
     /**

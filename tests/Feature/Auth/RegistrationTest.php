@@ -25,7 +25,16 @@ class RegistrationTest extends TestCase
             'password_confirmation' => 'password',
         ]);
 
-        $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response
+            ->assertSessionHas('totp_secret')
+            ->assertSessionHas('qr_code_url')
+            ->assertSessionHas('user_email')
+            ->assertRedirect(route('register.totp-setup'));
+
+        $this->assertGuest();
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'test@example.com',
+        ]);
     }
 }
