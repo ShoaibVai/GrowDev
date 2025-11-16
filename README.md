@@ -1,6 +1,60 @@
-# GrowDev - Professional CV Management System
 
-A modern Laravel application with TOTP-based authentication and professional CV management features.
+# GrowDev - Project Management & CV Platform
+
+GrowDev is a collaborative project management and professional CV platform built with Laravel. It guides users and teams through the software development lifecycle, offering role-based task allocation, documentation templates, notifications, and a modern CV builder.
+
+## 👥 Team & Task Distribution
+**Developers:**
+- Shoaib Ibna Omar
+- Mansura Yeasmin
+- Ismail Hossain
+- Sejanul Islam
+- Shafin Foysal
+All are Full Stack Developers.
+
+**Task Distribution:**
+- Shoaib Ibna Omar: User & Team Management, Security
+- Mansura Yeasmin: Project Management, Performance
+- Ismail Hossain: Task Allocation, Compatibility
+- Sejanul Islam: Data Sync, API, Backup
+- Shafin Foysal: UI/UX, Testing, Docs
+
+## 🌟 Feature List
+- TOTP-based authentication (2FA)
+- Professional CV builder & PDF export
+- Role-based team & task management
+- Project lifecycle guidance
+- Real-time collaboration & notifications
+- Documentation templates (SRS, SDD, etc.)
+- Responsive UI (Tailwind CSS)
+- Secure, reliable, and accessible
+
+## ⚡ Installation Guide
+**Windows:**
+Run `setup.bat` from the project root.
+
+**macOS/Linux:**
+Run:
+```bash
+composer install && npm install && php artisan migrate --seed
+```
+
+**Steps:**
+1. Clone the repo
+2. Install dependencies
+3. Configure `.env` and generate app key
+4. Run migrations & seeders
+5. Build assets (`npm run build`)
+6. Start server (`php artisan serve`)
+
+## 📦 Output Section
+- Access the app at [http://127.0.0.1:8000](http://127.0.0.1:8000)
+- Features: CV builder, team/project dashboard, documentation, notifications
+- PDF export for CVs
+- Real-time updates for team tasks
+
+## 🙏 Acknowledgment
+Special thanks to all contributors, the Laravel community, and open-source libraries used in GrowDev.
 
 ## 🌟 Features
 
@@ -18,7 +72,7 @@ A modern Laravel application with TOTP-based authentication and professional CV 
 - **Certifications**: Store certifications with issue/expiry dates and credentials
 - **PDF Export**: Download CV as professionally formatted PDF
 
-### 🎨 User Interface
+### � User Interface
 - **Responsive Design**: Built with Tailwind CSS
 - **Live Preview**: See changes in real-time as you edit
 - **Dynamic Form Sections**: Add/remove work experience, education, skills, certifications
@@ -33,7 +87,7 @@ A modern Laravel application with TOTP-based authentication and professional CV 
 - **PDF Generation**: barryvdh/laravel-dompdf
 - **Authentication**: TOTP (pragmarx/google2fa)
 
-## 📦 Installation
+## � Installation
 
 ### Prerequisites
 - PHP 8.4+
@@ -184,7 +238,7 @@ GrowDev/
 └── README.md                          # This file
 ```
 
-## 🛣️ Routes
+## �️ Routes
 
 ### Authentication
 - `GET /register` - Registration form
