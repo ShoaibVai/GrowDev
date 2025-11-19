@@ -3,25 +3,28 @@ Version: 1.0
 Date: October 26, 2023
 GitHub Repository: https://github.com/Shoaibvai/growdev
 
-## 👥 Team Members
+## Team Members & Roles
+GrowDev is developed by:
+- Shoaib Ibna Omar (Full Stack Developer)
+- Mansura Yeasmin (Full Stack Developer)
+- Ismail Hossain (Full Stack Developer)
+- Sejanul Islam (Full Stack Developer)
+- Shafin Foysal (Full Stack Developer)
 
-| Name | Role | Expertise |
-|------|------|-----------|
-| Shoaib Ibna Omar | Full Stack Developer | Backend & Frontend |
-| Mansura Yeasmin | Full Stack Developer | Frontend & Database |
-| Ismail Hossain | Full Stack Developer | Backend & API |
-| Sejanul Islam | Full Stack Developer | Frontend & UI/UX |
-| Shafin Foysal | Full Stack Developer | Testing & DevOps |
+### Task Distribution
+**Functional Requirements:**
+- Shoaib Ibna Omar: User Management, Team Management
+- Mansura Yeasmin: Project Management, Documentation
+- Ismail Hossain: Task Allocation, Email Notifications
+- Sejanul Islam: Data Sharing & Synchronization, API Integrations
+- Shafin Foysal: Frontend UI/UX, Dashboard, Collaboration Features
 
-## 📋 Task Distribution
-
-| Team Member | Assigned Tasks |
-|---|---|
-| **Shoaib Ibna Omar** | FR1 (User Management - FR1.1, FR1.2, FR1.3, FR1.4, FR1.5), NFR4 (Secure Authentication), NFR5 (Data Encryption), NFR7 (Access Control) |
-| **Mansura Yeasmin** | FR5 (Documentation - FR5.1, FR5.2, FR5.3, FR5.4, FR5.5, FR5.6), FR7 (Data Sharing - FR7.1, FR7.2, FR7.3, FR7.4), NFR9 (Automated Backups) |
-| **Ismail Hossain** | FR2 (Project Management - FR2.1, FR2.2, FR2.3, FR2.4, FR2.5, FR2.6), FR3 (Team Management - FR3.1, FR3.2, FR3.3, FR3.4, FR3.5), NFR1 (Performance), NFR2 (Concurrent Users) |
-| **Sejanul Islam** | FR4 (Task Allocation - FR4.1, FR4.2, FR4.3, FR4.4, FR4.5, FR4.6), NFR11 (Intuitive UI), NFR12 (WCAG Accessibility), NFR14 (Browser Compatibility) |
-| **Shafin Foysal** | FR6 (Email Notifications - FR6.1, FR6.2, FR6.3, FR6.4, FR6.5), NFR3 (Document Upload Performance), NFR8 (System Availability), NFR10 (Disaster Recovery), NFR15 (Mobile Responsiveness), NFR16 (OS Compatibility) |
+**Non-Functional Requirements:**
+- Shoaib Ibna Omar: Security, Reliability
+- Mansura Yeasmin: Performance, Usability
+- Ismail Hossain: Compatibility, External Interfaces
+- Sejanul Islam: Backup, Disaster Recovery, Accessibility
+- Shafin Foysal: Testing, Documentation, Help & Tooltips
 
 1. Introduction
 1.1 Purpose
