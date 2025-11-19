@@ -6,12 +6,12 @@ use App\Http\Controllers\DocumentationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
-});
+    return view('pages.home');
+})->name('home');
 
 Route::get('/dashboard', function () {
     $projects = auth()->user()->projects()->latest()->get();
-    return view('dashboard', compact('projects'));
+    return view('pages.admin.dashboard', compact('projects'));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
