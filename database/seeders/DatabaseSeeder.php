@@ -22,7 +22,10 @@ class DatabaseSeeder extends Seeder
             'email' => 'test@example.com',
         ]);
 
-        // Seed documentation templates
-        $this->call(DocumentationTemplateSeeder::class);
+    // Seed documentation templates
+    $this->call(DocumentationTemplateSeeder::class);
+
+    // Seed teams
+    $this->call(TeamSeeder::class);
     }
 }

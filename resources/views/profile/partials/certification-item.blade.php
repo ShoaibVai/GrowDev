@@ -13,7 +13,7 @@
             <input type="text" name="certifications[{{ $index }}][certification_name]" 
                 value="{{ old("certifications.$index.certification_name", $cert->certification_name ?? '') }}" 
                 required
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
 
         <!-- Issuer -->
@@ -22,7 +22,7 @@
             <input type="text" name="certifications[{{ $index }}][issuer]" 
                 value="{{ old("certifications.$index.issuer", $cert->issuer ?? '') }}" 
                 required
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
 
         <!-- Issue Date -->
@@ -31,7 +31,7 @@
             <input type="date" name="certifications[{{ $index }}][issue_date]" 
                 value="{{ old("certifications.$index.issue_date", $cert?->issue_date?->format('Y-m-d') ?? '') }}" 
                 required
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
 
         <!-- Expiry Date -->
@@ -39,7 +39,7 @@
             <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('Expiry Date') }}</label>
             <input type="date" name="certifications[{{ $index }}][expiry_date]" 
                 value="{{ old("certifications.$index.expiry_date", $cert?->expiry_date?->format('Y-m-d') ?? '') }}" 
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
 
         <!-- Credential URL -->
@@ -47,7 +47,7 @@
             <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('Credential URL') }}</label>
             <input type="url" name="certifications[{{ $index }}][credential_url]" 
                 value="{{ old("certifications.$index.credential_url", $cert->credential_url ?? '') }}" 
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 placeholder="https://...">
         </div>
 
@@ -56,7 +56,7 @@
             <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('Description') }}</label>
             <textarea name="certifications[{{ $index }}][description]" 
                 rows="3"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 placeholder="Additional details about this certification">{{ old("certifications.$index.description", $cert->description ?? '') }}</textarea>
         </div>
     </div>

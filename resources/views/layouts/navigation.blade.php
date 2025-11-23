@@ -16,43 +16,55 @@
                         {{ __('Dashboard') }}
                     </x-nav-link>
 
-                    <!-- Documentation Dropdown -->
-                    <div x-data="{ docOpen: false }" class="relative">
-                        <button @click="docOpen = !docOpen" 
-                                class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out">
-                            📄 {{ __('Documentation') }}
-                            <svg class="ml-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                            </svg>
-                        </button>
+                    <x-nav-link :href="route('projects.index')" :active="request()->routeIs('projects.*')">
+                        {{ __('Projects') }}
+                    </x-nav-link>
 
-                        <!-- Documentation Dropdown Menu -->
-                        <div @click.outside="docOpen = false"
-                             x-show="docOpen"
-                             x-transition
-                             class="absolute left-0 mt-0 w-48 bg-white rounded-md shadow-lg z-10">
-                            <a href="{{ route('documentation.srs.create') }}" 
-                               @click="docOpen = false"
-                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 first:rounded-t-md">
-                                📋 Create SRS Document
-                            </a>
-                            <a href="{{ route('documentation.sdd.create') }}" 
-                               @click="docOpen = false"
-                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                🏗️ Create SDD Document
-                            </a>
-                            <div class="border-t border-gray-100"></div>
-                            <a href="{{ route('documentation.srs.index') }}" 
-                               @click="docOpen = false"
-                               class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100">
-                                📑 View SRS Documents
-                            </a>
-                            <a href="{{ route('documentation.sdd.index') }}" 
-                               @click="docOpen = false"
-                               class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 last:rounded-b-md">
-                                🔧 View SDD Documents
-                            </a>
-                        </div>
+                    @if(Route::has('teams.index'))
+                    <x-nav-link :href="route('teams.index')" :active="request()->routeIs('teams.*')">
+                        {{ __('Teams') }}
+                    </x-nav-link>
+                    @endif
+
+                    <!-- Documentation Dropdown -->
+                    <div class="hidden sm:flex sm:items-center sm:ms-6">
+                        <x-dropdown align="left" width="48">
+                            <x-slot name="trigger">
+                                <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
+                                    <div>{{ __('Documentation') }}</div>
+
+                                    <div class="ms-1">
+                                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                </button>
+                            </x-slot>
+
+                            <x-slot name="content">
+                                <div class="px-4 py-2 text-xs text-gray-400">
+                                    SRS (Requirements)
+                                </div>
+                                <x-dropdown-link :href="route('documentation.srs.index')">
+                                    {{ __('View All SRS') }}
+                                </x-dropdown-link>
+                                <x-dropdown-link :href="route('documentation.srs.create')">
+                                    {{ __('Create New SRS') }}
+                                </x-dropdown-link>
+                                
+                                <div class="border-t border-gray-100"></div>
+                                
+                                <div class="px-4 py-2 text-xs text-gray-400">
+                                    SDD (Design)
+                                </div>
+                                <x-dropdown-link :href="route('documentation.sdd.index')">
+                                    {{ __('View All SDD') }}
+                                </x-dropdown-link>
+                                <x-dropdown-link :href="route('documentation.sdd.create')">
+                                    {{ __('Create New SDD') }}
+                                </x-dropdown-link>
+                            </x-slot>
+                        </x-dropdown>
                     </div>
                 </div>
             </div>
@@ -109,19 +121,24 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
-
-            <!-- Responsive Documentation Links -->
-            <x-responsive-nav-link :href="route('documentation.srs.create')">
-                📋 Create SRS Document
+            <x-responsive-nav-link :href="route('projects.index')" :active="request()->routeIs('projects.*')">
+                {{ __('Projects') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('documentation.sdd.create')">
-                🏗️ Create SDD Document
+            @if(Route::has('teams.index'))
+            <x-responsive-nav-link :href="route('teams.index')" :active="request()->routeIs('teams.*')">
+                {{ __('Teams') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('documentation.srs.index')">
-                📑 View SRS Documents
+            @endif
+            
+            <div class="border-t border-gray-200 my-2"></div>
+            <div class="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Documentation
+            </div>
+            <x-responsive-nav-link :href="route('documentation.srs.index')" :active="request()->routeIs('documentation.srs.*')">
+                {{ __('SRS Documents') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('documentation.sdd.index')">
-                🔧 View SDD Documents
+            <x-responsive-nav-link :href="route('documentation.sdd.index')" :active="request()->routeIs('documentation.sdd.*')">
+                {{ __('SDD Documents') }}
             </x-responsive-nav-link>
         </div>
 

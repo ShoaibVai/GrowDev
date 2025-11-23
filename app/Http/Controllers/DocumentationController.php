@@ -21,9 +21,31 @@ class DocumentationController extends Controller
     /**
      * Show all SRS documents for the user.
      */
-    public function indexSrs(): View
+    public function indexSrs(Request $request): View
     {
-        $srsDocuments = auth()->user()->srsDocuments()->latest()->get();
+        $query = auth()->user()->srsDocuments()->latest();
+        if ($request->filled('q')) {
+            $query->where('title', 'like', '%' . $request->q . '%')
+                  ->orWhere('description', 'like', '%' . $request->q . '%');
+        }
+        if ($request->filled('sort')) {
+            switch ($request->get('sort')) {
+                case 'oldest':
+                    $query->oldest();
+                    break;
+                case 'name_asc':
+                    $query->orderBy('title', 'asc');
+                    break;
+                case 'name_desc':
+                    $query->orderBy('title', 'desc');
+                    break;
+                default:
+                    // latest is default
+                    break;
+            }
+        }
+
+        $srsDocuments = $query->paginate(12)->withQueryString();
         return view('documentation.srs.index', compact('srsDocuments'));
     }
 
@@ -142,9 +164,31 @@ class DocumentationController extends Controller
     /**
      * Show all SDD documents for the user.
      */
-    public function indexSdd(): View
+    public function indexSdd(Request $request): View
     {
-        $sddDocuments = auth()->user()->sddDocuments()->latest()->get();
+        $query = auth()->user()->sddDocuments()->latest();
+        if ($request->filled('q')) {
+            $query->where('title', 'like', '%' . $request->q . '%')
+                  ->orWhere('description', 'like', '%' . $request->q . '%');
+        }
+        if ($request->filled('sort')) {
+            switch ($request->get('sort')) {
+                case 'oldest':
+                    $query->oldest();
+                    break;
+                case 'name_asc':
+                    $query->orderBy('title', 'asc');
+                    break;
+                case 'name_desc':
+                    $query->orderBy('title', 'desc');
+                    break;
+                default:
+                    // latest is default
+                    break;
+            }
+        }
+
+        $sddDocuments = $query->paginate(12)->withQueryString();
         return view('documentation.sdd.index', compact('sddDocuments'));
     }
 

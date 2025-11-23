@@ -11,10 +11,37 @@ class ProjectController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $projects = Auth::user()->projects()->latest()->paginate(10);
-        return view('projects.index', compact('projects'));
+        $query = Auth::user()->projects()->latest();
+        if ($request->filled('q')) {
+            $query->where('name', 'like', '%' . $request->q . '%')
+                  ->orWhere('description', 'like', '%' . $request->q . '%');
+        }
+
+        if ($request->filled('team_id')) {
+            $query->where('team_id', $request->team_id);
+        }
+
+        // Sorting
+        switch ($request->get('sort')) {
+            case 'oldest':
+                $query->oldest();
+                break;
+            case 'name_asc':
+                $query->orderBy('name', 'asc');
+                break;
+            case 'name_desc':
+                $query->orderBy('name', 'desc');
+                break;
+            default:
+                // latest is default - already applied
+                break;
+        }
+
+        $projects = $query->paginate(12)->withQueryString();
+        $teams = Auth::user()->teams()->pluck('name', 'id');
+        return view('projects.index', compact('projects', 'teams'));
     }
 
     /**
@@ -22,7 +49,8 @@ class ProjectController extends Controller
      */
     public function create()
     {
-        return view('projects.create');
+        $teams = Auth::user()->teams()->get();
+        return view('projects.create', compact('teams'));
     }
 
     /**
@@ -34,9 +62,13 @@ class ProjectController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
             'status' => 'required|in:active,completed,on_hold',
+            'type' => 'required|in:solo,team',
+            'team_id' => 'nullable|exists:teams,id',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
         ]);
 
-        $project = Auth::user()->projects()->create($validated);
+    $project = Auth::user()->projects()->create($validated);
 
         return redirect()->route('dashboard')
             ->with('success', 'Project created successfully!');
@@ -45,10 +77,26 @@ class ProjectController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Project $project)
+    public function show(Project $project, Request $request)
     {
         $this->authorize('view', $project);
-        return view('projects.show', compact('project'));
+
+        $tasksQuery = $project->tasks()->latest();
+        if ($request->filled('q')) {
+            $tasksQuery->where('title', 'like', '%' . $request->q . '%')
+                ->orWhere('description', 'like', '%' . $request->q . '%');
+        }
+        if ($request->filled('status')) {
+            $tasksQuery->where('status', $request->status);
+        }
+        if ($request->filled('assigned_to')) {
+            $tasksQuery->where('assigned_to', $request->assigned_to);
+        }
+
+    $tasks = $tasksQuery->get();
+    $members = $project->team ? $project->team->members()->pluck('name', 'id') : collect([auth()->id() => 'Me']);
+
+    return view('projects.show', compact('project', 'tasks', 'members'));
     }
 
     /**
@@ -57,7 +105,8 @@ class ProjectController extends Controller
     public function edit(Project $project)
     {
         $this->authorize('update', $project);
-        return view('projects.edit', compact('project'));
+    $teams = Auth::user()->teams()->get();
+    return view('projects.edit', compact('project', 'teams'));
     }
 
     /**
@@ -71,9 +120,13 @@ class ProjectController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
             'status' => 'required|in:active,completed,on_hold',
+            'type' => 'required|in:solo,team',
+            'team_id' => 'nullable|exists:teams,id',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
         ]);
 
-        $project->update($validated);
+    $project->update($validated);
 
         return redirect()->route('dashboard')
             ->with('success', 'Project updated successfully!');

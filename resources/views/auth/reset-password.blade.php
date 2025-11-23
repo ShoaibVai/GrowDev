@@ -45,7 +45,7 @@
         </div>
 
         <!-- Password Requirements -->
-        <div class="mt-3 text-xs text-gray-600 bg-blue-50 p-3 rounded border border-blue-200">
+        <div class="mt-3 text-xs text-gray-600 bg-indigo-50 p-3 rounded border border-indigo-200">
             <strong class="block mb-1">Password Requirements:</strong>
             <ul class="list-disc list-inside space-y-1">
                 <li>Minimum 8 characters</li>

@@ -23,72 +23,125 @@
                 </div>
             @endif
 
-            <!-- Projects List -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    <h3 class="text-lg font-semibold mb-4">Your Projects</h3>
-                    
-                    @if ($projects->count() > 0)
-                        <div class="space-y-4">
-                            @foreach ($projects as $project)
-                                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition duration-150">
-                                    <div class="flex justify-between items-start">
-                                        <div class="flex-1">
-                                            <h4 class="text-lg font-semibold text-gray-900">{{ $project->name }}</h4>
-                                            <p class="text-gray-600 mt-1">{{ $project->description ?? 'No description provided' }}</p>
-                                            <div class="mt-2">
-                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                                    @if($project->status === 'active') bg-green-100 text-green-800
-                                                    @elseif($project->status === 'completed') bg-blue-100 text-blue-800
-                                                    @else bg-yellow-100 text-yellow-800
-                                                    @endif">
-                                                    {{ ucfirst($project->status) }}
-                                                </span>
-                                                <span class="text-xs text-gray-500 ml-2">
-                                                    Created {{ $project->created_at->diffForHumans() }}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div class="flex space-x-2 ml-4">
-                                            <a href="{{ route('projects.edit', $project) }}" 
-                                               class="text-indigo-600 hover:text-indigo-900">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                                </svg>
-                                            </a>
-                                            <form method="POST" action="{{ route('projects.destroy', $project) }}" 
-                                                  onsubmit="return confirm('Are you sure you want to delete this project?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:text-red-900">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                                    </svg>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
+            <!-- Dashboard layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="col-span-2 space-y-6">
+                    {{-- Top Stats --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <x-dashboard-stat title="Projects" :value="$totalProjects" color="indigo" :icon="'📁'" />
+                        <x-dashboard-stat title="Active Projects" :value="$activeProjects" color="green" :icon="'🚀'" />
+                        <x-dashboard-stat title="Open Tasks" :value="$openTasksCount" color="yellow" :icon="'📝'" />
+                        <x-dashboard-stat title="Teams" :value="$teamsCount" color="purple" :icon="'👥'" />
+                    </div>
+
+                    {{-- Recent Projects --}}
+                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold">Recent Projects</h3>
+                            <a href="{{ route('projects.index') }}" class="text-sm text-indigo-600 hover:underline">View All</a>
                         </div>
-                    @else
-                        <div class="text-center py-12">
-                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
-                            </svg>
-                            <h3 class="mt-2 text-sm font-medium text-gray-900">No projects</h3>
-                            <p class="mt-1 text-sm text-gray-500">Get started by creating a new project.</p>
-                            <div class="mt-6">
-                                <a href="{{ route('projects.create') }}" 
-                                   class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
-                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                    </svg>
-                                    New Project
-                                </a>
+                        @if($projects->count())
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                @foreach($projects as $project)
+                                    <x-project-card :project="$project" />
+                                @endforeach
                             </div>
+                        @else
+                            <div class="text-center py-8 text-gray-500">No recent projects.</div>
+                        @endif
+                    </div>
+
+                    {{-- My Tasks --}}
+                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold">My Tasks</h3>
+                            <a href="{{ route('projects.index') }}" class="text-sm text-indigo-600 hover:underline">View Tasks</a>
                         </div>
-                    @endif
+                        @if($tasksAssigned->count())
+                            <div class="overflow-hidden rounded-md border">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assignee</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        @foreach($tasksAssigned as $task)
+                                            <x-recent-task :task="$task" />
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @else
+                            <div class="text-center py-8 text-gray-500">No tasks assigned to you.</div>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Sidebar --}}
+                <div class="col-span-1 space-y-6">
+                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4">
+                        <h4 class="font-semibold mb-2">Upcoming Tasks</h4>
+                        @if($upcomingTasks->count())
+                            <ul class="divide-y divide-gray-100">
+                                @foreach($upcomingTasks as $ut)
+                                    <li class="py-3 flex items-start justify-between">
+                                        <div>
+                                            <div class="font-medium text-sm text-gray-900">{{ $ut->title }}</div>
+                                            <div class="text-xs text-gray-500">Due {{ optional($ut->due_date)->format('M d, Y') }}</div>
+                                        </div>
+                                        <div class="text-xs text-gray-500">{{ $ut->status }}</div>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @else
+                            <div class="text-sm text-gray-500">No upcoming tasks in the next 7 days.</div>
+                        @endif
+                    </div>
+
+                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="font-semibold">Quick Actions</h4>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <a href="{{ route('projects.create') }}" class="px-3 py-2 rounded bg-indigo-600 text-white text-sm text-center">New Project</a>
+                            <a href="{{ route('documentation.srs.create') }}" class="px-3 py-2 rounded bg-blue-600 text-white text-sm text-center">New SRS</a>
+                            <a href="{{ route('documentation.sdd.create') }}" class="px-3 py-2 rounded bg-green-600 text-white text-sm text-center">New SDD</a>
+                        </div>
+                    </div>
+
+                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4">
+                        <h4 class="font-semibold mb-2">Recent Documents</h4>
+                        @if($recentSrs->count() || $recentSdd->count())
+                            <div class="space-y-2">
+                                @foreach($recentSrs as $srs)
+                                    <a href="{{ route('documentation.srs.edit', $srs) }}" class="block text-sm text-gray-700 hover:underline">📄 {{ $srs->title }}</a>
+                                @endforeach
+                                @foreach($recentSdd as $sdd)
+                                    <a href="{{ route('documentation.sdd.edit', $sdd) }}" class="block text-sm text-gray-700 hover:underline">🏗️ {{ $sdd->title }}</a>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="text-sm text-gray-500">No recent documents.</div>
+                        @endif
+                    </div>
+
+                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4">
+                        <h4 class="font-semibold mb-2">Your Teams</h4>
+                        @if($teams->count())
+                            <div class="space-y-2">
+                                @foreach($teams as $team)
+                                    <a href="{{ route('teams.show', $team) }}" class="block text-sm text-gray-700 hover:underline">👥 {{ $team->name }}</a>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="text-sm text-gray-500">Not part of any teams yet.</div>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>

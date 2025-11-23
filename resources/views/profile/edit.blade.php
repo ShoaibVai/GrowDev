@@ -4,7 +4,7 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Edit Profile & CV') }}
             </h2>
-            <button type="button" onclick="generatePDF()" class="whitespace-nowrap inline-flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold shadow-md">
+            <button type="button" onclick="generatePDF()" class="whitespace-nowrap inline-flex items-center px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold shadow-md">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2m0 0v-8m0 8H3m18 0h-3"></path>
                 </svg>
@@ -40,56 +40,56 @@
                             <!-- Name -->
                             <div class="col-span-2">
                                 <label for="name" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Full Name') }} *</label>
-                                <input type="text" id="name" name="name" value="{{ old('name', auth()->user()->name) }}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input type="text" id="name" name="name" value="{{ old('name', auth()->user()->name) }}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                                 @error('name')<span class="text-red-500 text-sm">{{ $message }}</span>@enderror
                             </div>
 
                             <!-- Email -->
                             <div>
                                 <label for="email" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Email') }} *</label>
-                                <input type="email" id="email" name="email" value="{{ old('email', auth()->user()->email) }}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input type="email" id="email" name="email" value="{{ old('email', auth()->user()->email) }}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                                 @error('email')<span class="text-red-500 text-sm">{{ $message }}</span>@enderror
                             </div>
 
                             <!-- Phone -->
                             <div>
                                 <label for="phone_number" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Phone Number') }}</label>
-                                <input type="tel" id="phone_number" name="phone_number" value="{{ old('phone_number', auth()->user()->phone_number) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input type="tel" id="phone_number" name="phone_number" value="{{ old('phone_number', auth()->user()->phone_number) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                                 @error('phone_number')<span class="text-red-500 text-sm">{{ $message }}</span>@enderror
                             </div>
 
                             <!-- Location -->
                             <div>
                                 <label for="location" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Location') }}</label>
-                                <input type="text" id="location" name="location" value="{{ old('location', auth()->user()->location) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input type="text" id="location" name="location" value="{{ old('location', auth()->user()->location) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                                 @error('location')<span class="text-red-500 text-sm">{{ $message }}</span>@enderror
                             </div>
 
                             <!-- Website -->
                             <div>
                                 <label for="website" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Website') }}</label>
-                                <input type="url" id="website" name="website" value="{{ old('website', auth()->user()->website) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input type="url" id="website" name="website" value="{{ old('website', auth()->user()->website) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                                 @error('website')<span class="text-red-500 text-sm">{{ $message }}</span>@enderror
                             </div>
 
                             <!-- LinkedIn -->
                             <div>
                                 <label for="linkedin_url" class="block text-sm font-medium text-gray-700 mb-1">{{ __('LinkedIn URL') }}</label>
-                                <input type="url" id="linkedin_url" name="linkedin_url" value="{{ old('linkedin_url', auth()->user()->linkedin_url) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input type="url" id="linkedin_url" name="linkedin_url" value="{{ old('linkedin_url', auth()->user()->linkedin_url) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                                 @error('linkedin_url')<span class="text-red-500 text-sm">{{ $message }}</span>@enderror
                             </div>
 
                             <!-- GitHub -->
                             <div>
                                 <label for="github_url" class="block text-sm font-medium text-gray-700 mb-1">{{ __('GitHub URL') }}</label>
-                                <input type="url" id="github_url" name="github_url" value="{{ old('github_url', auth()->user()->github_url) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input type="url" id="github_url" name="github_url" value="{{ old('github_url', auth()->user()->github_url) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                                 @error('github_url')<span class="text-red-500 text-sm">{{ $message }}</span>@enderror
                             </div>
 
                             <!-- Professional Summary -->
                             <div class="col-span-2">
                                 <label for="professional_summary" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Professional Summary') }}</label>
-                                <textarea id="professional_summary" name="professional_summary" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">{{ old('professional_summary', auth()->user()->professional_summary) }}</textarea>
+                                <textarea id="professional_summary" name="professional_summary" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">{{ old('professional_summary', auth()->user()->professional_summary) }}</textarea>
                                 @error('professional_summary')<span class="text-red-500 text-sm">{{ $message }}</span>@enderror
                             </div>
                         </div>
@@ -99,7 +99,7 @@
                     <div class="p-6 bg-white shadow sm:rounded-lg">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-lg font-semibold text-gray-900">{{ __('Work Experience') }}</h3>
-                            <button type="button" onclick="addWorkExperience()" class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition">
+                            <button type="button" onclick="addWorkExperience()" class="px-3 py-1 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700 transition">
                                 + {{ __('Add') }}
                             </button>
                         </div>
@@ -114,7 +114,7 @@
                     <div class="p-6 bg-white shadow sm:rounded-lg">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-lg font-semibold text-gray-900">{{ __('Education') }}</h3>
-                            <button type="button" onclick="addEducation()" class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition">
+                            <button type="button" onclick="addEducation()" class="px-3 py-1 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700 transition">
                                 + {{ __('Add') }}
                             </button>
                         </div>
@@ -129,7 +129,7 @@
                     <div class="p-6 bg-white shadow sm:rounded-lg">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-lg font-semibold text-gray-900">{{ __('Skills') }}</h3>
-                            <button type="button" onclick="addSkill()" class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition">
+                            <button type="button" onclick="addSkill()" class="px-3 py-1 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700 transition">
                                 + {{ __('Add') }}
                             </button>
                         </div>
@@ -144,7 +144,7 @@
                     <div class="p-6 bg-white shadow sm:rounded-lg">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-lg font-semibold text-gray-900">{{ __('Certifications') }}</h3>
-                            <button type="button" onclick="addCertification()" class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition">
+                            <button type="button" onclick="addCertification()" class="px-3 py-1 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700 transition">
                                 + {{ __('Add') }}
                             </button>
                         </div>
@@ -160,7 +160,7 @@
                         <a href="{{ route('dashboard') }}" class="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
                             {{ __('Cancel') }}
                         </a>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
                             {{ __('Save Changes') }}
                         </button>
                     </div>
@@ -213,29 +213,29 @@
     <div class="grid grid-cols-2 gap-3">
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Job Title *</label>
-            <input type="text" name="work_experiences[${index}][job_title]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="text" name="work_experiences[${index}][job_title]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Company Name *</label>
-            <input type="text" name="work_experiences[${index}][company_name]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="text" name="work_experiences[${index}][company_name]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Start Date *</label>
-            <input type="date" name="work_experiences[${index}][start_date]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="date" name="work_experiences[${index}][start_date]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-            <input type="date" name="work_experiences[${index}][end_date]" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="date" name="work_experiences[${index}][end_date]" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
         <div class="col-span-2">
             <label class="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" name="work_experiences[${index}][currently_working]" value="1" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                <input type="checkbox" name="work_experiences[${index}][currently_working]" value="1" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                 <span class="text-sm font-medium text-gray-700">I currently work here</span>
             </label>
         </div>
         <div class="col-span-2">
             <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea name="work_experiences[${index}][description]" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+            <textarea name="work_experiences[${index}][description]" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
         </div>
     </div>
 </div>`;
@@ -255,27 +255,27 @@
     <div class="grid grid-cols-2 gap-3">
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">School / University *</label>
-            <input type="text" name="educations[${index}][school_name]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="text" name="educations[${index}][school_name]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Degree *</label>
-            <input type="text" name="educations[${index}][degree]" required placeholder="e.g., Bachelor, Master, Diploma" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="text" name="educations[${index}][degree]" required placeholder="e.g., Bachelor, Master, Diploma" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Field of Study *</label>
-            <input type="text" name="educations[${index}][field_of_study]" required placeholder="e.g., Computer Science" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="text" name="educations[${index}][field_of_study]" required placeholder="e.g., Computer Science" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Start Date *</label>
-            <input type="date" name="educations[${index}][start_date]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="date" name="educations[${index}][start_date]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">End Date *</label>
-            <input type="date" name="educations[${index}][end_date]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="date" name="educations[${index}][end_date]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
         <div class="col-span-2">
             <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea name="educations[${index}][description]" rows="3" placeholder="Additional details about your education" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+            <textarea name="educations[${index}][description]" rows="3" placeholder="Additional details about your education" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
         </div>
     </div>
 </div>`;
@@ -290,11 +290,11 @@
 <div class="form-item p-3 bg-gray-50 rounded-lg border border-gray-200 flex items-end gap-3">
     <div class="flex-1">
         <label class="block text-sm font-medium text-gray-700 mb-1">Skill Name *</label>
-        <input type="text" name="skills[${index}][skill_name]" required placeholder="e.g., JavaScript, Laravel, React" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <input type="text" name="skills[${index}][skill_name]" required placeholder="e.g., JavaScript, Laravel, React" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
     </div>
     <div class="flex-1">
         <label class="block text-sm font-medium text-gray-700 mb-1">Proficiency *</label>
-        <select name="skills[${index}][proficiency]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <select name="skills[${index}][proficiency]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <option value="">Select level</option>
             <option value="beginner">Beginner</option>
             <option value="intermediate">Intermediate</option>
@@ -326,27 +326,27 @@
     <div class="grid grid-cols-2 gap-3">
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Certification Name *</label>
-            <input type="text" name="certifications[${index}][certification_name]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="text" name="certifications[${index}][certification_name]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Issuer *</label>
-            <input type="text" name="certifications[${index}][issuer]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="text" name="certifications[${index}][issuer]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Issue Date *</label>
-            <input type="date" name="certifications[${index}][issue_date]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="date" name="certifications[${index}][issue_date]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
-            <input type="date" name="certifications[${index}][expiry_date]" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="date" name="certifications[${index}][expiry_date]" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
         <div class="col-span-2">
             <label class="block text-sm font-medium text-gray-700 mb-1">Credential URL</label>
-            <input type="url" name="certifications[${index}][credential_url]" placeholder="https://..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="url" name="certifications[${index}][credential_url]" placeholder="https://..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
         <div class="col-span-2">
             <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea name="certifications[${index}][description]" rows="3" placeholder="Additional details about this certification" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+            <textarea name="certifications[${index}][description]" rows="3" placeholder="Additional details about this certification" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
         </div>
     </div>
 </div>`;

@@ -12,14 +12,30 @@ class Project extends Model
         'name',
         'description',
         'status',
+        'type',
+        'team_id',
+        'start_date',
+        'end_date',
     ];
 
     protected $casts = [
         'status' => 'string',
+        'start_date' => 'date',
+        'end_date' => 'date',
     ];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function team(): BelongsTo
+    {
+        return $this->belongsTo(Team::class);
+    }
+
+    public function tasks(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Task::class);
     }
 }
