@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SrsDocument;
 use App\Models\SddDocument;
 use App\Models\SrsFunctionalRequirement;
+use App\Models\SrsNonFunctionalRequirement;
 use App\Models\SddComponent;
 use App\Models\SddDiagram;
 use Illuminate\Http\Request;
@@ -65,10 +66,23 @@ class DocumentationController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'purpose' => 'nullable|string',
+            'document_conventions' => 'nullable|string',
+            'intended_audience' => 'nullable|string',
+            'product_scope' => 'nullable|string',
+            'references' => 'nullable|string',
             'project_overview' => 'nullable|string',
             'scope' => 'nullable|string',
+            'product_perspective' => 'nullable|string',
+            'product_features' => 'nullable|string',
+            'user_classes' => 'nullable|string',
+            'operating_environment' => 'nullable|string',
+            'design_constraints' => 'nullable|string',
             'constraints' => 'nullable|string',
             'assumptions' => 'nullable|string',
+            'external_interfaces' => 'nullable|string',
+            'version' => 'nullable|string',
+            'status' => 'nullable|in:draft,review,approved,final',
         ]);
 
         $srsDocument = auth()->user()->srsDocuments()->create($validated);
@@ -83,8 +97,10 @@ class DocumentationController extends Controller
     public function editSrs(SrsDocument $srsDocument): View
     {
         $this->authorize('update', $srsDocument);
-        $functionalRequirements = $srsDocument->functionalRequirements;
-        return view('documentation.srs.edit', compact('srsDocument', 'functionalRequirements'));
+        $functionalRequirements = $srsDocument->functionalRequirements()->with('children')->get();
+        $nonFunctionalRequirements = $srsDocument->nonFunctionalRequirements()->with('children')->get();
+        $nfrCategories = SrsNonFunctionalRequirement::CATEGORIES;
+        return view('documentation.srs.edit', compact('srsDocument', 'functionalRequirements', 'nonFunctionalRequirements', 'nfrCategories'));
     }
 
     /**
@@ -97,44 +113,163 @@ class DocumentationController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'purpose' => 'nullable|string',
+            'document_conventions' => 'nullable|string',
+            'intended_audience' => 'nullable|string',
+            'product_scope' => 'nullable|string',
+            'references' => 'nullable|string',
             'project_overview' => 'nullable|string',
             'scope' => 'nullable|string',
+            'product_perspective' => 'nullable|string',
+            'product_features' => 'nullable|string',
+            'user_classes' => 'nullable|string',
+            'operating_environment' => 'nullable|string',
+            'design_constraints' => 'nullable|string',
             'constraints' => 'nullable|string',
             'assumptions' => 'nullable|string',
+            'dependencies' => 'nullable|string',
+            'external_interfaces' => 'nullable|string',
+            'system_features' => 'nullable|string',
+            'data_requirements' => 'nullable|string',
+            'appendices' => 'nullable|string',
+            'glossary' => 'nullable|string',
+            'version' => 'nullable|string',
+            'status' => 'nullable|in:draft,review,approved,final',
             'functional_requirements' => 'nullable|array',
             'functional_requirements.*.requirement_id' => 'required_with:functional_requirements|string',
+            'functional_requirements.*.section_number' => 'required_with:functional_requirements|string',
             'functional_requirements.*.title' => 'required_with:functional_requirements|string|max:255',
             'functional_requirements.*.description' => 'required_with:functional_requirements|string',
+            'functional_requirements.*.acceptance_criteria' => 'nullable|string',
+            'functional_requirements.*.source' => 'nullable|string',
             'functional_requirements.*.priority' => 'required_with:functional_requirements|in:low,medium,high,critical',
+            'functional_requirements.*.status' => 'nullable|in:draft,review,approved,implemented,verified',
             'functional_requirements.*.ux_considerations' => 'nullable|array',
+            'functional_requirements.*.parent_section' => 'nullable|string',
+            'non_functional_requirements' => 'nullable|array',
+            'non_functional_requirements.*.requirement_id' => 'required_with:non_functional_requirements|string',
+            'non_functional_requirements.*.section_number' => 'required_with:non_functional_requirements|string',
+            'non_functional_requirements.*.title' => 'required_with:non_functional_requirements|string|max:255',
+            'non_functional_requirements.*.description' => 'required_with:non_functional_requirements|string',
+            'non_functional_requirements.*.category' => 'required_with:non_functional_requirements|in:performance,security,reliability,availability,maintainability,scalability,usability,compatibility,compliance,other',
+            'non_functional_requirements.*.acceptance_criteria' => 'nullable|string',
+            'non_functional_requirements.*.measurement' => 'nullable|string',
+            'non_functional_requirements.*.target_value' => 'nullable|string',
+            'non_functional_requirements.*.source' => 'nullable|string',
+            'non_functional_requirements.*.priority' => 'required_with:non_functional_requirements|in:low,medium,high,critical',
+            'non_functional_requirements.*.status' => 'nullable|in:draft,review,approved,implemented,verified',
+            'non_functional_requirements.*.parent_section' => 'nullable|string',
         ]);
 
         $srsDocument->update([
             'title' => $validated['title'],
-            'description' => $validated['description'],
-            'project_overview' => $validated['project_overview'],
-            'scope' => $validated['scope'],
-            'constraints' => $validated['constraints'],
-            'assumptions' => $validated['assumptions'],
+            'description' => $validated['description'] ?? null,
+            'purpose' => $validated['purpose'] ?? null,
+            'document_conventions' => $validated['document_conventions'] ?? null,
+            'intended_audience' => $validated['intended_audience'] ?? null,
+            'product_scope' => $validated['product_scope'] ?? null,
+            'references' => $validated['references'] ?? null,
+            'project_overview' => $validated['project_overview'] ?? null,
+            'scope' => $validated['scope'] ?? null,
+            'product_perspective' => $validated['product_perspective'] ?? null,
+            'product_features' => $validated['product_features'] ?? null,
+            'user_classes' => $validated['user_classes'] ?? null,
+            'operating_environment' => $validated['operating_environment'] ?? null,
+            'design_constraints' => $validated['design_constraints'] ?? null,
+            'constraints' => $validated['constraints'] ?? null,
+            'assumptions' => $validated['assumptions'] ?? null,
+            'dependencies' => $validated['dependencies'] ?? null,
+            'external_interfaces' => $validated['external_interfaces'] ?? null,
+            'system_features' => $validated['system_features'] ?? null,
+            'data_requirements' => $validated['data_requirements'] ?? null,
+            'appendices' => $validated['appendices'] ?? null,
+            'glossary' => $validated['glossary'] ?? null,
+            'version' => $validated['version'] ?? '1.0',
+            'status' => $validated['status'] ?? 'draft',
         ]);
 
-        // Sync functional requirements
-        if (isset($validated['functional_requirements'])) {
-            $srsDocument->functionalRequirements()->delete();
-            foreach ($validated['functional_requirements'] as $index => $req) {
-                $srsDocument->functionalRequirements()->create([
-                    'requirement_id' => $req['requirement_id'],
-                    'title' => $req['title'],
-                    'description' => $req['description'],
-                    'priority' => $req['priority'],
-                    'ux_considerations' => $req['ux_considerations'] ?? [],
-                    'order' => $index,
-                ]);
-            }
-        }
+        // Sync functional requirements with hierarchical structure
+        $this->syncHierarchicalRequirements(
+            $srsDocument, 
+            $validated['functional_requirements'] ?? [], 
+            'functional'
+        );
+
+        // Sync non-functional requirements with hierarchical structure
+        $this->syncHierarchicalRequirements(
+            $srsDocument, 
+            $validated['non_functional_requirements'] ?? [], 
+            'non_functional'
+        );
 
         return redirect()->route('documentation.srs.edit', $srsDocument)
             ->with('success', 'SRS document updated successfully.');
+    }
+
+    /**
+     * Sync hierarchical requirements (both functional and non-functional).
+     */
+    private function syncHierarchicalRequirements(SrsDocument $srsDocument, array $requirements, string $type): void
+    {
+        if ($type === 'functional') {
+            $srsDocument->functionalRequirements()->delete();
+            $relationName = 'functionalRequirements';
+        } else {
+            $srsDocument->nonFunctionalRequirements()->delete();
+            $relationName = 'nonFunctionalRequirements';
+        }
+
+        if (empty($requirements)) {
+            return;
+        }
+
+        // First pass: Create all requirements without parent references
+        $createdRequirements = [];
+        foreach ($requirements as $index => $req) {
+            $data = [
+                'requirement_id' => $req['requirement_id'],
+                'section_number' => $req['section_number'],
+                'title' => $req['title'],
+                'description' => $req['description'],
+                'priority' => $req['priority'],
+                'status' => $req['status'] ?? 'draft',
+                'order' => $index,
+            ];
+
+            if ($type === 'functional') {
+                $data['acceptance_criteria'] = $req['acceptance_criteria'] ?? null;
+                $data['source'] = $req['source'] ?? null;
+                $data['ux_considerations'] = $req['ux_considerations'] ?? [];
+            } else {
+                $data['category'] = $req['category'];
+                $data['acceptance_criteria'] = $req['acceptance_criteria'] ?? null;
+                $data['measurement'] = $req['measurement'] ?? null;
+                $data['target_value'] = $req['target_value'] ?? null;
+                $data['source'] = $req['source'] ?? null;
+            }
+
+            $created = $srsDocument->$relationName()->create($data);
+            $createdRequirements[$req['section_number']] = $created;
+        }
+
+        // Second pass: Update parent references based on section numbers
+        foreach ($requirements as $req) {
+            $sectionNumber = $req['section_number'];
+            $parentSection = $req['parent_section'] ?? null;
+            
+            // If no explicit parent, try to derive from section number (e.g., 1.2.1 -> 1.2)
+            if (!$parentSection && substr_count($sectionNumber, '.') > 0) {
+                $parts = explode('.', $sectionNumber);
+                array_pop($parts);
+                $parentSection = implode('.', $parts);
+            }
+
+            if ($parentSection && isset($createdRequirements[$parentSection])) {
+                $createdRequirements[$sectionNumber]->update([
+                    'parent_id' => $createdRequirements[$parentSection]->id
+                ]);
+            }
+        }
     }
 
     /**

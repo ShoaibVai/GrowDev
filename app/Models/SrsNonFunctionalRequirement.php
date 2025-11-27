@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class SrsFunctionalRequirement extends Model
+class SrsNonFunctionalRequirement extends Model
 {
     protected $fillable = [
         'srs_document_id',
@@ -15,16 +15,30 @@ class SrsFunctionalRequirement extends Model
         'section_number',
         'title',
         'description',
+        'category',
         'acceptance_criteria',
+        'measurement',
+        'target_value',
         'source',
         'priority',
         'status',
-        'ux_considerations',
         'order',
     ];
 
-    protected $casts = [
-        'ux_considerations' => 'array',
+    /**
+     * The available categories for non-functional requirements.
+     */
+    public const CATEGORIES = [
+        'performance' => 'Performance',
+        'security' => 'Security',
+        'reliability' => 'Reliability',
+        'availability' => 'Availability',
+        'maintainability' => 'Maintainability',
+        'scalability' => 'Scalability',
+        'usability' => 'Usability',
+        'compatibility' => 'Compatibility',
+        'compliance' => 'Compliance',
+        'other' => 'Other',
     ];
 
     /**
@@ -40,7 +54,7 @@ class SrsFunctionalRequirement extends Model
      */
     public function parent(): BelongsTo
     {
-        return $this->belongsTo(SrsFunctionalRequirement::class, 'parent_id');
+        return $this->belongsTo(SrsNonFunctionalRequirement::class, 'parent_id');
     }
 
     /**
@@ -48,7 +62,7 @@ class SrsFunctionalRequirement extends Model
      */
     public function children(): HasMany
     {
-        return $this->hasMany(SrsFunctionalRequirement::class, 'parent_id')->orderBy('order');
+        return $this->hasMany(SrsNonFunctionalRequirement::class, 'parent_id')->orderBy('order');
     }
 
     /**
@@ -73,5 +87,13 @@ class SrsFunctionalRequirement extends Model
     public function getDepthAttribute(): int
     {
         return count(explode('.', $this->section_number)) - 1;
+    }
+
+    /**
+     * Get the category display name.
+     */
+    public function getCategoryLabelAttribute(): string
+    {
+        return self::CATEGORIES[$this->category] ?? $this->category;
     }
 }
