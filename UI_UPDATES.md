@@ -20,7 +20,7 @@ This file documents the UI/UX updates implemented on November 23, 2025.
 
 ### Dashboard (new)
 
-- Created `DashboardController` to supply comprehensive dashboard data: project counts, active/completed counts, tasks assigned, upcoming tasks, teams, recent SRS/SDD.
+- Created `DashboardController` to supply comprehensive dashboard data: project counts, active/completed counts, tasks assigned, upcoming tasks, teams, recent SRS snapshots.
 - Reworked `resources/views/dashboard.blade.php` with a modern layout:
   - Top stats: quick overview (Projects, Active Projects, Open Tasks, Teams)
   - Main content: recent projects (grid cards), tasks assigned to the user (table)
@@ -31,14 +31,14 @@ This file documents the UI/UX updates implemented on November 23, 2025.
 - This redesign prioritizes quick access to recent work and actionable items.
 - Future improvements: integrate a calendar view, add drag-and-drop for task ordering, and persist view preferences.
 
-### Documentation (SRS/SDD)
+### Documentation (SRS)
 - Index: replaced search UI with `list-controls`, added sorting and view toggle.
 - Index: added list/table view option and improved empty-state visual.
 
 ### Controller updates
 - `ProjectController::index` supports filtering by `team_id` and sorting.
 - `ProjectController::show` supports filtering tasks by `q`, `status`, `assigned_to` and returns filtered `tasks` and `members`.
-- `DocumentationController::indexSrs` and `indexSdd` support sorting by `sort` query param.
+- `DocumentationController::indexSrs` supports sorting by `sort` query param. (`indexSdd` was removed with the SDD feature sunset.)
 
 ## Tests/Validation
 - Views successfully compiled with `php artisan view:cache`.

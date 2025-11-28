@@ -25,9 +25,11 @@ All are Full Stack Developers.
 - Role-based team & task management
 - Project lifecycle guidance
 - Real-time collaboration & notifications
-- Documentation templates (SRS, SDD, etc.)
+- Documentation templates (SRS-focused; SDD retired)
 - Responsive UI (Tailwind CSS)
 - Secure, reliable, and accessible
+
+> **Note:** The legacy Software Design Document (SDD) workflows were fully removed in November 2025. GrowDev now concentrates on SRS authoring and related project guidance.
 
 ## ⚡ Installation Guide
 **Windows:**

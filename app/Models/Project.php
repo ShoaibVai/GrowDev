@@ -47,8 +47,4 @@ class Project extends Model
         return $this->hasMany(SrsDocument::class);
     }
 
-    public function sddDocuments(): HasMany
-    {
-        return $this->hasMany(SddDocument::class);
-    }
 }

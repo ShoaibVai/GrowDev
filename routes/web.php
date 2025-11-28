@@ -1,8 +1,9 @@
 <?php
 
+use App\Http\Controllers\DocumentationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
-use App\Http\Controllers\DocumentationController;
+use App\Http\Controllers\TaskController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -23,6 +24,11 @@ Route::middleware('auth')->group(function () {
     // Project routes
     Route::resource('projects', ProjectController::class);
 
+    // Project task routes
+    Route::post('/projects/{project}/tasks', [TaskController::class, 'store'])->name('projects.tasks.store');
+    Route::put('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
+    Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
+
     // Team routes
     Route::post('/teams/{team}/invite', [\App\Http\Controllers\TeamController::class, 'invite'])->name('teams.invite');
     Route::patch('/teams/{team}/members/{user}', [\App\Http\Controllers\TeamController::class, 'assignRole'])->name('teams.assignRole');
@@ -37,17 +43,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/documentation/srs/{srsDocument}/pdf', [DocumentationController::class, 'generateSrsPdf'])->name('documentation.srs.pdf');
     Route::delete('/documentation/srs/{srsDocument}', [DocumentationController::class, 'destroySrs'])->name('documentation.srs.destroy');
 
-    // SDD Documentation routes
-    Route::get('/documentation/sdd', [DocumentationController::class, 'indexSdd'])->name('documentation.sdd.index');
-    Route::get('/documentation/sdd/create', [DocumentationController::class, 'createSdd'])->name('documentation.sdd.create');
-    Route::post('/documentation/sdd', [DocumentationController::class, 'storeSdd'])->name('documentation.sdd.store');
-    Route::get('/documentation/sdd/{sddDocument}/edit', [DocumentationController::class, 'editSdd'])->name('documentation.sdd.edit');
-    Route::put('/documentation/sdd/{sddDocument}', [DocumentationController::class, 'updateSdd'])->name('documentation.sdd.update');
-    Route::get('/documentation/sdd/{sddDocument}/pdf', [DocumentationController::class, 'generateSddPdf'])->name('documentation.sdd.pdf');
-    Route::delete('/documentation/sdd/{sddDocument}', [DocumentationController::class, 'destroySdd'])->name('documentation.sdd.destroy');
-
-    // API endpoint for text to diagram conversion
-    Route::post('/api/documentation/text-to-diagram', [DocumentationController::class, 'convertTextToDiagram']);
 });
 
 require __DIR__.'/auth.php';

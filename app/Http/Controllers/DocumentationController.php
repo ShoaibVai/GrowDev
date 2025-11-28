@@ -3,11 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\SrsDocument;
-use App\Models\SddDocument;
 use App\Models\SrsFunctionalRequirement;
 use App\Models\SrsNonFunctionalRequirement;
-use App\Models\SddComponent;
-use App\Models\SddDiagram;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -95,8 +92,8 @@ class DocumentationController extends Controller
 
         $srsDocument = auth()->user()->srsDocuments()->create($validated);
 
-        return redirect()->route('documentation.sdd.create', ['project_id' => $srsDocument->project_id])
-            ->with('success', 'SRS document created successfully. Next up: the SDD.');
+        return redirect()->route('projects.show', $srsDocument->project_id)
+            ->with('success', 'SRS document created successfully.');
     }
 
     /**
@@ -306,199 +303,6 @@ class DocumentationController extends Controller
         $srsDocument->delete();
         return redirect()->route('documentation.srs.index')
             ->with('success', 'SRS document deleted successfully.');
-    }
-
-    // ===== SDD METHODS =====
-
-    /**
-     * Show all SDD documents for the user.
-     */
-    public function indexSdd(Request $request): View
-    {
-        $query = auth()->user()->sddDocuments()->latest();
-        if ($request->filled('q')) {
-            $query->where('title', 'like', '%' . $request->q . '%')
-                  ->orWhere('description', 'like', '%' . $request->q . '%');
-        }
-        if ($request->filled('sort')) {
-            switch ($request->get('sort')) {
-                case 'oldest':
-                    $query->oldest();
-                    break;
-                case 'name_asc':
-                    $query->orderBy('title', 'asc');
-                    break;
-                case 'name_desc':
-                    $query->orderBy('title', 'desc');
-                    break;
-                default:
-                    // latest is default
-                    break;
-            }
-        }
-
-        $sddDocuments = $query->paginate(12)->withQueryString();
-        return view('documentation.sdd.index', compact('sddDocuments'));
-    }
-
-    /**
-     * Show form to create new SDD document.
-     */
-    public function createSdd(Request $request): View
-    {
-        $projects = auth()->user()->projects()->latest()->get();
-        $selectedProjectId = $request->integer('project_id');
-
-        return view('documentation.sdd.create', compact('projects', 'selectedProjectId'));
-    }
-
-    /**
-     * Store new SDD document.
-     */
-    public function storeSdd(Request $request): RedirectResponse
-    {
-        $validated = $request->validate([
-            'project_id' => [
-                'required',
-                Rule::exists('projects', 'id')->where(fn ($query) => $query->where('user_id', auth()->id())),
-            ],
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'design_overview' => 'nullable|string',
-            'architecture_overview' => 'nullable|string',
-        ]);
-
-        $sddDocument = auth()->user()->sddDocuments()->create($validated);
-
-        return redirect()->route('projects.show', $sddDocument->project_id)
-            ->with('success', 'SDD document created successfully and linked to your project.');
-    }
-
-    /**
-     * Show form to edit SDD document.
-     */
-    public function editSdd(SddDocument $sddDocument): View
-    {
-        $this->authorize('update', $sddDocument);
-        $components = $sddDocument->components;
-        $diagrams = $sddDocument->diagrams;
-        $projects = auth()->user()->projects()->latest()->get();
-        return view('documentation.sdd.edit', compact('sddDocument', 'components', 'diagrams', 'projects'));
-    }
-
-    /**
-     * Update SDD document.
-     */
-    public function updateSdd(Request $request, SddDocument $sddDocument): RedirectResponse
-    {
-        $this->authorize('update', $sddDocument);
-
-        $validated = $request->validate([
-            'project_id' => [
-                'required',
-                Rule::exists('projects', 'id')->where(fn ($query) => $query->where('user_id', auth()->id())),
-            ],
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'design_overview' => 'nullable|string',
-            'architecture_overview' => 'nullable|string',
-            'components' => 'nullable|array',
-            'components.*.component_name' => 'required_with:components|string|max:255',
-            'components.*.description' => 'required_with:components|string',
-            'components.*.responsibility' => 'required_with:components|string',
-            'components.*.interfaces' => 'nullable|string',
-            'components.*.diagram_type' => 'nullable|in:mermaid,custom',
-            'diagrams' => 'nullable|array',
-            'diagrams.*.diagram_name' => 'required_with:diagrams|string|max:255',
-            'diagrams.*.diagram_type' => 'required_with:diagrams|string',
-            'diagrams.*.diagram_content' => 'required_with:diagrams|string',
-        ]);
-
-        $sddDocument->update([
-            'project_id' => $validated['project_id'],
-            'title' => $validated['title'],
-            'description' => $validated['description'],
-            'design_overview' => $validated['design_overview'],
-            'architecture_overview' => $validated['architecture_overview'],
-        ]);
-
-        // Sync components
-        if (isset($validated['components'])) {
-            $sddDocument->components()->delete();
-            foreach ($validated['components'] as $index => $comp) {
-                $sddDocument->components()->create([
-                    'component_name' => $comp['component_name'],
-                    'description' => $comp['description'],
-                    'responsibility' => $comp['responsibility'],
-                    'interfaces' => $comp['interfaces'] ?? null,
-                    'diagram_type' => $comp['diagram_type'] ?? 'mermaid',
-                    'order' => $index,
-                ]);
-            }
-        }
-
-        // Sync diagrams
-        if (isset($validated['diagrams'])) {
-            $sddDocument->diagrams()->delete();
-            foreach ($validated['diagrams'] as $diag) {
-                $sddDocument->diagrams()->create([
-                    'diagram_name' => $diag['diagram_name'],
-                    'diagram_type' => $diag['diagram_type'],
-                    'diagram_content' => $diag['diagram_content'],
-                ]);
-            }
-        }
-
-        return redirect()->route('documentation.sdd.edit', $sddDocument)
-            ->with('success', 'SDD document updated successfully.');
-    }
-
-    /**
-     * Generate SDD PDF.
-     */
-    public function generateSddPdf(SddDocument $sddDocument)
-    {
-        $this->authorize('view', $sddDocument);
-
-        $pdf = Pdf::loadView('documentation.sdd.pdf', compact('sddDocument'));
-        return $pdf->download('SDD_' . $sddDocument->title . '.pdf');
-    }
-
-    /**
-     * Delete SDD document.
-     */
-    public function destroySdd(SddDocument $sddDocument): RedirectResponse
-    {
-        $this->authorize('delete', $sddDocument);
-        $sddDocument->delete();
-        return redirect()->route('documentation.sdd.index')
-            ->with('success', 'SDD document deleted successfully.');
-    }
-
-    /**
-     * Convert text to Mermaid diagram (API endpoint).
-     */
-    public function convertTextToDiagram(Request $request)
-    {
-        $validated = $request->validate([
-            'text' => 'required|string',
-            'diagram_type' => 'required|in:flowchart,sequence,class,state',
-        ]);
-
-        // This would integrate with an AI service or predefined templates
-        // For now, we'll return a basic structure
-        $mermaidDiagrams = [
-            'flowchart' => 'flowchart TD\n    A[Start] --> B{Decision}\n    B -->|Yes| C[Process]\n    B -->|No| D[End]\n    C --> D',
-            'sequence' => 'sequenceDiagram\n    participant User\n    participant System\n    User->>System: Request\n    System-->>User: Response',
-            'class' => 'classDiagram\n    class MyClass {\n        +property: string\n        +method(): void\n    }',
-            'state' => 'stateDiagram-v2\n    [*] --> State1\n    State1 --> State2\n    State2 --> [*]',
-        ];
-
-        return response()->json([
-            'success' => true,
-            'diagram_content' => $mermaidDiagrams[$validated['diagram_type']],
-            'diagram_type' => $validated['diagram_type'],
-        ]);
     }
 
     // ===== TEMPLATE-BASED DOCUMENTATION METHODS =====

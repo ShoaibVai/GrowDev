@@ -39,7 +39,6 @@ Include email notification features for team communication
 Maintain a shared database accessible across devices
 1.3 Definitions, Acronyms, and Abbreviations
 SRS: Software Requirements Specification
-SDD: Software Design Document
 UI: User Interface
 UX: User Experience
 CRUD: Create, Read, Update, Delete
@@ -93,7 +92,6 @@ Visual representation of task assignments
 2.2.4 Documentation Templates
 Provide templates for:
 Software Requirements Specification (SRS)
-Software Design Document (SDD)
 Test plans
 User manuals
 Meeting notes

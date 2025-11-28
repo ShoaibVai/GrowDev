@@ -36,14 +36,13 @@ class DashboardController extends Controller
             ->take(6)
             ->get();
 
-        // Recent Documents
+        // Recent SRS documents only
         $recentSrs = $user->srsDocuments()->latest()->take(6)->get();
-        $recentSdd = $user->sddDocuments()->latest()->take(6)->get();
 
         return view('dashboard', compact(
             'projects', 'totalProjects', 'activeProjects', 'completedProjects',
             'teams', 'teamsCount', 'tasksAssigned', 'openTasksCount', 'upcomingTasks',
-            'recentSrs', 'recentSdd'
+            'recentSrs'
         ));
     }
 }

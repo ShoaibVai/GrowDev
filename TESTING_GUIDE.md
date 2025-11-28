@@ -172,239 +172,15 @@
 
 ---
 
-## 🏗️ SDD Document Testing
+## 🧹 SDD Testing (Retired)
 
-### Test 9: Create SDD Document
-
-**Steps:**
-1. From dropdown, select "🏗️ Create SDD Document"
-2. Fill form:
-   - Title: "E-Commerce Platform SDD"
-   - Description: "System design for e-commerce platform"
-   - Design Overview: "Three-tier architecture with API gateway"
-   - Architecture Overview: "Microservices-based architecture"
-3. Click "✅ Create SDD"
-
-**Expected Result:**
-- Redirected to SDD edit page
-- Form pre-filled
-- Components and Diagrams sections visible
-- Add Component button visible
-
----
-
-### Test 10: Add Components
-
-**Steps:**
-1. Click "+ Add Component" button
-2. Fill component 1:
-   - Component Name: "User Service"
-   - Description: "Handles user authentication and profile management"
-   - Responsibility: "User registration, login, profile updates"
-   - Interfaces: "REST API - /users, /auth"
-   - Diagram Type: "Mermaid Diagram"
-3. Click "+ Add Component" again
-4. Fill component 2:
-   - Component Name: "Product Service"
-   - Description: "Manages product catalog and search"
-   - Responsibility: "Product CRUD, search indexing"
-   - Interfaces: "REST API - /products, /search"
-
-**Expected Result:**
-- Two components added
-- Each shows in form section
-- Professional styling applied
-- Remove component buttons functional
-
----
-
-### Test 11: Create Text-to-Diagram (Mermaid)
-
-**Steps:**
-1. In Diagrams section, find "✨ AI Convert Text" tab
-2. Click it to activate
-3. In text area, enter:
-   ```
-   The user opens the app and logs in. The system sends
-   credentials to the User Service. If valid, returns JWT token.
-   User uses token for API requests to Product Service.
-   ```
-4. Select diagram type: "Sequence Diagram"
-5. Click "🔄 Generate Mermaid Diagram"
-6. Wait for preview to appear
-
-**Expected Result:**
-- Text is sent to API endpoint
-- Mermaid diagram generated based on text
-- Preview shows sequence diagram
-- "✅ Save this Diagram" button appears
-- No errors in console
-
----
-
-### Test 12: Save Generated Diagram
-
-**Steps:**
-1. After preview appears, click "✅ Save this Diagram"
-2. Diagram should appear in "Saved Diagrams" section
-
-**Expected Result:**
-- Diagram appears under "Saved Diagrams"
-- Shows diagram name (auto-generated)
-- Shows diagram type
-- Displays rendered Mermaid diagram
-- Remove button available
-- Input fields added to form for submission
-
----
-
-### Test 13: Create Manual Mermaid Diagram
-
-**Steps:**
-1. Click "📐 Create Manual Diagram" tab
-2. Enter diagram name: "System Architecture"
-3. Enter Mermaid code:
-   ```
-   graph TD
-       A[Client] -->|REST API| B[API Gateway]
-       B --> C[User Service]
-       B --> D[Product Service]
-       C --> E[(User DB)]
-       D --> F[(Product DB)]
-   ```
-4. Click "👁️ Preview Diagram"
-
-**Expected Result:**
-- Diagram renders in preview area
-- Shows the architecture diagram
-- Preview box becomes visible
-- "✅ Save this Diagram" button available
-
----
-
-### Test 14: Save Manual Diagram
-
-**Steps:**
-1. Click "✅ Save this Diagram"
-2. Diagram added to saved list
-
-**Expected Result:**
-- Diagram appears in "Saved Diagrams"
-- Named "System Architecture"
-- Type shows as "mermaid"
-- Diagram renders correctly
-
----
-
-### Test 15: Add Multiple Diagram Types
-
-**Steps:**
-1. Create another manual diagram with name "Database Schema" and code:
-   ```
-   classDiagram
-       class User {
-           +id: int
-           +email: string
-           +password: string
-           +register()
-           +login()
-       }
-       class Product {
-           +id: int
-           +name: string
-           +price: float
-           +getDetails()
-       }
-   ```
-2. Save it
-3. Create a flowchart diagram
-
-**Expected Result:**
-- Multiple diagrams can coexist
-- Each displays correctly
-- All saved in "Saved Diagrams" section
-- Form contains all diagrams for submission
-
----
-
-### Test 16: Save SDD with Components and Diagrams
-
-**Steps:**
-1. Click "💾 Save SDD"
-
-**Expected Result:**
-- All components saved
-- All diagrams saved
-- Form validates successfully
-- Success message shown
-- Redirected to edit page
-- All data persists on reload
-
----
-
-### Test 17: Remove Diagram
-
-**Steps:**
-1. In "Saved Diagrams", find a diagram
-2. Click "✕ Remove" button
-
-**Expected Result:**
-- Diagram removed from list
-- Hidden input removed from form
-- Other diagrams unaffected
-
----
-
-### Test 18: Export SDD as PDF
-
-**Steps:**
-1. Click "📥 Export PDF" button
-2. Wait for PDF generation
-3. PDF should download
-
-**Expected Result:**
-- PDF downloads as "SDD_[title].pdf"
-- PDF contains:
-  - Header with title and dates
-  - Design and Architecture overviews
-  - All components with descriptions
-  - All diagrams rendered as images
-  - Component interfaces and responsibilities
-  - Professional formatting
-  - Footer with generation timestamp
-
----
-
-### Test 19: View SDD List
-
-**Steps:**
-1. From dropdown, click "🔧 View SDD Documents"
-2. Or navigate to http://127.0.0.1:8000/documentation/sdd
-
-**Expected Result:**
-- List shows all user's SDD documents
-- Each shows title, description, component count
-- Edit, PDF, Delete buttons available
-
----
-
-### Test 20: Edit Existing SDD
-
-**Steps:**
-1. From SDD list, click "✏️ Edit"
-2. Add new component: "Cache Service"
-3. Save changes
-
-**Expected Result:**
-- Changes persist
-- New component visible in list
-- Diagrams remain unchanged
+SDD creation, component management, diagram tooling, and PDF export were sunset in November 2025. All related manual tests (historically Tests 9–20) were removed. For historical reference, check the repository tag `release/v1.0`.
 
 ---
 
 ## 🔒 Authorization Testing
 
-### Test 21: Document Ownership
+### Test 9: Document Ownership
 
 **Steps:**
 1. Create SRS document as User A
@@ -423,7 +199,7 @@
 
 ## 🔧 Edge Cases & Error Handling
 
-### Test 22: Empty Fields Validation
+### Test 10: Empty Fields Validation
 
 **Steps:**
 1. Try to create SRS without title
@@ -437,7 +213,7 @@
 
 ---
 
-### Test 23: Long Text Handling
+### Test 11: Long Text Handling
 
 **Steps:**
 1. Add requirement with very long description (>1000 chars)
@@ -445,32 +221,33 @@
 3. Export to PDF
 
 **Expected Result:**
-- Text wraps properly
-- No layout issues
-- PDF renders correctly
-- All content visible
+-- Text wraps properly
+-- No layout issues
+-- PDF renders correctly
+-- All content visible
 
 ---
 
-### Test 24: Special Characters in Diagrams
+### Test 12: Special Characters in Requirements
 
 **Steps:**
-1. Create diagram with special characters in name: `User@Login#123`
-2. Create diagram with special chars in code
+1. Add a requirement with special characters in the Requirement ID (e.g., `REQ-@Login#123`)
+2. Include emojis and punctuation in the requirement description and UX considerations
+3. Save the SRS and export the PDF
 
 **Expected Result:**
-- Special characters properly escaped
-- No errors or corruption
-- PDF renders correctly
+- Special characters remain intact in the web UI
+- PDF export shows the same characters without encoding issues
+- No validation errors triggered solely by the characters
 
 ---
 
 ## 📱 Responsive Design Testing
 
-### Test 25: Mobile View
+### Test 13: Mobile View
 
 **Steps:**
-1. Open SRS/SDD edit page on mobile browser (or use DevTools)
+1. Open the SRS edit page on a mobile browser (or use DevTools)
 2. Try to:
    - Scroll through requirements
    - Add/remove UX items
@@ -481,21 +258,21 @@
 - Layout adapts to screen size
 - All buttons clickable
 - Forms readable
-- No horizontal scrolling needed
-- Touch-friendly spacing
+-- No horizontal scrolling needed
+-- Touch-friendly spacing
 
 ---
 
 ## 🎨 Visual Quality Testing
 
-### Test 26: UI/UX Polish
+### Test 14: UI/UX Polish
 
 **Steps:**
 1. Review colors and contrast
 2. Check button hover states
 3. Verify spacing and alignment
 4. Check font readability
-5. Review PDF styling
+-- Review PDF styling
 
 **Expected Result:**
 - Professional appearance
@@ -508,7 +285,7 @@
 
 ## 📊 Data Persistence Testing
 
-### Test 27: Database Integrity
+### Test 15: Database Integrity
 
 **Steps:**
 1. Create SRS with requirements
@@ -527,21 +304,17 @@
 
 ---
 
-## Performance Testing
+## ⚡ Performance Testing
 
-### Test 28: Load with Multiple Documents
+### Test 16: Load with Multiple Documents
 
 **Steps:**
 1. Create 5-10 SRS documents
-2. Create 5-10 SDD documents with multiple diagrams
-3. Load list pages
-4. Load edit pages
+2. Populate each with multiple requirements and UX considerations
+3. Load the dashboard and documentation list pages
+4. Load multiple edit pages back-to-back
 
 **Expected Result:**
-- Pages load quickly (< 2 seconds)
-- No lag when adding/removing items
-- PDF generation completes in reasonable time
-- No console errors
 
 ---
 
@@ -551,20 +324,16 @@
 - [ ] SRS: Functional Requirements Management ✅
 - [ ] SRS: UX Considerations (Add/Remove) ✅
 - [ ] SRS: PDF Export ✅
-- [ ] SDD: Create, Read, Update, Delete ✅
-- [ ] SDD: Components Management ✅
-- [ ] SDD: Text-to-Diagram Conversion ✅
-- [ ] SDD: Manual Mermaid Diagrams ✅
-- [ ] SDD: PDF Export with Diagrams ✅
 - [ ] Authorization: Users can only access own documents ✅
 - [ ] Validation: Form errors handled properly ✅
 - [ ] UI: Responsive design works ✅
 - [ ] UI: Professional appearance ✅
 - [ ] Database: Data properly persisted ✅
 - [ ] Performance: Pages load quickly ✅
+- [ ] SDD functionality retired (no manual testing required) ✅
 
 ---
 
-**Testing Guide Version**: 1.0
-**Last Updated**: October 21, 2025
-**Status**: Ready for Testing ✅
+**Testing Guide Version**: 1.1
+**Last Updated**: November 12, 2025
+**Status**: Ready for SRS Testing ✅

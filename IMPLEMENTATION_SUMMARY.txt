@@ -4,11 +4,12 @@
 📊 PROJECT SUMMARY
 ================================================================================
 
-Feature: Professional Documentation System (SRS & SDD)
+Feature: Guided Software Requirements Specification workspace
 Status: ✅ PRODUCTION READY
 Implementation Time: Completed
 Database: SQLite (migrations executed successfully)
 Server Status: ✅ Running on http://127.0.0.1:8000
+Legacy Note: Software Design Document (SDD) flows were retired in November 2025 and now exist only in historical tags.
 
 ================================================================================
 🎯 FEATURES IMPLEMENTED
@@ -31,75 +32,45 @@ Server Status: ✅ Running on http://127.0.0.1:8000
    - Direct download capability
 
 🏗️ SDD (Software Design Description)
-✅ Basic Information Section
-   - Title, description, design & architecture overview
-
-✅ Components Management
-   - Add/Remove components dynamically
-   - Component name, description, responsibility, interfaces
-
-✅ Advanced Diagram Support
-   - AI-Powered Text-to-Diagram conversion ✨
-     * Flowchart generation
-     * Sequence diagram generation
-     * Class diagram generation
-     * State diagram generation
-   - Manual Mermaid Diagram Creator 📐
-     * Live preview capability
-     * Full Mermaid syntax support
-     * Save unlimited diagrams
-   - Diagram rendering in PDF export
-
-✅ PDF Export
-   - Professional formatting
-   - Embedded Mermaid diagrams
-   - Component descriptions with formatting
+🧹 **Retired** — The SDD module (components, diagrams, and PDF export) was sunset in November 2025. Historical behavior is preserved in tags prior to `release/v1.1`.
 
 🌐 Homepage Integration
 ✅ "Create Documentation" Dropdown
    - 📋 Create SRS Document
-   - 🏗️ Create SDD Document
    - 📑 View SRS Documents
-   - 🔧 View SDD Documents
 
 ================================================================================
 📁 FILES CREATED
 ================================================================================
 
-MODELS (4 files):
+MODELS (active):
 ├── app/Models/SrsDocument.php
-├── app/Models/SrsFunctionalRequirement.php
-├── app/Models/SddDocument.php
-├── app/Models/SddComponent.php
-└── app/Models/SddDiagram.php
+└── app/Models/SrsFunctionalRequirement.php
 
-CONTROLLERS (1 file):
-└── app/Http/Controllers/DocumentationController.php (300+ lines)
+CONTROLLER:
+└── app/Http/Controllers/DocumentationController.php (SRS create/edit/PDF logic)
 
-POLICIES (2 files):
-├── app/Policies/SrsDocumentPolicy.php
-└── app/Policies/SddDocumentPolicy.php
+POLICY:
+└── app/Policies/SrsDocumentPolicy.php
 
-MIGRATIONS (2 files):
+MIGRATIONS:
 ├── database/migrations/2025_10_21_120000_create_srs_documents_table.php
-└── database/migrations/2025_10_21_120100_create_sdd_documents_table.php
+└── database/migrations/2025_10_21_120001_create_srs_functional_requirements_table.php
 
-VIEWS (8 files):
-├── resources/views/welcome.blade.php (updated with dropdown)
+VIEWS:
+├── resources/views/welcome.blade.php (documentation dropdown)
 ├── resources/views/documentation/srs/index.blade.php
 ├── resources/views/documentation/srs/create.blade.php
 ├── resources/views/documentation/srs/edit.blade.php (with UX controls)
-├── resources/views/documentation/srs/pdf.blade.php
-├── resources/views/documentation/sdd/index.blade.php
-├── resources/views/documentation/sdd/create.blade.php
-├── resources/views/documentation/sdd/edit.blade.php (with Mermaid support)
-└── resources/views/documentation/sdd/pdf.blade.php
+└── resources/views/documentation/srs/pdf.blade.php
 
-DOCUMENTATION (1 file):
-└── DOCUMENTATION_FEATURE.md (comprehensive guide)
+DOCUMENTATION:
+└── DOCUMENTATION_FEATURE.md (SRS usage guide, legacy SDD note)
 
-ROUTES (updated):
-└── routes/web.php (14 new documentation routes + 1 API endpoint)
+ROUTES:
+└── routes/web.php (SRS CRUD + PDF endpoints)
+
+Legacy SDD artifacts (models, policies, migrations, and views) remain only as stubs while cleanup completes; they are no longer referenced by active routes.
 
 ================================================================================
 🗄️ DATABASE SCHEMA
@@ -127,51 +98,18 @@ SRS_FUNCTIONAL_REQUIREMENTS Table:
 - order
 - timestamps
 
-SDD_DOCUMENTS Table:
-- id (PK)
-- user_id (FK) → users
-- title
-- description
-- design_overview
-- architecture_overview
-- timestamps
-
-SDD_COMPONENTS Table:
-- id (PK)
-- sdd_document_id (FK) → sdd_documents
-- component_name
-- description
-- responsibility
-- interfaces
-- diagram_data (JSON)
-- diagram_type (enum: mermaid, custom)
-- order
-- timestamps
-
-SDD_DIAGRAMS Table:
-- id (PK)
-- sdd_document_id (FK) → sdd_documents
-- diagram_name
-- diagram_type (string)
-- diagram_content (Mermaid syntax or custom)
-- text_description
-- timestamps
+Legacy SDD tables (sdd_documents, sdd_components, sdd_diagrams) were dropped from fresh migrations in November 2025. Existing databases should run the removal migration bundle or start from a fresh schema.
 
 ================================================================================
 🚀 QUICK START
 ================================================================================
 
 1. Login to the application
-2. On homepage, click the green "📄 Create Documentation" button
-3. Choose between:
-   - 📋 Create SRS Document → Add functional requirements with UX items
-   - 🏗️ Create SDD Document → Add components and create diagrams
-
-4. For SDD Diagrams:
-   - Option 1: Describe text → AI converts to Mermaid diagram
-   - Option 2: Write Mermaid syntax → Live preview → Save
-   
-5. Export as PDF: Click "📥 Export PDF" on any document
+2. On the homepage, click the green "📄 Create Documentation" button
+3. Select "📋 Create SRS Document"
+4. Populate the overview fields, add requirements, and include UX considerations
+5. Click "💾 Save SRS" and verify it appears on the list view
+6. Export as PDF via "📥 Export PDF" from the edit screen
 
 ================================================================================
 📚 TECHNOLOGY STACK
@@ -181,7 +119,7 @@ Frontend:
 - Blade templating (Laravel)
 - Tailwind CSS (responsive design)
 - JavaScript (vanilla, dynamic forms)
-- Mermaid.js CDN (diagram rendering)
+- Fetch API helpers for dynamic interactions
 
 Backend:
 - Laravel 12.34.0 (framework)
@@ -215,33 +153,10 @@ Authorization:
    - Proper data type casting
 
 ================================================================================
-📊 MERMAID DIAGRAM SUPPORT
+🧹 LEGACY DIAGRAM SUPPORT
 ================================================================================
 
-Supported Diagram Types:
-1. Flowchart (graphs, decision trees)
-2. Sequence Diagram (interactions, sequences)
-3. Class Diagram (object-oriented design)
-4. State Diagram (state machines)
-
-Example Flowchart:
-graph TD
-    A[Start] --> B{Decision}
-    B -->|Yes| C[Process]
-    B -->|No| D[End]
-
-Example Sequence:
-sequenceDiagram
-    participant User
-    participant API
-    User->>API: Request
-    API-->>User: Response
-
-The system provides:
-- AI-powered text-to-diagram conversion (basic)
-- Manual Mermaid syntax entry with preview
-- Live diagram rendering
-- Embedded diagrams in PDF exports
+Mermaid-based diagramming, AI text-to-diagram conversion, and the companion PDF export paths were decommissioned with the SDD module retirement (November 2025). Any remaining references point to archived tags for historical research only.
 
 ================================================================================
 🎯 API ENDPOINTS
@@ -256,16 +171,7 @@ Documentation Routes:
 - GET    /documentation/srs/{id}/pdf        - Export SRS as PDF
 - DELETE /documentation/srs/{id}            - Delete SRS
 
-- GET    /documentation/sdd                 - List SDD documents
-- GET    /documentation/sdd/create          - Create SDD form
-- POST   /documentation/sdd                 - Store SDD
-- GET    /documentation/sdd/{id}/edit       - Edit SDD form
-- PUT    /documentation/sdd/{id}            - Update SDD
-- GET    /documentation/sdd/{id}/pdf        - Export SDD as PDF
-- DELETE /documentation/sdd/{id}            - Delete SDD
-
-API Endpoint:
-- POST   /api/documentation/text-to-diagram - Convert text to Mermaid diagram
+Legacy SDD routes and the `/api/documentation/text-to-diagram` endpoint were removed from `routes/web.php` and `routes/api.php` in November 2025.
 
 ================================================================================
 ✨ KEY FEATURES HIGHLIGHT
@@ -276,16 +182,14 @@ API Endpoint:
    - No page reload needed
    - Clean, intuitive UI
    
-2. 📊 Advanced Diagram Support
-   - AI-powered text-to-diagram conversion
-   - Manual Mermaid syntax support
-   - Live preview before saving
-   - Multiple diagrams per SDD
+2. 🧩 Requirement Ordering & Metrics
+   - Drag-style ordering captured via `order` column
+   - Requirement counts and UX stats rendered on dashboard cards
+   - Inline validation keeps numbering consistent
    
 3. 📥 Professional PDF Export
-   - Color-coded priority badges (SRS)
-   - Embedded Mermaid diagrams (SDD)
-   - Professional formatting
+   - Color-coded priority badges
+   - Full narrative sections (overview, scope, constraints, assumptions)
    - Ready for stakeholder distribution
 
 4. 🌐 Responsive Design
@@ -318,14 +222,8 @@ API Endpoint:
    - Add UX considerations to requirements
    - Export as PDF
    - Verify PDF includes all content
-
-6. Test SDD:
-   - Create SDD document
-   - Add components
-   - Create a text-to-diagram (describe a login flow)
-   - Create a manual Mermaid diagram
-   - Export as PDF
-   - Verify diagrams render correctly in PDF
+   
+Legacy manual tests for SDD/diagram tooling have been removed (see TESTING_GUIDE.md for the updated checklist).
 
 ================================================================================
 📝 DOCUMENTATION
@@ -334,10 +232,9 @@ API Endpoint:
 Main Documentation: DOCUMENTATION_FEATURE.md
 - Complete feature overview
 - Usage guide with examples
-- Mermaid syntax examples
 - Database structure explanation
 - API endpoint reference
-- Future enhancement ideas
+- Legacy SDD sunset note
 
 ================================================================================
 ✅ VERIFICATION CHECKLIST
@@ -345,31 +242,24 @@ Main Documentation: DOCUMENTATION_FEATURE.md
 
 Database:
 ✅ All migrations executed successfully
-✅ 5 new tables created (SRS & SDD related)
+✅ 2 active tables created for the SRS module
 ✅ Foreign key constraints established
 ✅ User relationships configured
 
 Backend:
-✅ DocumentationController created (300+ lines)
-✅ All 4 models created with relationships
+✅ DocumentationController SRS actions implemented
+✅ SrsDocument + SrsFunctionalRequirement models registered
 ✅ Authorization policies implemented
-✅ 14 routes registered
-✅ API endpoint for text-to-diagram conversion
+✅ Active SRS routes registered in `routes/web.php`
 
 Frontend:
 ✅ Homepage dropdown added with nice styling
 ✅ SRS list, create, edit, and PDF views
-✅ SDD list, create, edit, and PDF views
 ✅ UX controls for requirements (add/remove)
-✅ Mermaid diagram integration (CDN)
-✅ Text-to-diagram converter UI
-✅ Manual diagram creation interface
-✅ Live preview functionality
 
 Features:
-✅ CRUD operations for SRS and SDD
+✅ CRUD operations for SRS
 ✅ PDF export with professional formatting
-✅ Mermaid diagram support and rendering
 ✅ Dynamic form controls (no page reload)
 ✅ Authorization and access control
 ✅ Input validation and error handling

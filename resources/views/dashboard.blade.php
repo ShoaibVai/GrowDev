@@ -110,19 +110,15 @@
                         <div class="flex flex-col gap-2">
                             <a href="{{ route('projects.create') }}" class="px-3 py-2 rounded bg-indigo-600 text-white text-sm text-center">New Project</a>
                             <a href="{{ route('documentation.srs.create') }}" class="px-3 py-2 rounded bg-blue-600 text-white text-sm text-center">New SRS</a>
-                            <a href="{{ route('documentation.sdd.create') }}" class="px-3 py-2 rounded bg-green-600 text-white text-sm text-center">New SDD</a>
                         </div>
                     </div>
 
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4">
                         <h4 class="font-semibold mb-2">Recent Documents</h4>
-                        @if($recentSrs->count() || $recentSdd->count())
+                        @if($recentSrs->count())
                             <div class="space-y-2">
                                 @foreach($recentSrs as $srs)
                                     <a href="{{ route('documentation.srs.edit', $srs) }}" class="block text-sm text-gray-700 hover:underline">📄 {{ $srs->title }}</a>
-                                @endforeach
-                                @foreach($recentSdd as $sdd)
-                                    <a href="{{ route('documentation.sdd.edit', $sdd) }}" class="block text-sm text-gray-700 hover:underline">🏗️ {{ $sdd->title }}</a>
                                 @endforeach
                             </div>
                         @else

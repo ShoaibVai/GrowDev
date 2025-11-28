@@ -189,14 +189,13 @@
                                         @endif
                                         <div class="text-xs text-gray-500 flex flex-wrap gap-4">
                                             <span>📄 {{ $project->srsDocuments->count() }} SRS</span>
-                                            <span>🏗️ {{ $project->sddDocuments->count() }} SDD</span>
                                             @if($project->start_date)
                                                 <span>🗓️ Starts {{ $project->start_date->format('M d, Y') }}</span>
                                             @endif
                                         </div>
                                     </div>
                                 @empty
-                                    <p class="text-sm text-gray-500">Projects you create inside GrowDev will appear here, along with their SRS/SDD documents.</p>
+                                    <p class="text-sm text-gray-500">Projects you create inside GrowDev will appear here, along with their SRS documentation.</p>
                                 @endforelse
                             </div>
                         </div>

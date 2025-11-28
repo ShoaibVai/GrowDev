@@ -41,7 +41,7 @@ class ProjectController extends Controller
         }
 
         $projects = $query->paginate(12)->withQueryString();
-        $teams = Auth::user()->teams()->pluck('name', 'id');
+        $teams = Auth::user()->teams()->pluck('teams.name', 'teams.id');
         return view('projects.index', compact('projects', 'teams'));
     }
 
@@ -106,7 +106,9 @@ class ProjectController extends Controller
         }
 
     $tasks = $tasksQuery->get();
-    $members = $project->team ? $project->team->members()->pluck('name', 'id') : collect([auth()->id() => 'Me']);
+    $members = $project->team
+        ? $project->team->members()->pluck('users.name', 'users.id')
+        : collect([auth()->id() => 'Me']);
 
     return view('projects.show', compact('project', 'tasks', 'members'));
     }

@@ -52,17 +52,6 @@
                                     {{ __('Create New SRS') }}
                                 </x-dropdown-link>
                                 
-                                <div class="border-t border-gray-100"></div>
-                                
-                                <div class="px-4 py-2 text-xs text-gray-400">
-                                    SDD (Design)
-                                </div>
-                                <x-dropdown-link :href="route('documentation.sdd.index')">
-                                    {{ __('View All SDD') }}
-                                </x-dropdown-link>
-                                <x-dropdown-link :href="route('documentation.sdd.create')">
-                                    {{ __('Create New SDD') }}
-                                </x-dropdown-link>
                             </x-slot>
                         </x-dropdown>
                     </div>
@@ -136,9 +125,6 @@
             </div>
             <x-responsive-nav-link :href="route('documentation.srs.index')" :active="request()->routeIs('documentation.srs.*')">
                 {{ __('SRS Documents') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('documentation.sdd.index')" :active="request()->routeIs('documentation.sdd.*')">
-                {{ __('SDD Documents') }}
             </x-responsive-nav-link>
         </div>
 

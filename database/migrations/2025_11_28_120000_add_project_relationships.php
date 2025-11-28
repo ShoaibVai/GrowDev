@@ -23,9 +23,6 @@ return new class extends Migration
             $table->foreignId('project_id')->nullable()->after('user_id')->constrained('projects')->nullOnDelete();
         });
 
-        Schema::table('sdd_documents', function (Blueprint $table) {
-            $table->foreignId('project_id')->nullable()->after('user_id')->constrained('projects')->nullOnDelete();
-        });
     }
 
     /**
@@ -43,8 +40,5 @@ return new class extends Migration
             $table->dropConstrainedForeignId('project_id');
         });
 
-        Schema::table('sdd_documents', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('project_id');
-        });
     }
 };

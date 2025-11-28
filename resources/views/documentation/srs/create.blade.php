@@ -34,7 +34,7 @@
                                 @endforeach
                             </select>
                             @error('project_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                            <p class="text-xs text-gray-500 mt-1">We’ll automatically route you to the SDD step for the same project after saving.</p>
+                            <p class="text-xs text-gray-500 mt-1">After saving, you can manage this project’s documentation directly from its project page.</p>
                         @endif
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">

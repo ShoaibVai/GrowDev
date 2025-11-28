@@ -6,22 +6,21 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                      USER INTERFACE LAYER                       │
 ├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌──────────────────┐         ┌──────────────────┐             │
-│  │  SRS Documents   │         │  SDD Documents   │             │
-│  │  - List View     │         │  - List View     │             │
-│  │  - Create Form   │         │  - Create Form   │             │
-│  │  - Edit Form     │         │  - Edit Form     │             │
-│  │  - PDF Export    │         │  - PDF Export    │             │
-│  └──────────────────┘         └──────────────────┘             │
-│           ▲                            ▲                        │
-│           │                            │                        │
-│  Requirements Management      Components & Diagrams             │
-│  - Add/Remove Req            - Add/Remove Components           │
-│  - UX Controls               - Mermaid Diagrams                │
-│  - Priority Badges           - Text-to-Diagram AI              │
-│  - PDF Generation            - Manual Diagram Editor           │
-│                              - PDF with Embedded Diagrams      │
+│                                                                 │
+│  ┌──────────────────┐                                           │
+│  │  SRS Documents   │                                           │
+│  │  - List View     │                                           │
+│  │  - Create Form   │                                           │
+│  │  - Edit Form     │                                           │
+│  │  - PDF Export    │                                           │
+│  └──────────────────┘                                           │
+│           ▲                                                     │
+│           │                                                     │
+│  Requirements Management                                        │
+│  - Add/Remove Requirements                                      │
+│  - UX Controls                                                  │
+│  - Priority Badges                                              │
+│  - PDF Generation                                               │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
                               │
@@ -29,104 +28,63 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                     APPLICATION LAYER                           │
 ├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │         DocumentationController                           │  │
-│  │  - SRS CRUD Operations (create, read, update, delete)    │  │
-│  │  - SDD CRUD Operations (create, read, update, delete)    │  │
-│  │  - PDF Generation (barryvdh/laravel-dompdf)             │  │
-│  │  - Text-to-Diagram API Endpoint                         │  │
-│  │  - Authorization Checks                                 │  │
-│  └──────────────────────────────────────────────────────────┘  │
-│                                                                  │
+│                                                                 │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │         DocumentationController                           │   │
+│  │  - SRS CRUD Operations                                   │   │
+│  │  - PDF Generation (barryvdh/laravel-dompdf)              │   │
+│  │  - Authorization & Policies                              │   │
+│  │  - Sorting / filtering helpers                           │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                                                                 │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                      MODELS LAYER                               │
 ├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌──────────────┐           ┌──────────────┐                  │
-│  │ SrsDocument  │           │ SddDocument  │                  │
-│  │ - HasMany:   │           │ - HasMany:   │                  │
-│  │   Reqs       │           │   Components │                  │
-│  │   (ordered)  │           │   (ordered)  │                  │
-│  │              │           │   Diagrams   │                  │
-│  └──────────────┘           └──────────────┘                  │
-│         │                            │                        │
-│         ▼                            ▼                        │
-│  ┌──────────────────┐    ┌──────────────────────┐            │
-│  │SrsFunctional     │    │SddComponent          │            │
-│  │Requirement       │    │- component_name      │            │
-│  │- requirement_id  │    │- description         │            │
-│  │- title           │    │- responsibility      │            │
-│  │- description     │    │- interfaces          │            │
-│  │- priority        │    │- diagram_type        │            │
-│  │- ux_consider...  │    └──────────────────────┘            │
-│  │  (JSON)          │            │                           │
-│  └──────────────────┘            ▼                           │
-│                          ┌──────────────────┐                │
-│                          │  SddDiagram      │                │
-│                          │- diagram_name    │                │
-│                          │- diagram_type    │                │
-│                          │- diagram_content │                │
-│                          │  (Mermaid/Custom)│                │
-│                          └──────────────────┘                │
-│                                                               │
+│                                                                 │
+│  ┌──────────────┐                                               │
+│  │ SrsDocument  │                                               │
+│  │ - HasMany:   │                                               │
+│  │   SrsFunctionalRequirements                                  │
+│  │ - Accessors: requirement counts, UX stats                    │
+│  └──────────────┘                                               │
+│         │                                                       │
+│         ▼                                                       │
+│  ┌──────────────────────────────┐                               │
+│  │ SrsFunctionalRequirement     │                               │
+│  │ - requirement_id             │                               │
+│  │ - title/description/priority │                               │
+│  │ - ux_considerations (JSON)   │                               │
+│  │ - ordering column            │                               │
+│  └──────────────────────────────┘                               │
+│                                                                 │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                    DATABASE LAYER (SQLite)                      │
 ├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌────────────────────────────────────────────────────────┐    │
-│  │ SRS Documents Hierarchy                               │    │
-│  │                                                        │    │
-│  │  srs_documents                                        │    │
-│  │  ├── id (PK)                                          │    │
-│  │  ├── user_id (FK) ──→ users                          │    │
-│  │  ├── title, description                              │    │
-│  │  └── timestamps                                       │    │
-│  │       │                                               │    │
-│  │       └─→ srs_functional_requirements                │    │
-│  │           ├── id (PK)                                 │    │
-│  │           ├── srs_document_id (FK)                    │    │
-│  │           ├── requirement_id, title                   │    │
-│  │           ├── description                             │    │
-│  │           ├── priority                                │    │
-│  │           ├── ux_considerations (JSON)                │    │
-│  │           └── order                                   │    │
-│  └────────────────────────────────────────────────────────┘    │
-│                                                                  │
-│  ┌────────────────────────────────────────────────────────┐    │
-│  │ SDD Documents Hierarchy                               │    │
-│  │                                                        │    │
-│  │  sdd_documents                                        │    │
-│  │  ├── id (PK)                                          │    │
-│  │  ├── user_id (FK) ──→ users                          │    │
-│  │  ├── title, description                              │    │
-│  │  └── timestamps                                       │    │
-│  │       │                                               │    │
-│  │       ├─→ sdd_components                             │    │
-│  │       │   ├── id (PK)                                 │    │
-│  │       │   ├── sdd_document_id (FK)                    │    │
-│  │       │   ├── component_name                          │    │
-│  │       │   ├── description, responsibility             │    │
-│  │       │   ├── diagram_type                            │    │
-│  │       │   └── order                                   │    │
-│  │       │                                               │    │
-│  │       └─→ sdd_diagrams                               │    │
-│  │           ├── id (PK)                                 │    │
-│  │           ├── sdd_document_id (FK)                    │    │
-│  │           ├── diagram_name                            │    │
-│  │           ├── diagram_type                            │    │
-│  │           ├── diagram_content (Mermaid/Custom)        │    │
-│  │           └── timestamps                              │    │
-│  └────────────────────────────────────────────────────────┘    │
-│                                                                  │
+│                                                                 │
+│  srs_documents                                                  │
+│  ├── id (PK)                                                    │
+│  ├── user_id (FK → users)                                       │
+│  ├── title, description, overview, scope                        │
+│  └── timestamps                                                 │
+│         │                                                       │
+│         └─→ srs_functional_requirements                         │
+│             ├── id (PK)                                         │
+│             ├── srs_document_id (FK)                            │
+│             ├── requirement_id, title, description              │
+│             ├── priority                                        │
+│             ├── ux_considerations (JSON)                        │
+│             └── order                                           │
+│                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+> Legacy SDD modules (documents, components, diagrams, and routes) were decommissioned in November 2025. They now exist only in historical tags for archival reference.
 
 ## Request/Response Flow
 
@@ -159,60 +117,9 @@ User
           └─→ Add UX Items controls
 ```
 
-### SDD Document with Diagram Creation Flow
+### Legacy SDD Flow (Retired)
 
-```
-User
-  │
-  ├─→ Click "Create Documentation" dropdown
-  │   └─→ Select "Create SDD Document"
-  │
-  ├─→ GET /documentation/sdd/create
-  │   └─→ Display SDD create form
-  │
-  ├─→ Fill form & click "Create SDD"
-  │
-  ├─→ POST /documentation/sdd
-  │   └─→ Create SddDocument
-  │
-  ├─→ GET /documentation/sdd/{id}/edit
-  │   └─→ Display edit form with diagram tabs
-  │
-  ├─→ Add Components & Create Diagrams
-  │
-  ├─→ For Text-to-Diagram:
-  │   ├─→ Enter text description
-  │   ├─→ Select diagram type
-  │   ├─→ POST /api/documentation/text-to-diagram (AJAX)
-  │   │   └─→ Generate Mermaid syntax
-  │   └─→ Preview & Save
-  │
-  ├─→ For Manual Diagram:
-  │   ├─→ Enter Mermaid code
-  │   ├─→ Click "Preview Diagram"
-  │   │   └─→ Mermaid.js renders preview
-  │   └─→ Click "Save this Diagram"
-  │
-  ├─→ Click "Save SDD"
-  │
-  ├─→ PUT /documentation/sdd/{id}
-  │   │
-  │   └─→ DocumentationController::updateSdd()
-  │       ├─→ Validate all inputs
-  │       ├─→ Update SddDocument
-  │       ├─→ Sync components
-  │       ├─→ Sync diagrams
-  │       └─→ Save as JSON in database
-  │
-  └─→ GET /documentation/sdd/{id}/pdf
-      │
-      └─→ DocumentationController::generateSddPdf()
-          ├─→ Load SddDocument with relations
-          ├─→ Load all diagrams
-          ├─→ Use Pdf::loadView('documentation.sdd.pdf')
-          ├─→ Render Mermaid in PDF
-          └─→ Download file
-```
+SDD creation, component modeling, text-to-diagram conversion, and PDF export endpoints were removed in November 2025. Any diagrams of those flows should now reference the `release/v1.0` tag.
 
 ## Data Flow - UX Considerations in SRS
 
@@ -310,20 +217,19 @@ User
 │                                                              │
 │  • Blade Templates (Laravel templating)                     │
 │  • Tailwind CSS (responsive styling)                        │
-│  • Vanilla JavaScript (dynamic forms)                       │
-│  • Mermaid.js (diagram rendering - CDN)                    │
-│  • Fetch API (AJAX requests)                               │
+│  • Vanilla JavaScript (dynamic SRS forms)                   │
+│  • Fetch API (AJAX requests for auto-save, sorting)        │
 │                                                              │
 └──────────────────────────────────────────────────────────────┘
                         │
         ┌───────────────┼───────────────┐
         │               │               │
         ▼               ▼               ▼
-    Backend API    Database      Third-party
+    Backend API    Database      PDF Service
     ┌─────────┐  ┌─────────┐   ┌──────────┐
-    │ Laravel │  │ SQLite  │   │ Mermaid  │
-    │ 12.34   │  │ DB      │   │ CDN      │
-    │ PHP 8.4 │  │         │   │          │
+    │ Laravel │  │ SQLite  │   │ DomPDF   │
+    │ 12.34   │  │ DB      │   │ (barry  │
+    │ PHP 8.4 │  │         │   │  vdh)   │
     └─────────┘  └─────────┘   └──────────┘
         │               │
         ├─ Eloquent ORM─┤
@@ -332,14 +238,10 @@ User
         ├─ Routing      │
         ├─ Middleware   │
         └─ PDF Gen ─────┤
-                        │
-                        └─ barryvdh/
-                           laravel-
-                           dompdf
 ```
 
 ---
 
-**Architecture Diagram Version**: 1.0
-**Last Updated**: October 21, 2025
-**Status**: ✅ Production Ready
+**Architecture Diagram Version**: 1.1
+**Last Updated**: November 12, 2025
+**Status**: ✅ Production Ready (SRS-only)

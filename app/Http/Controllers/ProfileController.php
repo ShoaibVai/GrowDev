@@ -28,7 +28,7 @@ class ProfileController extends Controller
         $manualProjects = $user->projects()->where('source', 'manual')->orderBy('created_at')->get();
         $autoProjects = $user->projects()
             ->where('source', 'auto')
-            ->with(['srsDocuments', 'sddDocuments'])
+            ->with('srsDocuments')
             ->latest()
             ->get();
 
