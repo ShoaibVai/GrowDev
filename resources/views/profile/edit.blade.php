@@ -155,6 +155,53 @@
                         </div>
                     </div>
 
+                    <!-- Projects Section -->
+                    <div class="p-6 bg-white shadow sm:rounded-lg">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900">{{ __('Projects') }}</h3>
+                            <button type="button" onclick="addManualProject()" class="px-3 py-1 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700 transition">
+                                + {{ __('Add') }}
+                            </button>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-4">Showcase custom side projects and see the ones generated through GrowDev automatically.</p>
+
+                        <div id="manual-projects" class="space-y-4">
+                            @forelse(($manualProjects ?? collect()) as $index => $project)
+                                @include('profile.partials.project-item', ['index' => $index, 'project' => $project])
+                            @empty
+                                <p class="text-sm text-gray-500">No manual projects yet. Use the button above to add one.</p>
+                            @endforelse
+                        </div>
+
+                        <div class="mt-6 border-t border-gray-200 pt-6">
+                            <h4 class="text-sm font-semibold text-gray-900 mb-2">{{ __('Projects created in GrowDev') }}</h4>
+                            <div class="space-y-3">
+                                @forelse(($autoProjects ?? collect()) as $project)
+                                    <div class="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                                        <div class="flex justify-between items-center mb-1">
+                                            <div class="font-semibold text-gray-900">{{ $project->name }}</div>
+                                            <span class="text-xs px-2 py-0.5 rounded-full {{ $project->status === 'completed' ? 'bg-emerald-100 text-emerald-700' : ($project->status === 'on_hold' ? 'bg-amber-100 text-amber-700' : 'bg-indigo-100 text-indigo-700') }}">
+                                                {{ ucfirst(str_replace('_', ' ', $project->status)) }}
+                                            </span>
+                                        </div>
+                                        @if($project->description)
+                                            <p class="text-xs text-gray-600 mb-2">{{ \Illuminate\Support\Str::limit($project->description, 120) }}</p>
+                                        @endif
+                                        <div class="text-xs text-gray-500 flex flex-wrap gap-4">
+                                            <span>📄 {{ $project->srsDocuments->count() }} SRS</span>
+                                            <span>🏗️ {{ $project->sddDocuments->count() }} SDD</span>
+                                            @if($project->start_date)
+                                                <span>🗓️ Starts {{ $project->start_date->format('M d, Y') }}</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @empty
+                                    <p class="text-sm text-gray-500">Projects you create inside GrowDev will appear here, along with their SRS/SDD documents.</p>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Submit Button -->
                     <div class="flex justify-end gap-3">
                         <a href="{{ route('dashboard') }}" class="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
@@ -347,6 +394,55 @@
         <div class="col-span-2">
             <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
             <textarea name="certifications[${index}][description]" rows="3" placeholder="Additional details about this certification" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+        </div>
+    </div>
+</div>`;
+            container.insertAdjacentHTML('beforeend', html);
+        }
+
+        // Manual Projects Management
+        function addManualProject() {
+            const container = document.getElementById('manual-projects');
+            if (!container) return;
+            const index = container.querySelectorAll('.form-item').length;
+            const html = `
+<div class="form-item p-4 bg-gray-50 rounded-lg border border-gray-200">
+    <div class="flex justify-between items-start mb-3">
+        <h4 class="font-semibold text-gray-800">Project #${index + 1}</h4>
+        <button type="button" onclick="removeElement(this)" class="text-red-600 hover:text-red-800 text-sm font-medium">Remove</button>
+    </div>
+    <input type="hidden" name="projects_manual[${index}][id]" value="">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Project Name *</label>
+            <input type="text" name="projects_manual[${index}][name]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Status *</label>
+            <select name="projects_manual[${index}][status]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="active">Active</option>
+                <option value="on_hold">On Hold</option>
+                <option value="completed">Completed</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Type *</label>
+            <select name="projects_manual[${index}][type]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="solo">Solo</option>
+                <option value="team">Team</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+            <input type="date" name="projects_manual[${index}][start_date]" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+            <input type="date" name="projects_manual[${index}][end_date]" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <textarea name="projects_manual[${index}][description]" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
         </div>
     </div>
 </div>`;

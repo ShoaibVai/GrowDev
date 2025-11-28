@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class ProjectController extends Controller
 {
@@ -63,15 +64,26 @@ class ProjectController extends Controller
             'description' => 'nullable|string|max:1000',
             'status' => 'required|in:active,completed,on_hold',
             'type' => 'required|in:solo,team',
-            'team_id' => 'nullable|exists:teams,id',
+            'team_id' => [
+                'nullable',
+                'exists:teams,id',
+                Rule::requiredIf(fn () => $request->input('type') === 'team'),
+            ],
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
         ]);
 
-    $project = Auth::user()->projects()->create($validated);
+        if ($validated['type'] === 'solo') {
+            $validated['team_id'] = null;
+        }
 
-        return redirect()->route('dashboard')
-            ->with('success', 'Project created successfully!');
+        $project = Auth::user()->projects()->create(array_merge($validated, [
+            'source' => 'auto',
+        ]));
+
+        return redirect()
+            ->route('documentation.srs.create', ['project_id' => $project->id])
+            ->with('success', 'Project created successfully! Let’s document the SRS next.');
     }
 
     /**
@@ -121,12 +133,20 @@ class ProjectController extends Controller
             'description' => 'nullable|string|max:1000',
             'status' => 'required|in:active,completed,on_hold',
             'type' => 'required|in:solo,team',
-            'team_id' => 'nullable|exists:teams,id',
+            'team_id' => [
+                'nullable',
+                'exists:teams,id',
+                Rule::requiredIf(fn () => $request->input('type') === 'team'),
+            ],
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
         ]);
 
-    $project->update($validated);
+        if ($validated['type'] === 'solo') {
+            $validated['team_id'] = null;
+        }
+
+        $project->update($validated);
 
         return redirect()->route('dashboard')
             ->with('success', 'Project updated successfully!');

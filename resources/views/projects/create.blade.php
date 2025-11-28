@@ -84,20 +84,6 @@
                                 <input type="date" name="end_date" id="end_date" value="{{ old('end_date') }}" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm mt-1 block w-full" />
                             </div>
                         </div>
-                    </form>
-
-                    <script>
-                        // Simple JS to toggle team select when type set to 'team'
-                        const radios = document.querySelectorAll('input[name="type"]');
-                        const teamSelect = document.getElementById('teamSelect');
-                        radios.forEach(r => r.addEventListener('change', function(){
-                            if (this.value === 'team') {
-                                teamSelect.style.display = 'block';
-                            } else {
-                                teamSelect.style.display = 'none';
-                            }
-                        }));
-                    </script>
 
                         <div class="flex items-center justify-end mt-6 gap-4">
                             <a href="{{ route('dashboard') }}" 
@@ -105,11 +91,38 @@
                                 {{ __('Cancel') }}
                             </a>
 
-                            <x-primary-button>
+                            <x-primary-button type="submit">
                                 {{ __('Create Project') }}
                             </x-primary-button>
                         </div>
                     </form>
+
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function () {
+                            const radios = document.querySelectorAll('input[name="type"]');
+                            const teamSelect = document.getElementById('teamSelect');
+                            const toggleTeamSelect = (value) => {
+                                if (value === 'team') {
+                                    teamSelect.style.display = 'block';
+                                } else {
+                                    teamSelect.style.display = 'none';
+                                    const teamField = document.getElementById('team_id');
+                                    if (teamField) {
+                                        teamField.value = '';
+                                    }
+                                }
+                            };
+
+                            radios.forEach(radio => {
+                                radio.addEventListener('change', function () {
+                                    toggleTeamSelect(this.value);
+                                });
+                                if (radio.checked) {
+                                    toggleTeamSelect(radio.value);
+                                }
+                            });
+                        });
+                    </script>
                 </div>
             </div>
         </div>

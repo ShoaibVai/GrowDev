@@ -19,12 +19,27 @@
             <form method="POST" action="{{ route('documentation.srs.update', $srsDocument) }}" class="space-y-8" id="srs-form">
                 @csrf
                 @method('PUT')
+                @php($projectOptions = $projects ?? collect())
+                @php($selectedProjectId = old('project_id', $srsDocument->project_id))
 
                 <!-- Section 1: Introduction -->
                 <div class="bg-white rounded-lg shadow-md p-8">
                     <h2 class="text-2xl font-bold text-gray-900 mb-6 border-b pb-4">
                         <span class="text-indigo-600">1.</span> Introduction
                     </h2>
+
+                    <div class="mb-6">
+                        <label for="project_id" class="block text-sm font-medium text-gray-700 mb-2">Linked Project *</label>
+                        <select id="project_id" name="project_id" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            <option value="">Select a project</option>
+                            @foreach($projectOptions as $project)
+                                <option value="{{ $project->id }}" @selected($selectedProjectId == $project->id)>
+                                    {{ $project->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('project_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                    </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>

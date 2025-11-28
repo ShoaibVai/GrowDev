@@ -25,12 +25,21 @@ class ProfileController extends Controller
     $user = Auth::user();
     $originalEmail = $user->email;
 
+        $manualProjects = $user->projects()->where('source', 'manual')->orderBy('created_at')->get();
+        $autoProjects = $user->projects()
+            ->where('source', 'auto')
+            ->with(['srsDocuments', 'sddDocuments'])
+            ->latest()
+            ->get();
+
         return view('profile.edit', [
             'user' => $user,
             'workExperiences' => $user->workExperiences()->get(),
             'educations' => $user->educations()->get(),
             'skills' => $user->skills()->get(),
             'certifications' => $user->certifications()->get(),
+            'manualProjects' => $manualProjects,
+            'autoProjects' => $autoProjects,
         ]);
     }
 
@@ -92,6 +101,16 @@ class ProfileController extends Controller
             'certifications.*.expiry_date' => ['nullable', 'date'],
             'certifications.*.credential_url' => ['nullable', 'url', 'max:255'],
             'certifications.*.order' => ['integer'],
+
+            // Manual Projects
+            'projects_manual' => ['nullable', 'array'],
+            'projects_manual.*.id' => ['nullable', 'integer'],
+            'projects_manual.*.name' => ['required_with:projects_manual', 'string', 'max:255'],
+            'projects_manual.*.description' => ['nullable', 'string', 'max:1000'],
+            'projects_manual.*.status' => ['required_with:projects_manual', 'in:active,completed,on_hold'],
+            'projects_manual.*.type' => ['required_with:projects_manual', 'in:solo,team'],
+            'projects_manual.*.start_date' => ['nullable', 'date'],
+            'projects_manual.*.end_date' => ['nullable', 'date'],
         ]);
 
         // Use transaction to ensure data integrity
@@ -125,6 +144,9 @@ class ProfileController extends Controller
 
             // Update certifications
             $this->syncCertifications($user, $validated['certifications'] ?? []);
+
+            // Update manual projects
+            $this->syncManualProjects($user, $validated['projects_manual'] ?? []);
         });
 
         return redirect()
@@ -281,6 +303,44 @@ class ProfileController extends Controller
                     'credential_url' => $item['credential_url'] ?? null,
                     'order' => $index,
                 ]);
+            }
+        }
+    }
+
+    /**
+     * Sync manually curated projects for the user profile.
+     */
+    private function syncManualProjects(User $user, array $projects): void
+    {
+        $existingIds = collect($projects)
+            ->filter(fn ($item) => !empty($item['id']))
+            ->pluck('id')
+            ->toArray();
+
+        $user->projects()
+            ->where('source', 'manual')
+            ->whereNotIn('id', $existingIds)
+            ->delete();
+
+        foreach ($projects as $item) {
+            $payload = [
+                'name' => $item['name'],
+                'description' => $item['description'] ?? null,
+                'status' => $item['status'],
+                'type' => $item['type'],
+                'team_id' => null,
+                'start_date' => $item['start_date'] ?? null,
+                'end_date' => $item['end_date'] ?? null,
+                'source' => 'manual',
+            ];
+
+            if (!empty($item['id'])) {
+                $user->projects()
+                    ->where('id', $item['id'])
+                    ->where('source', 'manual')
+                    ->update($payload);
+            } else {
+                $user->projects()->create($payload);
             }
         }
     }

@@ -10,6 +10,7 @@ class SrsDocument extends Model
 {
     protected $fillable = [
         'user_id',
+        'project_id',
         'title',
         'description',
         'purpose',
@@ -42,6 +43,14 @@ class SrsDocument extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the project this SRS is attached to.
+     */
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
     }
 
     /**

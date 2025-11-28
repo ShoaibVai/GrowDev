@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Project extends Model
 {
@@ -16,12 +17,14 @@ class Project extends Model
         'team_id',
         'start_date',
         'end_date',
+        'source',
     ];
 
     protected $casts = [
         'status' => 'string',
         'start_date' => 'date',
         'end_date' => 'date',
+        'source' => 'string',
     ];
 
     public function user(): BelongsTo
@@ -34,8 +37,18 @@ class Project extends Model
         return $this->belongsTo(Team::class);
     }
 
-    public function tasks(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function tasks(): HasMany
     {
         return $this->hasMany(Task::class);
+    }
+
+    public function srsDocuments(): HasMany
+    {
+        return $this->hasMany(SrsDocument::class);
+    }
+
+    public function sddDocuments(): HasMany
+    {
+        return $this->hasMany(SddDocument::class);
     }
 }

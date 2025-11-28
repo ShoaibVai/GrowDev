@@ -9,12 +9,34 @@
         <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
             <form method="POST" action="{{ route('documentation.srs.store') }}" class="space-y-8">
                 @csrf
+                @php($projectOptions = $projects ?? collect())
+                @php($prefilledProjectId = old('project_id', $selectedProjectId ?? null))
 
                 <!-- Document Header -->
                 <div class="bg-white rounded-lg shadow-md p-8">
                     <h2 class="text-2xl font-bold text-gray-900 mb-6 border-b pb-4">
                         📄 Document Header
                     </h2>
+                    <div class="mb-6">
+                        <label for="project_id" class="block text-sm font-medium text-gray-700 mb-2">Linked Project *</label>
+                        @if($projectOptions->isEmpty())
+                            <div class="p-4 border border-amber-300 bg-amber-50 rounded-lg text-sm text-amber-900">
+                                <p class="font-semibold mb-1">No projects found.</p>
+                                <p>Create a project first so we can attach this SRS. <a href="{{ route('projects.create') }}" class="text-amber-800 underline font-medium">Create Project</a></p>
+                            </div>
+                        @else
+                            <select id="project_id" name="project_id" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                <option value="">Select a project</option>
+                                @foreach($projectOptions as $project)
+                                    <option value="{{ $project->id }}" @selected($prefilledProjectId == $project->id)>
+                                        {{ $project->name }} @if($project->status) — {{ ucfirst(str_replace('_', ' ', $project->status)) }} @endif
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('project_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            <p class="text-xs text-gray-500 mt-1">We’ll automatically route you to the SDD step for the same project after saving.</p>
+                        @endif
+                    </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="md:col-span-2">
                             <label for="title" class="block text-sm font-medium text-gray-700 mb-2">Project Name *</label>

@@ -101,13 +101,25 @@
                         // Toggle team select in edit view
                         const radios = document.querySelectorAll('input[name="type"]');
                         const teamSelect = document.getElementById('teamSelect');
-                        radios.forEach(r => r.addEventListener('change', function(){
-                            if (this.value === 'team') {
+                        const toggleTeamSelect = (value) => {
+                            if (value === 'team') {
                                 teamSelect.style.display = 'block';
                             } else {
                                 teamSelect.style.display = 'none';
+                                const teamField = document.getElementById('team_id');
+                                if (teamField) {
+                                    teamField.value = '';
+                                }
                             }
-                        }));
+                        };
+                        radios.forEach(r => {
+                            r.addEventListener('change', function(){
+                                toggleTeamSelect(this.value);
+                            });
+                            if (r.checked) {
+                                toggleTeamSelect(r.value);
+                            }
+                        });
                     </script>
                 </div>
             </div>

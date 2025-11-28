@@ -13,6 +13,7 @@ use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Validation\Rule;
 
 class DocumentationController extends Controller
 {
@@ -53,9 +54,12 @@ class DocumentationController extends Controller
     /**
      * Show form to create new SRS document.
      */
-    public function createSrs(): View
+    public function createSrs(Request $request): View
     {
-        return view('documentation.srs.create');
+        $projects = auth()->user()->projects()->latest()->get();
+        $selectedProjectId = $request->integer('project_id');
+
+        return view('documentation.srs.create', compact('projects', 'selectedProjectId'));
     }
 
     /**
@@ -64,6 +68,10 @@ class DocumentationController extends Controller
     public function storeSrs(Request $request): RedirectResponse
     {
         $validated = $request->validate([
+            'project_id' => [
+                'required',
+                Rule::exists('projects', 'id')->where(fn ($query) => $query->where('user_id', auth()->id())),
+            ],
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'purpose' => 'nullable|string',
@@ -87,8 +95,8 @@ class DocumentationController extends Controller
 
         $srsDocument = auth()->user()->srsDocuments()->create($validated);
 
-        return redirect()->route('documentation.srs.edit', $srsDocument)
-            ->with('success', 'SRS document created successfully.');
+        return redirect()->route('documentation.sdd.create', ['project_id' => $srsDocument->project_id])
+            ->with('success', 'SRS document created successfully. Next up: the SDD.');
     }
 
     /**
@@ -100,7 +108,8 @@ class DocumentationController extends Controller
         $functionalRequirements = $srsDocument->functionalRequirements()->with('children')->get();
         $nonFunctionalRequirements = $srsDocument->nonFunctionalRequirements()->with('children')->get();
         $nfrCategories = SrsNonFunctionalRequirement::CATEGORIES;
-        return view('documentation.srs.edit', compact('srsDocument', 'functionalRequirements', 'nonFunctionalRequirements', 'nfrCategories'));
+        $projects = auth()->user()->projects()->latest()->get();
+        return view('documentation.srs.edit', compact('srsDocument', 'functionalRequirements', 'nonFunctionalRequirements', 'nfrCategories', 'projects'));
     }
 
     /**
@@ -111,6 +120,10 @@ class DocumentationController extends Controller
         $this->authorize('update', $srsDocument);
 
         $validated = $request->validate([
+            'project_id' => [
+                'required',
+                Rule::exists('projects', 'id')->where(fn ($query) => $query->where('user_id', auth()->id())),
+            ],
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'purpose' => 'nullable|string',
@@ -162,6 +175,7 @@ class DocumentationController extends Controller
         ]);
 
         $srsDocument->update([
+            'project_id' => $validated['project_id'],
             'title' => $validated['title'],
             'description' => $validated['description'] ?? null,
             'purpose' => $validated['purpose'] ?? null,
@@ -330,9 +344,12 @@ class DocumentationController extends Controller
     /**
      * Show form to create new SDD document.
      */
-    public function createSdd(): View
+    public function createSdd(Request $request): View
     {
-        return view('documentation.sdd.create');
+        $projects = auth()->user()->projects()->latest()->get();
+        $selectedProjectId = $request->integer('project_id');
+
+        return view('documentation.sdd.create', compact('projects', 'selectedProjectId'));
     }
 
     /**
@@ -341,6 +358,10 @@ class DocumentationController extends Controller
     public function storeSdd(Request $request): RedirectResponse
     {
         $validated = $request->validate([
+            'project_id' => [
+                'required',
+                Rule::exists('projects', 'id')->where(fn ($query) => $query->where('user_id', auth()->id())),
+            ],
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'design_overview' => 'nullable|string',
@@ -349,8 +370,8 @@ class DocumentationController extends Controller
 
         $sddDocument = auth()->user()->sddDocuments()->create($validated);
 
-        return redirect()->route('documentation.sdd.edit', $sddDocument)
-            ->with('success', 'SDD document created successfully.');
+        return redirect()->route('projects.show', $sddDocument->project_id)
+            ->with('success', 'SDD document created successfully and linked to your project.');
     }
 
     /**
@@ -361,7 +382,8 @@ class DocumentationController extends Controller
         $this->authorize('update', $sddDocument);
         $components = $sddDocument->components;
         $diagrams = $sddDocument->diagrams;
-        return view('documentation.sdd.edit', compact('sddDocument', 'components', 'diagrams'));
+        $projects = auth()->user()->projects()->latest()->get();
+        return view('documentation.sdd.edit', compact('sddDocument', 'components', 'diagrams', 'projects'));
     }
 
     /**
@@ -372,6 +394,10 @@ class DocumentationController extends Controller
         $this->authorize('update', $sddDocument);
 
         $validated = $request->validate([
+            'project_id' => [
+                'required',
+                Rule::exists('projects', 'id')->where(fn ($query) => $query->where('user_id', auth()->id())),
+            ],
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'design_overview' => 'nullable|string',
@@ -389,6 +415,7 @@ class DocumentationController extends Controller
         ]);
 
         $sddDocument->update([
+            'project_id' => $validated['project_id'],
             'title' => $validated['title'],
             'description' => $validated['description'],
             'design_overview' => $validated['design_overview'],

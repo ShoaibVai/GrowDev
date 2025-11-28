@@ -7,8 +7,31 @@
 
     <div class="py-12">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-            <form method="POST" action="{{ route('documentation.sdd.store') }}" class="bg-white rounded-lg shadow-md p-8">
+            <form method="POST" action="{{ route('documentation.sdd.store') }}" class="bg-white rounded-lg shadow-md p-8 space-y-6">
                 @csrf
+                @php($projectOptions = $projects ?? collect())
+                @php($prefilledProjectId = old('project_id', $selectedProjectId ?? null))
+
+            <!-- Linked Project -->
+            <div>
+                <label for="project_id" class="block text-sm font-medium text-gray-700 mb-2">Linked Project *</label>
+                @if($projectOptions->isEmpty())
+                    <div class="p-4 border border-amber-300 bg-amber-50 rounded-lg text-sm text-amber-900">
+                        <p class="font-semibold mb-1">No projects available.</p>
+                        <p>Please create a project (and its SRS) before preparing the SDD.</p>
+                    </div>
+                @else
+                    <select id="project_id" name="project_id" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        <option value="">Select a project</option>
+                        @foreach($projectOptions as $project)
+                            <option value="{{ $project->id }}" @selected($prefilledProjectId == $project->id)>
+                                {{ $project->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('project_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                @endif
+            </div>
 
             <!-- Title -->
             <div class="mb-6">

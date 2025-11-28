@@ -10,6 +10,7 @@ class SddDocument extends Model
 {
     protected $fillable = [
         'user_id',
+        'project_id',
         'title',
         'description',
         'design_overview',
@@ -19,6 +20,11 @@ class SddDocument extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
     }
 
     public function components(): HasMany
