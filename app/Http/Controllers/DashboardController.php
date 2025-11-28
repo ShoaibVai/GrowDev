@@ -13,7 +13,7 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        $projectsQuery = $user->projects()->latest();
+        $projectsQuery = $user->projects()->with('tasks')->latest();
         $projects = $projectsQuery->take(6)->get();
 
         $totalProjects = $user->projects()->count();

@@ -3,28 +3,34 @@ Version: 1.0
 Date: October 26, 2023
 GitHub Repository: https://github.com/Shoaibvai/growdev
 
-## Team Members & Roles
-GrowDev is developed by:
-- Shoaib Ibna Omar (Full Stack Developer)
-- Mansura Yeasmin (Full Stack Developer)
-- Ismail Hossain (Full Stack Developer)
-- Sejanul Islam (Full Stack Developer)
-- Shafin Foysal (Full Stack Developer)
+## Project Pods & Assignments
+GrowDev organizes contributors around active project streams rather than generic teams. Each pod owns a slice of the functional (FR) and non-functional (NFR) backlog, and every task captures current status so work can be tracked directly from this SRS.
 
-### Task Distribution
-**Functional Requirements:**
-- Shoaib Ibna Omar: User Management, Team Management
-- Mansura Yeasmin: Project Management, Documentation
-- Ismail Hossain: Task Allocation, Email Notifications
-- Sejanul Islam: Data Sharing & Synchronization, API Integrations
-- Shafin Foysal: Frontend UI/UX, Dashboard, Collaboration Features
+### Project Atlas — Identity & Access
+- **Members:** Shoaib Ibna Omar (Lead), Sejanul Islam
+- **Scope:** FR1 (User Management), FR3 (Project Staffing), NFR4–NFR7 (security & reliability)
+- **Current Tasks:**
+	- `FR1.1–FR1.4` authentication flow refactor — _Owner: Shoaib_ — **Status:** ✅ Complete
+	- `FR3.2` searchable project-member invite wizard — _Owner: Sejanul_ — **Status:** ✅ Complete
+	- `NFR4/NFR7` periodic security audit automation — _Owner: Shoaib_ — **Status:** 🔵 Planned
 
-**Non-Functional Requirements:**
-- Shoaib Ibna Omar: Security, Reliability
-- Mansura Yeasmin: Performance, Usability
-- Ismail Hossain: Compatibility, External Interfaces
-- Sejanul Islam: Backup, Disaster Recovery, Accessibility
-- Shafin Foysal: Testing, Documentation, Help & Tooltips
+### Project Helix — Documentation Workspace
+- **Members:** Mansura Yeasmin (Lead), Shafin Foysal
+- **Scope:** FR2 (Project Management dashboards), FR5 (Documentation), NFR11–NFR13 (usability/accessibility)
+- **Current Tasks:**
+	- `FR2.5/FR2.6` project overview cards linked to requirement status — _Owner: Mansura_ — **Status:** ✅ Complete
+	- `FR5.1–FR5.6` SRS template polish & PDF export QA — _Owner: Shafin_ — **Status:** ✅ Complete
+	- `NFR11` responsive layout audit for documentation editor — _Owner: Shafin_ — **Status:** 🔵 Planned
+
+### Project Pulse — Collaboration & Delivery
+- **Members:** Ismail Hossain (Lead), Sejanul Islam
+- **Scope:** FR4 (Task Allocation), FR6 (Email Notifications), FR7 (Data Sync), upcoming `FR8` (User Discovery), plus NFR8–NFR10 (availability, backups)
+- **Current Tasks:**
+	- `FR4.1–FR4.5` task board with assignment + status chips — _Owner: Ismail_ — **Status:** ✅ Complete
+	- `FR6.1–FR6.5` reminder digest + preference center — _Owner: Sejanul_ — **Status:** 🔵 Planned
+	- `FR7.1–FR7.4` replica sync health monitoring — _Owner: Ismail_ — **Status:** ✅ Complete
+
+> **Status Legend:** ✅ Complete · 🟡 In Progress · 🔵 Planned
 
 1. Introduction
 1.1 Purpose
@@ -74,10 +80,11 @@ Offer templates and best practices for each phase
 Track progress through each development stage
 2.2.2 Project Type Support
 Support for solo development projects
-Support for team-based projects with:
-Team creation and management
-Role definitions
-Permission levels
+Support for multi-member project workspaces with:
+- Project-centric member rosters instead of ad-hoc teams
+- Global user search to discover and shortlist contributors
+- Role definitions tied to functional/non-functional requirements
+- Permission levels that inherit from project roles
 2.2.3 Role-Based Task Allocation
 Create customizable roles (e.g., Developer, UI Designer, Tester)
 Assign specific development aspects to team members:
@@ -127,12 +134,12 @@ FR2.3: Users shall be able to define project scope and objectives
 FR2.4: Users shall be able to set project timelines and milestones
 FR2.5: System shall track project progress through development phases
 FR2.6: Users shall be able to view project dashboards with status summaries
-3.1.3 Team Management
-FR3.1: Project managers shall be able to create and manage teams
-FR3.2: Project managers shall be able to invite team members via email
-FR3.3: Project managers shall be able to define custom roles
-FR3.4: Project managers shall be able to assign roles to team members
-FR3.5: Team members shall be able to accept or decline invitations
+3.1.3 Project Staffing & Assignment
+FR3.1: Project managers shall be able to create and manage project member rosters
+FR3.2: Project managers shall be able to search the user directory and invite members via email
+FR3.3: Project managers shall be able to define custom project roles mapped to functional/non-functional requirements
+FR3.4: Project managers shall be able to assign roles and link open tasks (e.g., FR4, NFR8) to specific project members
+FR3.5: Invitees shall be able to accept or decline project membership requests
 3.1.4 Task Allocation
 FR4.1: Project managers shall be able to create tasks for development aspects
 FR4.2: Project managers shall be able to assign tasks to specific team members
@@ -158,6 +165,13 @@ FR7.1: System shall maintain a shared database for all project data
 FR7.2: System shall synchronize data across all user devices in real-time
 FR7.3: System shall provide offline access with synchronization when online
 FR7.4: System shall maintain access logs for data security
+
+3.1.8 User Discovery & Task Assignment
+FR8.1: Project managers shall be able to query users by name, skill, requirement tag (FR/NFR), or availability before assignment
+FR8.2: The system shall display a consolidated view of each project member, their active tasks, and associated requirement references
+FR8.3: Managers shall be able to assign or reassign tasks directly from the user search results to keep projects staffed efficiently
+FR8.4: Every task UI shall expose status controls (e.g., Planned, In Progress, Complete) that roll up into project dashboards
+FR8.5: Task status changes shall trigger notifications and audit logs identifying the responsible member and linked requirement IDs
 
 3.2 Non-Functional Requirements
 3.2.1 Performance

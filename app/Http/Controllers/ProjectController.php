@@ -14,7 +14,7 @@ class ProjectController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Auth::user()->projects()->latest();
+        $query = Auth::user()->projects()->with('tasks')->latest();
         if ($request->filled('q')) {
             $query->where('name', 'like', '%' . $request->q . '%')
                   ->orWhere('description', 'like', '%' . $request->q . '%');

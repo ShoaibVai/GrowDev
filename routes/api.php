@@ -4,8 +4,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DocumentationController;
 use App\Http\Controllers\DiagramController;
+use App\Http\Controllers\Api\UserSearchController;
 
 Route::middleware(['auth:sanctum'])->group(function () {
+    // ===== USER SEARCH ROUTES (FR3.2, FR8.1) =====
+    Route::get('/users/search', [UserSearchController::class, 'search']);
+
     // ===== DOCUMENTATION ROUTES =====
     
     /**

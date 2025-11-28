@@ -62,31 +62,82 @@
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @if($tasks->count())
                                     @foreach($tasks as $task)
-                                    <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap">{{ $task->title }}</td>
+                                    <tr class="hover:bg-gray-50 transition">
+                                        <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{{ $task->title }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $task->priority === 'Critical' ? 'bg-red-100 text-red-800' : ($task->priority === 'High' ? 'bg-orange-100 text-orange-800' : ($task->priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800')) }}">{{ $task->priority }}</span>
+                                            @php
+                                                $priorityColors = [
+                                                    'Critical' => 'bg-red-100 text-red-800 border-red-200',
+                                                    'High' => 'bg-orange-100 text-orange-800 border-orange-200',
+                                                    'Medium' => 'bg-yellow-100 text-yellow-800 border-yellow-200',
+                                                    'Low' => 'bg-green-100 text-green-800 border-green-200',
+                                                ];
+                                                $priorityIcons = [
+                                                    'Critical' => '🔥',
+                                                    'High' => '⚠️',
+                                                    'Medium' => '📌',
+                                                    'Low' => '📋',
+                                                ];
+                                            @endphp
+                                            <span class="px-2.5 py-1 inline-flex items-center gap-1 text-xs font-semibold rounded-full border {{ $priorityColors[$task->priority] ?? 'bg-gray-100 text-gray-800 border-gray-200' }}">
+                                                {{ $priorityIcons[$task->priority] ?? '📋' }} {{ $task->priority }}
+                                            </span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">{{ $task->status }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap">{{ $task->assignee ? $task->assignee->name : 'Unassigned' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            @php
+                                                $statusColors = [
+                                                    'To Do' => 'bg-gray-100 text-gray-800 border-gray-300',
+                                                    'In Progress' => 'bg-blue-100 text-blue-800 border-blue-300',
+                                                    'Review' => 'bg-yellow-100 text-yellow-800 border-yellow-300',
+                                                    'Done' => 'bg-green-100 text-green-800 border-green-300',
+                                                ];
+                                                $statusIcons = [
+                                                    'To Do' => '📋',
+                                                    'In Progress' => '🔄',
+                                                    'Review' => '👀',
+                                                    'Done' => '✅',
+                                                ];
+                                            @endphp
+                                            <span class="px-2.5 py-1 inline-flex items-center gap-1 text-xs font-semibold rounded-full border {{ $statusColors[$task->status] ?? 'bg-gray-100 text-gray-800 border-gray-300' }}">
+                                                {{ $statusIcons[$task->status] ?? '📋' }} {{ $task->status }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            @if($task->assignee)
+                                                <div class="flex items-center gap-2">
+                                                    <div class="w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold">
+                                                        {{ strtoupper(substr($task->assignee->name, 0, 1)) }}
+                                                    </div>
+                                                    <span class="text-sm text-gray-700">{{ $task->assignee->name }}</span>
+                                                </div>
+                                            @else
+                                                <span class="text-sm text-gray-400 italic">Unassigned</span>
+                                            @endif
+                                        </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <form action="{{ route('tasks.update', $task) }}" method="POST" class="inline-block">
-                                                @csrf
-                                                @method('PUT')
-                                                <input type="hidden" name="title" value="{{ $task->title }}">
-                                                <select name="status" onchange="this.form.submit()" class="text-xs border-gray-300 rounded-md shadow-sm">
-                                                    <option value="To Do" {{ $task->status == 'To Do' ? 'selected' : '' }}>To Do</option>
-                                                    <option value="In Progress" {{ $task->status == 'In Progress' ? 'selected' : '' }}>In Progress</option>
-                                                    <option value="Review" {{ $task->status == 'Review' ? 'selected' : '' }}>Review</option>
-                                                    <option value="Done" {{ $task->status == 'Done' ? 'selected' : '' }}>Done</option>
-                                                </select>
-                                            </form>
+                                            <div class="flex items-center gap-2">
+                                                <form action="{{ route('tasks.update', $task) }}" method="POST" class="inline-flex items-center gap-1">
+                                                    @csrf
+                                                    @method('PUT')
+                                                    <input type="hidden" name="title" value="{{ $task->title }}">
+                                                    <select name="status" onchange="this.form.submit()" class="text-xs border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-1 pr-8">
+                                                        <option value="To Do" {{ $task->status == 'To Do' ? 'selected' : '' }}>📋 To Do</option>
+                                                        <option value="In Progress" {{ $task->status == 'In Progress' ? 'selected' : '' }}>🔄 In Progress</option>
+                                                        <option value="Review" {{ $task->status == 'Review' ? 'selected' : '' }}>👀 Review</option>
+                                                        <option value="Done" {{ $task->status == 'Done' ? 'selected' : '' }}>✅ Done</option>
+                                                    </select>
+                                                </form>
 
-                                            <form action="{{ route('tasks.destroy', $task) }}" method="POST" class="inline-block ml-2" onsubmit="return confirm('Delete task?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
-                                            </form>
+                                                <form action="{{ route('tasks.destroy', $task) }}" method="POST" class="inline-block" onsubmit="return confirm('Delete task?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition" title="Delete task">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach
