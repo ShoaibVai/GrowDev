@@ -55,6 +55,21 @@
                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">{{ $req->description }}</textarea>
         </div>
         <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Assigned Roles</label>
+            @if(isset($roles) && $roles->count())
+                <select name="functional_requirements[{{ $index }}][roles][]" multiple class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm">
+                    @foreach($roles as $role)
+                        @php
+                            $selectedRoles = $req->roleMappings->pluck('role_id')->toArray() ?? [];
+                        @endphp
+                        <option value="{{ $role->id }}" @selected(in_array($role->id, $selectedRoles))>{{ $role->name }}</option>
+                    @endforeach
+                </select>
+            @else
+                <div class="text-xs text-gray-400">No roles available for this project.</div>
+            @endif
+        </div>
+        <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Acceptance Criteria</label>
             <textarea name="functional_requirements[{{ $index }}][acceptance_criteria]" rows="2"
                       placeholder="How will this requirement be verified?"

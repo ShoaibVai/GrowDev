@@ -19,6 +19,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Register model policies here when AuthServiceProvider isn't registered
+        if (class_exists(\App\Models\Team::class) && class_exists(\App\Policies\TeamPolicy::class)) {
+            \Illuminate\Support\Facades\Gate::policy(\App\Models\Team::class, \App\Policies\TeamPolicy::class);
+        }
     }
 }

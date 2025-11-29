@@ -5,6 +5,7 @@
                 {{ $project->name }}
             </h2>
             <div>
+                <a href="{{ route('projects.board', $project) }}" class="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded mr-2">Board</a>
                 <a href="{{ route('projects.edit', $project) }}" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded mr-2">Edit</a>
                 <form action="{{ route('projects.destroy', $project) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure?');">
                     @csrf
@@ -37,6 +38,178 @@
                 </div>
             </div>
 
+            <!-- Requirements Checklist -->
+            @if($srsDocument)
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold">📋 Requirements Checklist</h3>
+                        <a href="{{ route('documentation.srs.edit', $srsDocument) }}" class="text-sm text-indigo-600 hover:underline">Edit SRS →</a>
+                    </div>
+
+                    @php
+                        $statusColors = [
+                            'listed' => 'bg-gray-100 text-gray-700 border-gray-300',
+                            'work_in_progress' => 'bg-blue-100 text-blue-700 border-blue-300',
+                            'completed' => 'bg-green-100 text-green-700 border-green-300',
+                            'compromised' => 'bg-red-100 text-red-700 border-red-300',
+                            'under_maintenance' => 'bg-yellow-100 text-yellow-700 border-yellow-300',
+                        ];
+                        $statusIcons = [
+                            'listed' => '📝',
+                            'work_in_progress' => '🔄',
+                            'completed' => '✅',
+                            'compromised' => '⚠️',
+                            'under_maintenance' => '🔧',
+                        ];
+                        $statusLabels = [
+                            'listed' => 'Listed',
+                            'work_in_progress' => 'Work in Progress',
+                            'completed' => 'Completed',
+                            'compromised' => 'Compromised',
+                            'under_maintenance' => 'Under Maintenance',
+                        ];
+                    @endphp
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Functional Requirements -->
+                        <div>
+                            <h4 class="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                                <span class="w-3 h-3 bg-indigo-500 rounded-full"></span>
+                                Functional Requirements ({{ $allFunctionalReqs->count() }})
+                            </h4>
+                            @if($allFunctionalReqs->count())
+                                <div class="space-y-2 max-h-96 overflow-y-auto pr-2">
+                                    @foreach($allFunctionalReqs as $req)
+                                        <div class="border rounded-lg p-3 hover:shadow-sm transition {{ ($req->implementation_status ?? 'listed') === 'completed' ? 'bg-green-50' : 'bg-white' }}">
+                                            <div class="flex items-start justify-between gap-2">
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="text-xs font-mono text-gray-500">{{ $req->section_number }}</span>
+                                                        <span class="font-medium text-sm text-gray-900 truncate">{{ $req->title }}</span>
+                                                    </div>
+                                                    <div class="mt-1">
+                                                        <span class="px-2 py-0.5 text-xs rounded-full border {{ $statusColors[$req->implementation_status ?? 'listed'] }}">
+                                                            {{ $statusIcons[$req->implementation_status ?? 'listed'] }} {{ $statusLabels[$req->implementation_status ?? 'listed'] }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                @can('update', $project)
+                                                <form action="{{ route('projects.requirements.update', [$project, 'functional', $req->id]) }}" method="POST" class="flex-shrink-0">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <select name="implementation_status" onchange="this.form.submit()" class="text-xs border-gray-300 rounded py-1 pl-2 pr-6">
+                                                        @foreach($statusLabels as $val => $label)
+                                                            <option value="{{ $val }}" {{ ($req->implementation_status ?? 'listed') === $val ? 'selected' : '' }}>{{ $label }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </form>
+                                                @endcan
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <p class="text-sm text-gray-500">No functional requirements defined.</p>
+                            @endif
+                        </div>
+
+                        <!-- Non-Functional Requirements -->
+                        <div>
+                            <h4 class="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                                <span class="w-3 h-3 bg-purple-500 rounded-full"></span>
+                                Non-Functional Requirements ({{ $allNonFunctionalReqs->count() }})
+                            </h4>
+                            @if($allNonFunctionalReqs->count())
+                                <div class="space-y-2 max-h-96 overflow-y-auto pr-2">
+                                    @foreach($allNonFunctionalReqs as $req)
+                                        <div class="border rounded-lg p-3 hover:shadow-sm transition {{ ($req->implementation_status ?? 'listed') === 'completed' ? 'bg-green-50' : 'bg-white' }}">
+                                            <div class="flex items-start justify-between gap-2">
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="text-xs font-mono text-gray-500">{{ $req->section_number }}</span>
+                                                        <span class="font-medium text-sm text-gray-900 truncate">{{ $req->title }}</span>
+                                                    </div>
+                                                    <div class="mt-1 flex items-center gap-2">
+                                                        <span class="px-2 py-0.5 text-xs rounded-full border {{ $statusColors[$req->implementation_status ?? 'listed'] }}">
+                                                            {{ $statusIcons[$req->implementation_status ?? 'listed'] }} {{ $statusLabels[$req->implementation_status ?? 'listed'] }}
+                                                        </span>
+                                                        @if($req->category)
+                                                            <span class="text-xs text-gray-500">{{ ucfirst($req->category) }}</span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                                @can('update', $project)
+                                                <form action="{{ route('projects.requirements.update', [$project, 'non_functional', $req->id]) }}" method="POST" class="flex-shrink-0">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <select name="implementation_status" onchange="this.form.submit()" class="text-xs border-gray-300 rounded py-1 pl-2 pr-6">
+                                                        @foreach($statusLabels as $val => $label)
+                                                            <option value="{{ $val }}" {{ ($req->implementation_status ?? 'listed') === $val ? 'selected' : '' }}>{{ $label }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </form>
+                                                @endcan
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <p class="text-sm text-gray-500">No non-functional requirements defined.</p>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- Progress Summary -->
+                    @php
+                        $totalReqs = $allFunctionalReqs->count() + $allNonFunctionalReqs->count();
+                        $completedReqs = $allFunctionalReqs->where('implementation_status', 'completed')->count() 
+                                       + $allNonFunctionalReqs->where('implementation_status', 'completed')->count();
+                        $inProgressReqs = $allFunctionalReqs->where('implementation_status', 'work_in_progress')->count() 
+                                        + $allNonFunctionalReqs->where('implementation_status', 'work_in_progress')->count();
+                        $progressPercent = $totalReqs > 0 ? round(($completedReqs / $totalReqs) * 100) : 0;
+                    @endphp
+                    @if($totalReqs > 0)
+                    <div class="mt-6 pt-4 border-t">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium text-gray-700">Implementation Progress</span>
+                            <span class="text-sm text-gray-500">{{ $completedReqs }}/{{ $totalReqs }} completed ({{ $progressPercent }}%)</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div class="bg-green-500 h-2.5 rounded-full transition-all" style="width: {{ $progressPercent }}%"></div>
+                        </div>
+                        <div class="flex gap-4 mt-2 text-xs text-gray-500">
+                            <span>✅ {{ $completedReqs }} Completed</span>
+                            <span>🔄 {{ $inProgressReqs }} In Progress</span>
+                            <span>📝 {{ $totalReqs - $completedReqs - $inProgressReqs }} Other</span>
+                        </div>
+                    </div>
+                    @endif
+                </div>
+            </div>
+            @else
+            <div class="bg-yellow-50 border border-yellow-200 overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6">
+                    <h3 class="text-lg font-bold text-yellow-800 mb-2">📋 No SRS Document</h3>
+                    <p class="text-sm text-yellow-700 mb-3">Create an SRS document to track requirements for this project.</p>
+                    <a href="{{ route('documentation.srs.create', ['project_id' => $project->id]) }}" class="inline-flex items-center px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700">
+                        Create SRS Document
+                    </a>
+                </div>
+            </div>
+            @endif
+
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 text-gray-900">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold">Members Summary</h3>
+                    </div>
+                    <ul id="memberSummaryList" class="space-y-2 text-sm text-gray-600">
+                        <li>Loading members...</li>
+                    </ul>
+                </div>
+            </div>
+
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                         <div class="flex justify-between items-center mb-4">
@@ -53,6 +226,7 @@
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requirement</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
@@ -64,6 +238,15 @@
                                     @foreach($tasks as $task)
                                     <tr class="hover:bg-gray-50 transition">
                                         <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{{ $task->title }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            @if($task->requirement)
+                                                <span class="px-2 py-1 text-xs rounded-full {{ $task->requirement_type === \App\Models\SrsFunctionalRequirement::class ? 'bg-indigo-100 text-indigo-700' : 'bg-purple-100 text-purple-700' }}" title="{{ $task->requirement->title }}">
+                                                    {{ $task->requirement->section_number }}
+                                                </span>
+                                            @else
+                                                <span class="text-xs text-gray-400">—</span>
+                                            @endif
+                                        </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             @php
                                                 $priorityColors = [
@@ -85,21 +268,21 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             @php
-                                                $statusColors = [
+                                                $taskStatusColors = [
                                                     'To Do' => 'bg-gray-100 text-gray-800 border-gray-300',
                                                     'In Progress' => 'bg-blue-100 text-blue-800 border-blue-300',
                                                     'Review' => 'bg-yellow-100 text-yellow-800 border-yellow-300',
                                                     'Done' => 'bg-green-100 text-green-800 border-green-300',
                                                 ];
-                                                $statusIcons = [
+                                                $taskStatusIcons = [
                                                     'To Do' => '📋',
                                                     'In Progress' => '🔄',
                                                     'Review' => '👀',
                                                     'Done' => '✅',
                                                 ];
                                             @endphp
-                                            <span class="px-2.5 py-1 inline-flex items-center gap-1 text-xs font-semibold rounded-full border {{ $statusColors[$task->status] ?? 'bg-gray-100 text-gray-800 border-gray-300' }}">
-                                                {{ $statusIcons[$task->status] ?? '📋' }} {{ $task->status }}
+                                            <span class="px-2.5 py-1 inline-flex items-center gap-1 text-xs font-semibold rounded-full border {{ $taskStatusColors[$task->status] ?? 'bg-gray-100 text-gray-800 border-gray-300' }}">
+                                                {{ $taskStatusIcons[$task->status] ?? '📋' }} {{ $task->status }}
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
@@ -143,7 +326,7 @@
                                 @endforeach
                             @else
                                 <tr>
-                                    <td colspan="5" class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">No tasks for this project yet.</td>
+                                    <td colspan="6" class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">No tasks for this project yet.</td>
                                 </tr>
                             @endif
                             </tbody>
@@ -154,44 +337,70 @@
         </div>
     </div>
 
-    <div id="createTaskModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div class="mt-3 text-center">
-                <h3 class="text-lg leading-6 font-medium text-gray-900">Add New Task</h3>
-                <form action="{{ route('projects.tasks.store', $project) }}" method="POST" class="mt-2 text-left">
+    <div id="createTaskModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-[480px] shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 text-center mb-4">Add New Task</h3>
+                <form action="{{ route('projects.tasks.store', $project) }}" method="POST" class="text-left">
                     @csrf
                     <div class="mb-4">
                         <label class="block text-gray-700 text-sm font-bold mb-2">Title</label>
                         <input type="text" name="title" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
                     </div>
-                    <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Priority</label>
-                        <select name="priority" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                            <option value="Low">Low</option>
-                            <option value="Medium">Medium</option>
-                            <option value="High">High</option>
-                            <option value="Critical">Critical</option>
-                        </select>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Priority</label>
+                            <select name="priority" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                <option value="Low">Low</option>
+                                <option value="Medium">Medium</option>
+                                <option value="High">High</option>
+                                <option value="Critical">Critical</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Due Date</label>
+                            <input type="date" name="due_date" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        </div>
                     </div>
+                    
+                    <!-- Requirement Selection -->
+                    @if($srsDocument && ($allFunctionalReqs->count() || $allNonFunctionalReqs->count()))
                     <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Assign To</label>
-                        <select name="assigned_to" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                            <option value="">Unassigned</option>
-                            @if($project->team)
-                                @foreach($project->team->members as $member)
-                                    <option value="{{ $member->id }}">{{ $member->name }}</option>
-                                @endforeach
-                            @else
-                                <option value="{{ auth()->id() }}">Me</option>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Link to Requirement</label>
+                        <select name="requirement_combined" id="requirementSelect" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" onchange="updateRequirementFields()">
+                            <option value="">— No requirement —</option>
+                            @if($allFunctionalReqs->count())
+                                <optgroup label="Functional Requirements">
+                                    @foreach($allFunctionalReqs as $req)
+                                        <option value="functional:{{ $req->id }}">{{ $req->section_number }} - {{ Str::limit($req->title, 40) }}</option>
+                                    @endforeach
+                                </optgroup>
+                            @endif
+                            @if($allNonFunctionalReqs->count())
+                                <optgroup label="Non-Functional Requirements">
+                                    @foreach($allNonFunctionalReqs as $req)
+                                        <option value="non_functional:{{ $req->id }}">{{ $req->section_number }} - {{ Str::limit($req->title, 40) }}</option>
+                                    @endforeach
+                                </optgroup>
                             @endif
                         </select>
+                        <input type="hidden" name="requirement_type" id="requirementType">
+                        <input type="hidden" name="requirement_id" id="requirementId">
+                        <small class="text-xs text-gray-500">Link this task to a specific requirement from the SRS.</small>
                     </div>
+                    @endif
+
                     <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Due Date</label>
-                        <input type="date" name="due_date" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Assign To</label>
+                        <div class="relative">
+                            <input type="text" id="assignSearch" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Search users by name or email..." autocomplete="off">
+                            <input type="hidden" name="assigned_to" id="assignedToId">
+                            <div id="assignResults" class="absolute z-10 w-full bg-white border border-gray-200 rounded-md shadow-lg mt-1 hidden max-h-48 overflow-y-auto"></div>
+                        </div>
+                        <small class="text-xs text-gray-500">Type at least 2 characters to search. The assignee will be notified.</small>
                     </div>
-                    <div class="flex justify-end">
-                        <button type="button" onclick="document.getElementById('createTaskModal').classList.add('hidden')" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-2">Cancel</button>
+                    <div class="flex justify-end gap-2">
+                        <button type="button" onclick="document.getElementById('createTaskModal').classList.add('hidden')" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Cancel</button>
                         <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">Add Task</button>
                     </div>
                 </form>
@@ -199,3 +408,78 @@
         </div>
     </div>
 </x-app-layout>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const list = document.getElementById('memberSummaryList');
+    fetch('{{ route('projects.members.summary', $project) }}', {
+        headers: { 'Accept': 'application/json' }
+    }).then(res => res.json())
+    .then(data => {
+        list.innerHTML = '';
+        data.members.forEach(m => {
+            const li = document.createElement('li');
+            li.className = 'flex justify-between items-center';
+            li.innerHTML = `<span>${m.name} <span class="text-xs text-gray-400">${m.email}</span></span><span class="text-sm text-gray-500">${m.active_tasks} open / ${m.total_tasks} total</span>`;
+            list.appendChild(li);
+        });
+    }).catch(() => {
+        list.innerHTML = '<li class="text-red-500">Failed to load members.</li>';
+    });
+});
+
+// Requirement field sync
+function updateRequirementFields() {
+    const select = document.getElementById('requirementSelect');
+    const typeInput = document.getElementById('requirementType');
+    const idInput = document.getElementById('requirementId');
+    
+    if (select && select.value) {
+        const [type, id] = select.value.split(':');
+        typeInput.value = type;
+        idInput.value = id;
+    } else {
+        if (typeInput) typeInput.value = '';
+        if (idInput) idInput.value = '';
+    }
+}
+
+// Task assign search
+document.addEventListener('DOMContentLoaded', function() {
+    const assignInput = document.getElementById('assignSearch');
+    const assignResults = document.getElementById('assignResults');
+    const assignedToId = document.getElementById('assignedToId');
+    let assignTimeout;
+    if (assignInput) {
+        assignInput.addEventListener('input', function() {
+            clearTimeout(assignTimeout);
+            const q = this.value.trim();
+            if (q.length < 2) { assignResults.classList.add('hidden'); return; }
+            assignTimeout = setTimeout(() => {
+                fetch(`/api/users/search?q=${encodeURIComponent(q)}`, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.users && data.users.length > 0) {
+                        assignResults.innerHTML = data.users.map(u => `<div class="px-3 py-2 hover:bg-indigo-50 cursor-pointer" onclick="selectAssignUser(${u.id}, '${u.name}', '${u.email}')">${u.name} <span class='text-xs text-gray-500'>${u.email}</span></div>`).join('');
+                        assignResults.classList.remove('hidden');
+                    } else {
+                        assignResults.innerHTML = '<div class="px-3 py-2 text-gray-500">No users found</div>';
+                        assignResults.classList.remove('hidden');
+                    }
+                }).catch(() => {
+                    assignResults.innerHTML = '<div class="px-3 py-2 text-red-500">Search error</div>';
+                    assignResults.classList.remove('hidden');
+                });
+            }, 250);
+        });
+    }
+
+    window.selectAssignUser = (id, name, email) => {
+        assignedToId.value = id;
+        assignInput.value = `${name} (${email})`;
+        assignResults.classList.add('hidden');
+    }
+});
+</script>
+@endpush

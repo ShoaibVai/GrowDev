@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Task extends Model
 {
@@ -17,6 +18,8 @@ class Task extends Model
         'created_by',
         'due_date',
         'category',
+        'requirement_type',
+        'requirement_id',
     ];
 
     protected $casts = [
@@ -36,5 +39,13 @@ class Task extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Get the linked requirement (functional or non-functional).
+     */
+    public function requirement(): MorphTo
+    {
+        return $this->morphTo();
     }
 }

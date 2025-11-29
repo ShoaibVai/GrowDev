@@ -84,6 +84,35 @@
 
                 {{-- Sidebar --}}
                 <div class="col-span-1 space-y-6">
+                    {{-- Pending Invitations --}}
+                    @if($pendingInvitations->count())
+                    <div class="bg-yellow-50 border border-yellow-200 overflow-hidden shadow-sm sm:rounded-lg p-4">
+                        <h4 class="font-semibold mb-2 text-yellow-800">📬 Pending Invitations</h4>
+                        <ul class="divide-y divide-yellow-200">
+                            @foreach($pendingInvitations as $invitation)
+                                <li class="py-3">
+                                    <div class="flex flex-col gap-2">
+                                        <div>
+                                            <div class="font-medium text-sm text-gray-900">{{ $invitation->team->name }}</div>
+                                            <div class="text-xs text-gray-500">Invited by {{ $invitation->inviter ? $invitation->inviter->name : 'Unknown' }} — {{ $invitation->created_at->diffForHumans() }}</div>
+                                        </div>
+                                        <div class="flex gap-2">
+                                            <a href="{{ route('invitations.accept', $invitation->token) }}" 
+                                               class="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700">
+                                                Accept
+                                            </a>
+                                            <a href="{{ route('invitations.decline', $invitation->token) }}" 
+                                               class="px-3 py-1 bg-gray-300 text-gray-700 text-xs rounded hover:bg-gray-400">
+                                                Decline
+                                            </a>
+                                        </div>
+                                    </div>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    @endif
+
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4">
                         <h4 class="font-semibold mb-2">Upcoming Tasks</h4>
                         @if($upcomingTasks->count())

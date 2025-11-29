@@ -93,7 +93,7 @@ class ProjectController extends Controller
     {
         $this->authorize('view', $project);
 
-        $tasksQuery = $project->tasks()->latest();
+        $tasksQuery = $project->tasks()->with('requirement')->latest();
         if ($request->filled('q')) {
             $tasksQuery->where('title', 'like', '%' . $request->q . '%')
                 ->orWhere('description', 'like', '%' . $request->q . '%');
@@ -105,12 +105,86 @@ class ProjectController extends Controller
             $tasksQuery->where('assigned_to', $request->assigned_to);
         }
 
-    $tasks = $tasksQuery->get();
-    $members = $project->team
-        ? $project->team->members()->pluck('users.name', 'users.id')
-        : collect([auth()->id() => 'Me']);
+        $tasks = $tasksQuery->get();
+        $members = $project->team
+            ? $project->team->members()->pluck('users.name', 'users.id')
+            : collect([auth()->id() => 'Me']);
 
-    return view('projects.show', compact('project', 'tasks', 'members'));
+        // Get SRS documents for this project with requirements
+        $srsDocument = $project->srsDocuments()->with([
+            'functionalRequirements' => fn($q) => $q->whereNull('parent_id')->with('children'),
+            'nonFunctionalRequirements' => fn($q) => $q->whereNull('parent_id')->with('children'),
+        ])->first();
+
+        $functionalRequirements = $srsDocument ? $srsDocument->functionalRequirements : collect();
+        $nonFunctionalRequirements = $srsDocument ? $srsDocument->nonFunctionalRequirements : collect();
+
+        // Flatten requirements for task dropdown (include children)
+        $allFunctionalReqs = $srsDocument 
+            ? \App\Models\SrsFunctionalRequirement::where('srs_document_id', $srsDocument->id)->orderBy('section_number')->get()
+            : collect();
+        $allNonFunctionalReqs = $srsDocument 
+            ? \App\Models\SrsNonFunctionalRequirement::where('srs_document_id', $srsDocument->id)->orderBy('section_number')->get()
+            : collect();
+
+        return view('projects.show', compact(
+            'project', 'tasks', 'members', 'srsDocument',
+            'functionalRequirements', 'nonFunctionalRequirements',
+            'allFunctionalReqs', 'allNonFunctionalReqs'
+        ));
+    }
+
+    public function board(Project $project)
+    {
+        $this->authorize('view', $project);
+        $tasks = $project->tasks()->orderBy('created_at')->get()->groupBy('status');
+        return view('projects.board', compact('project', 'tasks'));
+    }
+
+    public function membersSummary(Project $project)
+    {
+        $this->authorize('view', $project);
+        $members = $project->team ? $project->team->members : collect([auth()->user()]);
+        $summary = $members->map(function ($m) use ($project) {
+            $activeTasks = $project->tasks()->where('assigned_to', $m->id)->whereIn('status', ['To Do', 'In Progress', 'Review'])->count();
+            $totalTasks = $project->tasks()->where('assigned_to', $m->id)->count();
+            return [
+                'id' => $m->id,
+                'name' => $m->name,
+                'email' => $m->email,
+                'active_tasks' => $activeTasks,
+                'total_tasks' => $totalTasks,
+            ];
+        });
+        return response()->json(['members' => $summary]);
+    }
+
+    /**
+     * Update requirement implementation status.
+     */
+    public function updateRequirementStatus(Request $request, Project $project, string $type, int $requirement)
+    {
+        $this->authorize('update', $project);
+
+        $request->validate([
+            'implementation_status' => 'required|in:listed,work_in_progress,completed,compromised,under_maintenance',
+        ]);
+
+        if ($type === 'functional') {
+            $req = \App\Models\SrsFunctionalRequirement::findOrFail($requirement);
+        } else {
+            $req = \App\Models\SrsNonFunctionalRequirement::findOrFail($requirement);
+        }
+
+        // Verify the requirement belongs to this project's SRS
+        $srs = $project->srsDocuments()->first();
+        if (!$srs || $req->srs_document_id !== $srs->id) {
+            return back()->with('error', 'Requirement not found for this project.');
+        }
+
+        $req->update(['implementation_status' => $request->implementation_status]);
+
+        return back()->with('success', 'Requirement status updated.');
     }
 
     /**

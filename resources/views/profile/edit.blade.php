@@ -240,6 +240,79 @@
                             </div>
                         </div>
                     </div>
+                    <div class="sticky top-6 mt-4 p-6 bg-white shadow sm:rounded-lg">
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4">{{ __('Notification Preferences') }}</h4>
+                            <div class="text-sm text-gray-600 space-y-3">
+                            <div class="flex items-center gap-2">
+                                <input type="hidden" name="email_on_task_assigned" value="0">
+                                <input type="checkbox" id="email_on_task_assigned" name="email_on_task_assigned" value="1" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" {{ old('email_on_task_assigned', $preference?->email_on_task_assigned ?? true) ? 'checked' : '' }}>
+                                <label for="email_on_task_assigned" class="text-sm font-medium text-gray-700">{{ __('Email me when a task is assigned to me') }}</label>
+                            </div>
+                            <div class="mt-4 border-t border-gray-200 pt-4">
+                                <h5 class="text-sm font-semibold text-gray-900 mb-2">{{ __('Digest Preview & History') }}</h5>
+                                <button id="digest-preview-btn" class="px-3 py-1 bg-indigo-500 text-white rounded">{{ __('Preview Digest') }}</button>
+                                <div id="digest-preview" class="mt-3 text-xs text-gray-700"></div>
+                                <h6 class="mt-4 font-medium text-gray-800">{{ __('Recent Digests') }}</h6>
+                                <div id="digest-history" class="mt-2 text-xs text-gray-600 max-h-40 overflow-auto"></div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="hidden" name="email_on_task_status_change" value="0">
+                                <input type="checkbox" id="email_on_task_status_change" name="email_on_task_status_change" value="1" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" {{ old('email_on_task_status_change', $preference?->email_on_task_status_change ?? true) ? 'checked' : '' }}>
+                                <label for="email_on_task_status_change" class="text-sm font-medium text-gray-700">{{ __('Email me on task status changes') }}</label>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="hidden" name="email_reminders" value="0">
+                                <input type="checkbox" id="email_reminders" name="email_reminders" value="1" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" {{ old('email_reminders', $preference?->email_reminders ?? true) ? 'checked' : '' }}>
+                                <label for="email_reminders" class="text-sm font-medium text-gray-700">{{ __('Email me task reminders') }}</label>
+                            </div>
+
+                            <div class="mt-3">
+                                <label for="digest_frequency" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Notification Digest') }}</label>
+                                <div class="grid grid-cols-2 gap-3 items-center">
+                                    <select id="digest_frequency" name="digest_frequency" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                        <option value="none" {{ old('digest_frequency', $preference?->digest_frequency ?? 'none') === 'none' ? 'selected' : '' }}>{{ __('None') }}</option>
+                                        <option value="daily" {{ old('digest_frequency', $preference?->digest_frequency ?? 'none') === 'daily' ? 'selected' : '' }}>{{ __('Daily') }}</option>
+                                        <option value="weekly" {{ old('digest_frequency', $preference?->digest_frequency ?? 'none') === 'weekly' ? 'selected' : '' }}>{{ __('Weekly') }}</option>
+                                    </select>
+                                    <input type="time" id="digest_time" name="digest_time" value="{{ old('digest_time', $preference?->digest_time) }}" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <label for="timezone" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Timezone') }}</label>
+                                <select id="timezone" name="timezone" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    @foreach (($timezones ?? []) as $tzId => $label)
+                                        <option value="{{ $tzId }}" {{ old('timezone', $preference?->timezone) == $tzId ? 'selected' : '' }}>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="mt-3">
+                                <label for="digest_day" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Weekly digest day') }}</label>
+                                <select id="digest_day" name="digest_day" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option value="" {{ old('digest_day', $preference?->digest_day) === null ? 'selected' : '' }}>{{ __('Select day') }}</option>
+                                    <option value="sun" {{ old('digest_day', $preference?->digest_day) == 'sun' ? 'selected' : '' }}>{{ __('Sunday') }}</option>
+                                    <option value="mon" {{ old('digest_day', $preference?->digest_day) == 'mon' ? 'selected' : '' }}>{{ __('Monday') }}</option>
+                                    <option value="tue" {{ old('digest_day', $preference?->digest_day) == 'tue' ? 'selected' : '' }}>{{ __('Tuesday') }}</option>
+                                    <option value="wed" {{ old('digest_day', $preference?->digest_day) == 'wed' ? 'selected' : '' }}>{{ __('Wednesday') }}</option>
+                                    <option value="thu" {{ old('digest_day', $preference?->digest_day) == 'thu' ? 'selected' : '' }}>{{ __('Thursday') }}</option>
+                                    <option value="fri" {{ old('digest_day', $preference?->digest_day) == 'fri' ? 'selected' : '' }}>{{ __('Friday') }}</option>
+                                    <option value="sat" {{ old('digest_day', $preference?->digest_day) == 'sat' ? 'selected' : '' }}>{{ __('Saturday') }}</option>
+                                </select>
+                            </div>
+                            <div class="mt-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('Other email notifications') }}</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="hidden" name="email_on_team_invitation" value="0">
+                                    <input type="checkbox" id="email_on_team_invitation" name="email_on_team_invitation" value="1" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" {{ old('email_on_team_invitation', $preference?->email_on_team_invitation ?? true) ? 'checked' : '' }}>
+                                    <label for="email_on_team_invitation" class="text-sm font-medium text-gray-700">{{ __('Email on team invitations') }}</label>
+                                </div>
+                                <div class="flex items-center gap-2 mt-2">
+                                    <input type="hidden" name="email_on_srs_update" value="0">
+                                    <input type="checkbox" id="email_on_srs_update" name="email_on_srs_update" value="1" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" {{ old('email_on_srs_update', $preference?->email_on_srs_update ?? true) ? 'checked' : '' }}>
+                                    <label for="email_on_srs_update" class="text-sm font-medium text-gray-700">{{ __('Email on SRS updates') }}</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </form>
         </div>
@@ -487,6 +560,74 @@
             if (summaryInput) summaryInput.addEventListener('input', function() {
                 document.getElementById('preview-summary').textContent = this.value || 'No summary added';
             });
+        });
+
+        // Toggle digest time input based on frequency selection
+        document.addEventListener('DOMContentLoaded', function() {
+            const digestSelect = document.getElementById('digest_frequency');
+            const digestTime = document.getElementById('digest_time');
+            const digestDay = document.getElementById('digest_day');
+            function toggleDigestTime() {
+                if (!digestSelect || !digestTime) return;
+                const val = digestSelect.value;
+                digestTime.disabled = (val === 'none');
+                digestTime.classList.toggle('opacity-50', val === 'none');
+                if (digestDay) {
+                    digestDay.disabled = (val !== 'weekly');
+                    digestDay.classList.toggle('opacity-50', val !== 'weekly');
+                }
+            }
+            if (digestSelect) {
+                digestSelect.addEventListener('change', toggleDigestTime);
+            }
+            toggleDigestTime();
+        });
+        // Digest preview and history
+        document.addEventListener('DOMContentLoaded', function() {
+            const previewBtn = document.getElementById('digest-preview-btn');
+            const previewDiv = document.getElementById('digest-preview');
+            const historyDiv = document.getElementById('digest-history');
+
+            if (previewBtn) {
+                previewBtn.addEventListener('click', function() {
+                    fetch('{{ route('profile.digests.preview') }}')
+                        .then(res => res.json())
+                        .then(res => {
+                            if (!res.success) return;
+                            const items = res.data;
+                            if (items.length === 0) {
+                                previewDiv.textContent = '{{ __('No pending digest events') }}';
+                                return;
+                            }
+                            previewDiv.innerHTML = '';
+                            items.forEach(e => {
+                                const div = document.createElement('div');
+                                div.className = 'p-2 border-b border-gray-100';
+                                div.textContent = e.event_type + ' - ' + (e.payload && e.payload.task_id ? 'Task #' + e.payload.task_id : '');
+                                previewDiv.appendChild(div);
+                            });
+                        });
+                });
+            }
+
+            // load recent history
+            fetch('{{ route('profile.digests.history') }}')
+                .then(res => res.json())
+                .then(res => {
+                    if (!res.success) return;
+                    const items = res.data;
+                    if (!items || items.length === 0) {
+                        historyDiv.textContent = '{{ __('No digests in history') }}';
+                        return;
+                    }
+                    historyDiv.innerHTML = '';
+                    items.forEach(e => {
+                        const div = document.createElement('div');
+                        div.className = 'p-2 border-b border-gray-100';
+                        div.textContent = `${new Date(e.updated_at).toLocaleString()} - ${e.event_type}`;
+                        historyDiv.appendChild(div);
+                    });
+                });
         });
     </script>
 </x-app-layout>

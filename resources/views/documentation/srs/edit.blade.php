@@ -19,8 +19,10 @@
             <form method="POST" action="{{ route('documentation.srs.update', $srsDocument) }}" class="space-y-8" id="srs-form">
                 @csrf
                 @method('PUT')
-                @php($projectOptions = $projects ?? collect())
-                @php($selectedProjectId = old('project_id', $srsDocument->project_id))
+                @php
+                    $projectOptions = $projects ?? collect();
+                    $selectedProjectId = old('project_id', $srsDocument->project_id);
+                @endphp
 
                 <!-- Section 1: Introduction -->
                 <div class="bg-white rounded-lg shadow-md p-8">

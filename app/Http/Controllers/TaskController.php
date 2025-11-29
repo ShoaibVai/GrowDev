@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
+use App\Models\NotificationEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Events\TaskUpdated;
 
 class TaskController extends Controller
 {
@@ -19,9 +21,27 @@ class TaskController extends Controller
             'priority' => 'required|in:Low,Medium,High,Critical',
             'assigned_to' => 'nullable|exists:users,id',
             'due_date' => 'nullable|date',
+            'requirement_type' => 'nullable|in:functional,non_functional',
+            'requirement_id' => 'nullable|integer',
         ]);
 
-        $project->tasks()->create([
+        // Map requirement type to model class
+        $requirementType = null;
+        $requirementId = null;
+        $requirement = null;
+        
+        if ($request->filled('requirement_id') && $request->filled('requirement_type')) {
+            if ($request->requirement_type === 'functional') {
+                $requirementType = \App\Models\SrsFunctionalRequirement::class;
+                $requirement = \App\Models\SrsFunctionalRequirement::find($request->requirement_id);
+            } else {
+                $requirementType = \App\Models\SrsNonFunctionalRequirement::class;
+                $requirement = \App\Models\SrsNonFunctionalRequirement::find($request->requirement_id);
+            }
+            $requirementId = $request->requirement_id;
+        }
+
+        $task = $project->tasks()->create([
             'title' => $request->title,
             'description' => $request->description,
             'priority' => $request->priority,
@@ -29,7 +49,42 @@ class TaskController extends Controller
             'assigned_to' => $request->assigned_to,
             'created_by' => Auth::id(),
             'due_date' => $request->due_date,
+            'requirement_type' => $requirementType,
+            'requirement_id' => $requirementId,
         ]);
+
+        // Notify assignee if set
+        if ($task->assigned_to) {
+            $assignee = User::find($task->assigned_to);
+            if ($assignee) {
+                $pref = $assignee->notificationPreference;
+                $allowEmail = $pref ? (bool) $pref->email_on_task_assigned : true;
+                if ($allowEmail) {
+                    $assignee->notify(new \App\Notifications\TaskAssigned($task, $requirement));
+                } else {
+                    // store event for digest
+                    NotificationEvent::create([
+                        'user_id' => $assignee->id,
+                        'event_type' => 'task_assigned',
+                        'payload' => [
+                            'task_id' => $task->id, 
+                            'project_id' => $project->id, 
+                            'assigned_by' => auth()->id(),
+                            'requirement' => $requirement ? [
+                                'type' => $request->requirement_type,
+                                'id' => $requirement->id,
+                                'title' => $requirement->title,
+                                'section' => $requirement->section_number,
+                            ] : null,
+                        ],
+                        'sent' => false,
+                    ]);
+                }
+            }
+        }
+
+        // Broadcast task creation for realtime Kanban
+        event(new TaskUpdated($task));
 
         return back()->with('success', 'Task added successfully.');
     }
@@ -43,7 +98,63 @@ class TaskController extends Controller
             'status' => 'required|in:To Do,In Progress,Review,Done',
         ]);
 
+
+        $oldStatus = $task->status;
+        $oldAssignee = $task->assigned_to;
         $task->update($request->only(['title','status','priority','assigned_to','due_date']));
+
+        // Send status change notification if status changed
+        // Status change notifications
+        if ($oldStatus !== $task->status) {
+            $assignee = User::find($task->assigned_to);
+            if ($assignee) {
+                $pref = $assignee->notificationPreference;
+                $allowEmail = $pref ? (bool) $pref->email_on_task_status_change : true;
+                if ($allowEmail) {
+                    $assignee->notify(new \App\Notifications\TaskStatusChanged($task, $oldStatus));
+                } else {
+                    NotificationEvent::create([
+                        'user_id' => $assignee->id,
+                        'event_type' => 'task_status_changed',
+                        'payload' => ['task_id' => $task->id, 'old_status' => $oldStatus, 'new_status' => $task->status],
+                        'sent' => false,
+                    ]);
+                }
+            }
+            // Broadcast task update for realtime Kanban
+            event(new TaskUpdated($task));
+        }
+
+        // Assignment change notifications
+        if ($oldAssignee !== $task->assigned_to && $task->assigned_to) {
+            $newAssignee = User::find($task->assigned_to);
+            if ($newAssignee) {
+                $pref = $newAssignee->notificationPreference;
+                $allowEmail = $pref ? (bool) $pref->email_on_task_assigned : true;
+                if ($allowEmail) {
+                    $newAssignee->notify(new \App\Notifications\TaskAssigned($task));
+                } else {
+                    NotificationEvent::create([
+                        'user_id' => $newAssignee->id,
+                        'event_type' => 'task_assigned',
+                        'payload' => ['task_id' => $task->id, 'project_id' => $task->project_id, 'assigned_by' => auth()->id()],
+                        'sent' => false,
+                    ]);
+                }
+            }
+        }
+
+        // Log task activity
+        if ($oldStatus !== $task->status) {
+            \App\Models\TaskActivity::create([
+                'task_id' => $task->id,
+                'user_id' => auth()->id(),
+                'action' => 'status_changed',
+                'old_status' => $oldStatus,
+                'new_status' => $task->status,
+                'notes' => null,
+            ]);
+        }
 
         return back()->with('success', 'Task updated successfully.');
     }

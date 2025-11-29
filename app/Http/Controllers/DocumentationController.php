@@ -92,6 +92,26 @@ class DocumentationController extends Controller
 
         $srsDocument = auth()->user()->srsDocuments()->create($validated);
 
+        // Notify team members of new SRS if they allow SRS update notifications
+        if ($srsDocument->project && $srsDocument->project->team) {
+            $members = $srsDocument->project->team->members()->get();
+            foreach ($members as $m) {
+                if ($m->id === auth()->id()) continue; // skip actor
+                $pref = $m->notificationPreference;
+                $allowEmail = $pref ? (bool) $pref->email_on_srs_update : true;
+                if ($allowEmail) {
+                    $m->notify(new \App\Notifications\SrsUpdated($srsDocument));
+                } else {
+                    \App\Models\NotificationEvent::create([
+                        'user_id' => $m->id,
+                        'event_type' => 'srs_updated',
+                        'payload' => ['srs_id' => $srsDocument->id, 'project_id' => $srsDocument->project_id],
+                        'sent' => false,
+                    ]);
+                }
+            }
+        }
+
         return redirect()->route('projects.show', $srsDocument->project_id)
             ->with('success', 'SRS document created successfully.');
     }
@@ -106,7 +126,12 @@ class DocumentationController extends Controller
         $nonFunctionalRequirements = $srsDocument->nonFunctionalRequirements()->with('children')->get();
         $nfrCategories = SrsNonFunctionalRequirement::CATEGORIES;
         $projects = auth()->user()->projects()->latest()->get();
-        return view('documentation.srs.edit', compact('srsDocument', 'functionalRequirements', 'nonFunctionalRequirements', 'nfrCategories', 'projects'));
+        // Determine roles available for the related project (if any)
+        $roles = collect();
+        if ($srsDocument->project_id && $srsDocument->project && $srsDocument->project->team) {
+            $roles = $srsDocument->project->team->roles()->get();
+        }
+        return view('documentation.srs.edit', compact('srsDocument', 'functionalRequirements', 'nonFunctionalRequirements', 'nfrCategories', 'projects', 'roles'));
     }
 
     /**
@@ -156,6 +181,8 @@ class DocumentationController extends Controller
             'functional_requirements.*.status' => 'nullable|in:draft,review,approved,implemented,verified',
             'functional_requirements.*.ux_considerations' => 'nullable|array',
             'functional_requirements.*.parent_section' => 'nullable|string',
+            'functional_requirements.*.roles' => 'nullable|array',
+            'functional_requirements.*.roles.*' => 'nullable|integer|exists:roles,id',
             'non_functional_requirements' => 'nullable|array',
             'non_functional_requirements.*.requirement_id' => 'required_with:non_functional_requirements|string',
             'non_functional_requirements.*.section_number' => 'required_with:non_functional_requirements|string',
@@ -169,7 +196,13 @@ class DocumentationController extends Controller
             'non_functional_requirements.*.priority' => 'required_with:non_functional_requirements|in:low,medium,high,critical',
             'non_functional_requirements.*.status' => 'nullable|in:draft,review,approved,implemented,verified',
             'non_functional_requirements.*.parent_section' => 'nullable|string',
+            'non_functional_requirements.*.roles' => 'nullable|array',
+            'non_functional_requirements.*.roles.*' => 'nullable|integer|exists:roles,id',
         ]);
+
+        // capture existing requirement state so we can compute changed sections
+        $existingFunctional = $srsDocument->functionalRequirements()->get()->keyBy('section_number')->toArray();
+        $existingNonFunctional = $srsDocument->nonFunctionalRequirements()->get()->keyBy('section_number')->toArray();
 
         $srsDocument->update([
             'project_id' => $validated['project_id'],
@@ -212,6 +245,71 @@ class DocumentationController extends Controller
             $validated['non_functional_requirements'] ?? [], 
             'non_functional'
         );
+        // compute changed sections by comparing existing vs validated
+        $changedSections = [];
+        foreach (($validated['functional_requirements'] ?? []) as $req) {
+            $section = $req['section_number'];
+            $existing = $existingFunctional[$section] ?? null;
+            if (!$existing) {
+                $changedSections['functional'][] = ['section' => $section, 'type' => 'added', 'title' => $req['title']];
+            } else {
+                if ($existing['title'] !== $req['title'] || $existing['description'] !== $req['description']) {
+                    $changedSections['functional'][] = ['section' => $section, 'type' => 'modified', 'old_title' => $existing['title'], 'new_title' => $req['title']];
+                }
+            }
+        }
+        foreach (($validated['non_functional_requirements'] ?? []) as $req) {
+            $section = $req['section_number'];
+            $existing = $existingNonFunctional[$section] ?? null;
+            if (!$existing) {
+                $changedSections['non_functional'][] = ['section' => $section, 'type' => 'added', 'title' => $req['title']];
+            } else {
+                if ($existing['title'] !== $req['title'] || $existing['description'] !== $req['description']) {
+                    $changedSections['non_functional'][] = ['section' => $section, 'type' => 'modified', 'old_title' => $existing['title'], 'new_title' => $req['title']];
+                }
+            }
+        }
+
+        // Notify team members on update WITH changed section info
+        if ($srsDocument->project && $srsDocument->project->team) {
+            $members = $srsDocument->project->team->members()->get();
+            foreach ($members as $m) {
+                if ($m->id === auth()->id()) continue;
+                $pref = $m->notificationPreference;
+                $allowEmail = $pref ? (bool) $pref->email_on_srs_update : true;
+                $payload = ['srs_id' => $srsDocument->id, 'project_id' => $srsDocument->project_id, 'changed_sections' => $changedSections];
+                if ($allowEmail) {
+                    $m->notify(new \App\Notifications\SrsUpdated($srsDocument, $changedSections));
+                } else {
+                    \App\Models\NotificationEvent::create([
+                        'user_id' => $m->id,
+                        'event_type' => 'srs_updated',
+                        'payload' => $payload,
+                        'sent' => false,
+                    ]);
+                }
+            }
+        }
+
+        // Also notify team members on update
+        if ($srsDocument->project && $srsDocument->project->team) {
+            $members = $srsDocument->project->team->members()->get();
+            foreach ($members as $m) {
+                if ($m->id === auth()->id()) continue;
+                $pref = $m->notificationPreference;
+                $allowEmail = $pref ? (bool) $pref->email_on_srs_update : true;
+                if ($allowEmail) {
+                    $m->notify(new \App\Notifications\SrsUpdated($srsDocument));
+                } else {
+                    \App\Models\NotificationEvent::create([
+                        'user_id' => $m->id,
+                        'event_type' => 'srs_updated',
+                        'payload' => ['srs_id' => $srsDocument->id, 'project_id' => $srsDocument->project_id],
+                        'sent' => false,
+                    ]);
+                }
+            }
+        }
 
         return redirect()->route('documentation.srs.edit', $srsDocument)
             ->with('success', 'SRS document updated successfully.');
@@ -223,9 +321,22 @@ class DocumentationController extends Controller
     private function syncHierarchicalRequirements(SrsDocument $srsDocument, array $requirements, string $type): void
     {
         if ($type === 'functional') {
+            // Delete any existing role mappings for current functional requirements
+            $existingIds = $srsDocument->functionalRequirements()->pluck('id')->toArray();
+            if (!empty($existingIds)) {
+                \App\Models\RoleRequirementMapping::where('requirement_type', \App\Models\SrsFunctionalRequirement::class)
+                    ->whereIn('requirement_id', $existingIds)
+                    ->delete();
+            }
             $srsDocument->functionalRequirements()->delete();
             $relationName = 'functionalRequirements';
         } else {
+            $existingIds = $srsDocument->nonFunctionalRequirements()->pluck('id')->toArray();
+            if (!empty($existingIds)) {
+                \App\Models\RoleRequirementMapping::where('requirement_type', \App\Models\SrsNonFunctionalRequirement::class)
+                    ->whereIn('requirement_id', $existingIds)
+                    ->delete();
+            }
             $srsDocument->nonFunctionalRequirements()->delete();
             $relationName = 'nonFunctionalRequirements';
         }
@@ -260,6 +371,12 @@ class DocumentationController extends Controller
             }
 
             $created = $srsDocument->$relationName()->create($data);
+            // If there are role mappings provided in the request, create them
+            if (!empty($req['roles']) && is_array($req['roles'])) {
+                foreach ($req['roles'] as $roleId) {
+                    $created->roleMappings()->create(['role_id' => $roleId]);
+                }
+            }
             $createdRequirements[$req['section_number']] = $created;
         }
 

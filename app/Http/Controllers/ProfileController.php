@@ -32,6 +32,18 @@ class ProfileController extends Controller
             ->latest()
             ->get();
 
+        $preference = $user->notificationPreference ?? null;
+
+        // Prepare timezone options with friendly labels
+        $timezones = [];
+        foreach (\DateTimeZone::listIdentifiers() as $tz) {
+            $dt = new \DateTimeImmutable('now', new \DateTimeZone($tz));
+            $offset = $dt->getOffset() / 3600;
+            $sign = $offset >= 0 ? '+' : '-';
+            $label = sprintf('(UTC%s%02d:00) %s', $sign, abs((int)$offset), $tz);
+            $timezones[$tz] = $label;
+        }
+
         return view('profile.edit', [
             'user' => $user,
             'workExperiences' => $user->workExperiences()->get(),
@@ -40,6 +52,8 @@ class ProfileController extends Controller
             'certifications' => $user->certifications()->get(),
             'manualProjects' => $manualProjects,
             'autoProjects' => $autoProjects,
+            'preference' => $preference,
+            'timezones' => $timezones,
         ]);
     }
 
@@ -113,8 +127,21 @@ class ProfileController extends Controller
             'projects_manual.*.end_date' => ['nullable', 'date'],
         ]);
 
+        // Notification preferences
+        $prefValidated = $request->validate([
+            'email_on_task_assigned' => 'sometimes|boolean',
+            'email_on_task_status_change' => 'sometimes|boolean',
+            'email_reminders' => 'sometimes|boolean',
+            'digest_frequency' => 'sometimes|in:none,daily,weekly',
+                'digest_time' => 'nullable|date_format:H:i',
+                'timezone' => ['nullable', 'string', 'max:100'],
+                'digest_day' => ['nullable', 'in:sun,mon,tue,wed,thu,fri,sat'],
+                'email_on_team_invitation' => 'sometimes|boolean',
+                'email_on_srs_update' => 'sometimes|boolean',
+        ]);
+
         // Use transaction to ensure data integrity
-        DB::transaction(function () use ($user, $validated, $originalEmail) {
+        DB::transaction(function () use ($user, $validated, $originalEmail, $prefValidated) {
             // Update user profile and reset verification when email changes
             $user->fill([
                 'name' => $validated['name'],
@@ -147,6 +174,19 @@ class ProfileController extends Controller
 
             // Update manual projects
             $this->syncManualProjects($user, $validated['projects_manual'] ?? []);
+
+            // Save notification preferences
+            $pref = $user->notificationPreference ?: $user->notificationPreference()->create([]);
+            $pref->email_on_task_assigned = (bool) ($prefValidated['email_on_task_assigned'] ?? $pref->email_on_task_assigned ?? true);
+            $pref->email_on_task_status_change = (bool) ($prefValidated['email_on_task_status_change'] ?? $pref->email_on_task_status_change ?? true);
+            $pref->email_reminders = (bool) ($prefValidated['email_reminders'] ?? $pref->email_reminders ?? true);
+            $pref->digest_frequency = $prefValidated['digest_frequency'] ?? $pref->digest_frequency ?? 'none';
+                $pref->digest_time = $prefValidated['digest_time'] ?? $pref->digest_time;
+                $pref->timezone = $prefValidated['timezone'] ?? $pref->timezone;
+                $pref->digest_day = $prefValidated['digest_day'] ?? $pref->digest_day;
+                $pref->email_on_team_invitation = (bool) ($prefValidated['email_on_team_invitation'] ?? $pref->email_on_team_invitation ?? true);
+                $pref->email_on_srs_update = (bool) ($prefValidated['email_on_srs_update'] ?? $pref->email_on_srs_update ?? true);
+            $pref->save();
         });
 
         return redirect()
@@ -386,5 +426,25 @@ class ProfileController extends Controller
             ->setOption('margin-left', 0);
 
         return $pdf->download('CV_' . $user->name . '_' . now()->format('Y-m-d') . '.pdf');
+    }
+
+    /**
+     * Return a preview of unsent digests for current user.
+     */
+    public function previewDigests()
+    {
+        $user = Auth::user();
+        $events = $user->notificationEvents()->where('sent', false)->orderBy('created_at', 'desc')->get();
+        return response()->json(['success' => true, 'data' => $events]);
+    }
+
+    /**
+     * Return digest history for user.
+     */
+    public function digestHistory()
+    {
+        $user = Auth::user();
+        $events = $user->notificationEvents()->where('sent', true)->orderBy('updated_at', 'desc')->limit(50)->get();
+        return response()->json(['success' => true, 'data' => $events]);
     }
 }

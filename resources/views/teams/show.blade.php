@@ -41,15 +41,34 @@
                                         </td>
                                         @can('update', $team)
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            @if($member->id !== Auth::id())
-                                                <form action="{{ route('teams.assignRole', [$team, $member]) }}" method="POST" class="inline-flex items-center">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <select name="role" onchange="this.form.submit()" class="text-xs border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                                                        <option value="Member" {{ $member->pivot->role === 'Member' ? 'selected' : '' }}>Member</option>
-                                                        <option value="Admin" {{ $member->pivot->role === 'Admin' ? 'selected' : '' }}>Admin</option>
-                                                    </select>
-                                                </form>
+                                            @if($member->id !== Auth::id() && $member->pivot->role !== 'Owner')
+                                                <div class="flex items-center gap-2">
+                                                    <form action="{{ route('teams.assignRole', [$team, $member]) }}" method="POST" class="inline-flex items-center gap-2">
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        <select name="role" onchange="this.form.submit()" class="text-xs border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                                            <option value="Member" {{ $member->pivot->role === 'Member' ? 'selected' : '' }}>Member</option>
+                                                            <option value="Admin" {{ $member->pivot->role === 'Admin' ? 'selected' : '' }}>Admin</option>
+                                                        </select>
+                                                        @if(isset($roles) && $roles->count())
+                                                            <select name="role_id" onchange="this.form.submit()" class="text-xs border-gray-300 rounded-md shadow-sm">
+                                                                <option value="">-- Role --</option>
+                                                                @foreach($roles as $role)
+                                                                    <option value="{{ $role->id }}" {{ ($member->pivot->role_id ?? '') == $role->id ? 'selected' : '' }}>{{ $role->name }}</option>
+                                                                @endforeach
+                                                            </select>
+                                                        @endif
+                                                    </form>
+                                                    <form action="{{ route('teams.removeMember', [$team, $member]) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to remove this member?');">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="text-red-600 hover:text-red-800" title="Remove member">
+                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                            </svg>
+                                                        </button>
+                                                    </form>
+                                                </div>
                                             @endif
                                         </td>
                                         @endcan
@@ -174,6 +193,35 @@
                     }
                 });
             </script>
+            @endcan
+
+            @can('update', $team)
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Pending Invitations</h3>
+                    @if(isset($pendingInvitations) && $pendingInvitations->count())
+                        <ul class="space-y-2">
+                            @foreach($pendingInvitations as $inv)
+                                <li class="flex items-center justify-between border border-gray-200 rounded px-4 py-2">
+                                    <div>
+                                        <div class="font-medium text-gray-900">{{ $inv->email }}</div>
+                                        <div class="text-sm text-gray-500">Invited by {{ $inv->inviter ? $inv->inviter->name : 'Unknown' }} — {{ $inv->created_at->diffForHumans() }}</div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <form method="POST" action="{{ route('teams.invitations.cancel', [$team, $inv]) }}">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="px-3 py-1 bg-red-100 text-red-700 rounded text-sm">Cancel</button>
+                                        </form>
+                                    </div>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @else
+                        <div class="text-sm text-gray-500">No pending invitations.</div>
+                    @endif
+                </div>
+            </div>
             @endcan
 
         </div>

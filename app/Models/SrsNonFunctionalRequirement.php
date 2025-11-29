@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class SrsNonFunctionalRequirement extends Model
 {
@@ -22,6 +23,7 @@ class SrsNonFunctionalRequirement extends Model
         'source',
         'priority',
         'status',
+        'implementation_status',
         'order',
     ];
 
@@ -39,6 +41,17 @@ class SrsNonFunctionalRequirement extends Model
         'compatibility' => 'Compatibility',
         'compliance' => 'Compliance',
         'other' => 'Other',
+    ];
+
+    /**
+     * Available implementation statuses.
+     */
+    public const IMPLEMENTATION_STATUSES = [
+        'listed' => 'Listed',
+        'work_in_progress' => 'Work in Progress',
+        'completed' => 'Completed',
+        'compromised' => 'Compromised',
+        'under_maintenance' => 'Under Maintenance',
     ];
 
     /**
@@ -63,6 +76,19 @@ class SrsNonFunctionalRequirement extends Model
     public function children(): HasMany
     {
         return $this->hasMany(SrsNonFunctionalRequirement::class, 'parent_id')->orderBy('order');
+    }
+
+    public function roleMappings(): MorphMany
+    {
+        return $this->morphMany(\App\Models\RoleRequirementMapping::class, 'requirement');
+    }
+
+    /**
+     * Get tasks linked to this requirement.
+     */
+    public function tasks(): MorphMany
+    {
+        return $this->morphMany(Task::class, 'requirement');
     }
 
     /**
@@ -95,5 +121,13 @@ class SrsNonFunctionalRequirement extends Model
     public function getCategoryLabelAttribute(): string
     {
         return self::CATEGORIES[$this->category] ?? $this->category;
+    }
+
+    /**
+     * Get the implementation status label.
+     */
+    public function getImplementationStatusLabelAttribute(): string
+    {
+        return self::IMPLEMENTATION_STATUSES[$this->implementation_status] ?? $this->implementation_status;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Invitation;
 use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -39,10 +40,21 @@ class DashboardController extends Controller
         // Recent SRS documents only
         $recentSrs = $user->srsDocuments()->latest()->take(6)->get();
 
+        // Pending invitations for the current user
+        $pendingInvitations = Invitation::where('email', $user->email)
+            ->where('status', 'pending')
+            ->where(function ($q) {
+                $q->whereNull('expires_at')
+                  ->orWhere('expires_at', '>', now());
+            })
+            ->with(['team', 'inviter'])
+            ->latest()
+            ->get();
+
         return view('dashboard', compact(
             'projects', 'totalProjects', 'activeProjects', 'completedProjects',
             'teams', 'teamsCount', 'tasksAssigned', 'openTasksCount', 'upcomingTasks',
-            'recentSrs'
+            'recentSrs', 'pendingInvitations'
         ));
     }
 }

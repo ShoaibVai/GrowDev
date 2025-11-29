@@ -9,8 +9,10 @@
         <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
             <form method="POST" action="{{ route('documentation.srs.store') }}" class="space-y-8">
                 @csrf
-                @php($projectOptions = $projects ?? collect())
-                @php($prefilledProjectId = old('project_id', $selectedProjectId ?? null))
+                @php
+                    $projectOptions = $projects ?? collect();
+                    $prefilledProjectId = old('project_id', $selectedProjectId ?? null);
+                @endphp
 
                 <!-- Document Header -->
                 <div class="bg-white rounded-lg shadow-md p-8">

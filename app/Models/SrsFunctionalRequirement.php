@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class SrsFunctionalRequirement extends Model
 {
@@ -19,12 +20,24 @@ class SrsFunctionalRequirement extends Model
         'source',
         'priority',
         'status',
+        'implementation_status',
         'ux_considerations',
         'order',
     ];
 
     protected $casts = [
         'ux_considerations' => 'array',
+    ];
+
+    /**
+     * Available implementation statuses.
+     */
+    public const IMPLEMENTATION_STATUSES = [
+        'listed' => 'Listed',
+        'work_in_progress' => 'Work in Progress',
+        'completed' => 'Completed',
+        'compromised' => 'Compromised',
+        'under_maintenance' => 'Under Maintenance',
     ];
 
     /**
@@ -51,6 +64,19 @@ class SrsFunctionalRequirement extends Model
         return $this->hasMany(SrsFunctionalRequirement::class, 'parent_id')->orderBy('order');
     }
 
+    public function roleMappings(): MorphMany
+    {
+        return $this->morphMany(\App\Models\RoleRequirementMapping::class, 'requirement');
+    }
+
+    /**
+     * Get tasks linked to this requirement.
+     */
+    public function tasks(): MorphMany
+    {
+        return $this->morphMany(Task::class, 'requirement');
+    }
+
     /**
      * Get all descendants recursively.
      */
@@ -73,5 +99,13 @@ class SrsFunctionalRequirement extends Model
     public function getDepthAttribute(): int
     {
         return count(explode('.', $this->section_number)) - 1;
+    }
+
+    /**
+     * Get the implementation status label.
+     */
+    public function getImplementationStatusLabelAttribute(): string
+    {
+        return self::IMPLEMENTATION_STATUSES[$this->implementation_status] ?? $this->implementation_status;
     }
 }

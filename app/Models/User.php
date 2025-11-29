@@ -71,6 +71,22 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Team::class)->withPivot('role')->withTimestamps();
     }
+    
+    /**
+     * Get the notification preference for the user.
+     */
+    public function notificationPreference(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(\App\Models\NotificationPreference::class);
+    }
+    
+    /**
+     * Get the notification events for the user.
+     */
+    public function notificationEvents(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Models\NotificationEvent::class);
+    }
 
     /**
      * Get the teams the user owns.

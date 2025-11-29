@@ -93,6 +93,19 @@
                    placeholder="Who requested this?"
                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
         </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Assigned Roles</label>
+            @if(isset($roles) && $roles->count())
+                <select name="non_functional_requirements[{{ $index }}][roles][]" multiple class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm">
+                    @foreach($roles as $role)
+                        @php $selectedRoles = $req->roleMappings->pluck('role_id')->toArray() ?? []; @endphp
+                        <option value="{{ $role->id }}" @selected(in_array($role->id, $selectedRoles))>{{ $role->name }}</option>
+                    @endforeach
+                </select>
+            @else
+                <div class="text-xs text-gray-400">No roles available for this project.</div>
+            @endif
+        </div>
     </div>
 
     <div class="children-container space-y-4 mt-4">
