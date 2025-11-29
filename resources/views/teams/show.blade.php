@@ -134,7 +134,7 @@
                     }
                     
                     searchTimeout = setTimeout(() => {
-                        fetch(`/api/users/search?q=${encodeURIComponent(query)}&exclude[]=${existingMembers.join('&exclude[]=')}`, {
+                        fetch(`/web-api/users/search?q=${encodeURIComponent(query)}&exclude[]=${existingMembers.join('&exclude[]=')}`, {
                             headers: {
                                 'Accept': 'application/json',
                                 'X-CSRF-TOKEN': '{{ csrf_token() }}'

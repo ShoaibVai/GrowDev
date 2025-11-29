@@ -96,12 +96,41 @@ class TaskController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'status' => 'required|in:To Do,In Progress,Review,Done',
+            'priority' => 'nullable|in:Low,Medium,High,Critical',
+            'assigned_to' => 'nullable|exists:users,id',
+            'due_date' => 'nullable|date',
+            'requirement_type' => 'nullable|in:functional,non_functional',
+            'requirement_id' => 'nullable|integer',
         ]);
-
 
         $oldStatus = $task->status;
         $oldAssignee = $task->assigned_to;
-        $task->update($request->only(['title','status','priority','assigned_to','due_date']));
+        
+        // Handle requirement update
+        $requirementType = null;
+        $requirementId = null;
+        $requirement = null;
+        
+        if ($request->filled('requirement_id') && $request->filled('requirement_type')) {
+            if ($request->requirement_type === 'functional') {
+                $requirementType = \App\Models\SrsFunctionalRequirement::class;
+                $requirement = \App\Models\SrsFunctionalRequirement::find($request->requirement_id);
+            } else {
+                $requirementType = \App\Models\SrsNonFunctionalRequirement::class;
+                $requirement = \App\Models\SrsNonFunctionalRequirement::find($request->requirement_id);
+            }
+            $requirementId = $request->requirement_id;
+        }
+        
+        $task->update([
+            'title' => $request->title,
+            'status' => $request->status,
+            'priority' => $request->priority ?? $task->priority,
+            'assigned_to' => $request->has('assigned_to') ? $request->assigned_to : $task->assigned_to,
+            'due_date' => $request->has('due_date') ? $request->due_date : $task->due_date,
+            'requirement_type' => $request->has('requirement_type') ? $requirementType : $task->requirement_type,
+            'requirement_id' => $request->has('requirement_id') ? $requirementId : $task->requirement_id,
+        ]);
 
         // Send status change notification if status changed
         // Status change notifications
@@ -132,12 +161,22 @@ class TaskController extends Controller
                 $pref = $newAssignee->notificationPreference;
                 $allowEmail = $pref ? (bool) $pref->email_on_task_assigned : true;
                 if ($allowEmail) {
-                    $newAssignee->notify(new \App\Notifications\TaskAssigned($task));
+                    $newAssignee->notify(new \App\Notifications\TaskAssigned($task, $requirement));
                 } else {
                     NotificationEvent::create([
                         'user_id' => $newAssignee->id,
                         'event_type' => 'task_assigned',
-                        'payload' => ['task_id' => $task->id, 'project_id' => $task->project_id, 'assigned_by' => auth()->id()],
+                        'payload' => [
+                            'task_id' => $task->id, 
+                            'project_id' => $task->project_id, 
+                            'assigned_by' => auth()->id(),
+                            'requirement' => $requirement ? [
+                                'type' => $request->requirement_type,
+                                'id' => $requirement->id,
+                                'title' => $requirement->title,
+                                'section' => $requirement->section_number,
+                            ] : null,
+                        ],
                         'sent' => false,
                     ]);
                 }

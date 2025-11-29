@@ -23,8 +23,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile/cv-pdf', [ProfileController::class, 'generatePDF'])->name('profile.cv-pdf');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
-    // User search API (for AJAX calls from web views)
-    Route::get('/api/users/search', [\App\Http\Controllers\Api\UserSearchController::class, 'search'])->name('users.search');
+    // User search API (for AJAX calls from web views - uses session auth)
+    Route::get('/web-api/users/search', [\App\Http\Controllers\Api\UserSearchController::class, 'search'])->name('web.users.search');
     
     // Project routes
     Route::resource('projects', ProjectController::class);

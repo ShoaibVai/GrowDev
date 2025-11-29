@@ -299,6 +299,13 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <div class="flex items-center gap-2">
+                                                <button type="button" onclick="openEditTaskModal({{ $task->id }}, '{{ addslashes($task->title) }}', '{{ $task->priority }}', '{{ $task->status }}', {{ $task->assigned_to ?? 'null' }}, '{{ $task->assignee ? addslashes($task->assignee->name) : '' }}', '{{ $task->assignee ? addslashes($task->assignee->email) : '' }}', '{{ $task->due_date ? $task->due_date->format('Y-m-d') : '' }}', '{{ $task->requirement_type === \App\Models\SrsFunctionalRequirement::class ? 'functional' : ($task->requirement_type === \App\Models\SrsNonFunctionalRequirement::class ? 'non_functional' : '') }}', {{ $task->requirement_id ?? 'null' }})" 
+                                                        class="text-indigo-500 hover:text-indigo-700 p-1 rounded hover:bg-indigo-50 transition" title="Edit task">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                    </svg>
+                                                </button>
+
                                                 <form action="{{ route('tasks.update', $task) }}" method="POST" class="inline-flex items-center gap-1">
                                                     @csrf
                                                     @method('PUT')
@@ -367,7 +374,7 @@
                     @if($srsDocument && ($allFunctionalReqs->count() || $allNonFunctionalReqs->count()))
                     <div class="mb-4">
                         <label class="block text-gray-700 text-sm font-bold mb-2">Link to Requirement</label>
-                        <select name="requirement_combined" id="requirementSelect" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" onchange="updateRequirementFields()">
+                        <select name="requirement_combined" id="requirementSelect" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" onchange="updateRequirementFields('create')">
                             <option value="">— No requirement —</option>
                             @if($allFunctionalReqs->count())
                                 <optgroup label="Functional Requirements">
@@ -407,7 +414,87 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+
+    <!-- Edit Task Modal -->
+    <div id="editTaskModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-[480px] shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 text-center mb-4">Edit Task</h3>
+                <form id="editTaskForm" method="POST" class="text-left">
+                    @csrf
+                    @method('PUT')
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Title</label>
+                        <input type="text" name="title" id="editTaskTitle" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Priority</label>
+                            <select name="priority" id="editTaskPriority" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                <option value="Low">Low</option>
+                                <option value="Medium">Medium</option>
+                                <option value="High">High</option>
+                                <option value="Critical">Critical</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Status</label>
+                            <select name="status" id="editTaskStatus" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                <option value="To Do">To Do</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Review">Review</option>
+                                <option value="Done">Done</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Due Date</label>
+                        <input type="date" name="due_date" id="editTaskDueDate" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    </div>
+                    
+                    <!-- Requirement Selection for Edit -->
+                    @if($srsDocument && ($allFunctionalReqs->count() || $allNonFunctionalReqs->count()))
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Link to Requirement</label>
+                        <select name="requirement_combined" id="editRequirementSelect" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" onchange="updateRequirementFields('edit')">
+                            <option value="">— No requirement —</option>
+                            @if($allFunctionalReqs->count())
+                                <optgroup label="Functional Requirements">
+                                    @foreach($allFunctionalReqs as $req)
+                                        <option value="functional:{{ $req->id }}">{{ $req->section_number }} - {{ Str::limit($req->title, 40) }}</option>
+                                    @endforeach
+                                </optgroup>
+                            @endif
+                            @if($allNonFunctionalReqs->count())
+                                <optgroup label="Non-Functional Requirements">
+                                    @foreach($allNonFunctionalReqs as $req)
+                                        <option value="non_functional:{{ $req->id }}">{{ $req->section_number }} - {{ Str::limit($req->title, 40) }}</option>
+                                    @endforeach
+                                </optgroup>
+                            @endif
+                        </select>
+                        <input type="hidden" name="requirement_type" id="editRequirementType">
+                        <input type="hidden" name="requirement_id" id="editRequirementId">
+                    </div>
+                    @endif
+
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Assign To</label>
+                        <div class="relative">
+                            <input type="text" id="editAssignSearch" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Search users by name or email..." autocomplete="off">
+                            <input type="hidden" name="assigned_to" id="editAssignedToId">
+                            <div id="editAssignResults" class="absolute z-10 w-full bg-white border border-gray-200 rounded-md shadow-lg mt-1 hidden max-h-48 overflow-y-auto"></div>
+                        </div>
+                        <small class="text-xs text-gray-500">Type to search or clear to unassign.</small>
+                    </div>
+                    <div class="flex justify-end gap-2">
+                        <button type="button" onclick="document.getElementById('editTaskModal').classList.add('hidden')" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Cancel</button>
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
 @push('scripts')
 <script>
@@ -429,11 +516,12 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-// Requirement field sync
-function updateRequirementFields() {
-    const select = document.getElementById('requirementSelect');
-    const typeInput = document.getElementById('requirementType');
-    const idInput = document.getElementById('requirementId');
+// Requirement field sync for both create and edit modals
+function updateRequirementFields(mode = 'create') {
+    const prefix = mode === 'edit' ? 'edit' : '';
+    const select = document.getElementById(prefix ? 'editRequirementSelect' : 'requirementSelect');
+    const typeInput = document.getElementById(prefix ? 'editRequirementType' : 'requirementType');
+    const idInput = document.getElementById(prefix ? 'editRequirementId' : 'requirementId');
     
     if (select && select.value) {
         const [type, id] = select.value.split(':');
@@ -445,41 +533,117 @@ function updateRequirementFields() {
     }
 }
 
-// Task assign search
-document.addEventListener('DOMContentLoaded', function() {
-    const assignInput = document.getElementById('assignSearch');
-    const assignResults = document.getElementById('assignResults');
-    const assignedToId = document.getElementById('assignedToId');
-    let assignTimeout;
-    if (assignInput) {
-        assignInput.addEventListener('input', function() {
-            clearTimeout(assignTimeout);
-            const q = this.value.trim();
-            if (q.length < 2) { assignResults.classList.add('hidden'); return; }
-            assignTimeout = setTimeout(() => {
-                fetch(`/api/users/search?q=${encodeURIComponent(q)}`, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.users && data.users.length > 0) {
-                        assignResults.innerHTML = data.users.map(u => `<div class="px-3 py-2 hover:bg-indigo-50 cursor-pointer" onclick="selectAssignUser(${u.id}, '${u.name}', '${u.email}')">${u.name} <span class='text-xs text-gray-500'>${u.email}</span></div>`).join('');
-                        assignResults.classList.remove('hidden');
-                    } else {
-                        assignResults.innerHTML = '<div class="px-3 py-2 text-gray-500">No users found</div>';
-                        assignResults.classList.remove('hidden');
-                    }
-                }).catch(() => {
-                    assignResults.innerHTML = '<div class="px-3 py-2 text-red-500">Search error</div>';
-                    assignResults.classList.remove('hidden');
-                });
-            }, 250);
-        });
+// Open edit task modal
+function openEditTaskModal(taskId, title, priority, status, assignedTo, assigneeName, assigneeEmail, dueDate, reqType, reqId) {
+    const form = document.getElementById('editTaskForm');
+    form.action = `/tasks/${taskId}`;
+    
+    document.getElementById('editTaskTitle').value = title;
+    document.getElementById('editTaskPriority').value = priority;
+    document.getElementById('editTaskStatus').value = status;
+    document.getElementById('editTaskDueDate').value = dueDate || '';
+    
+    // Handle requirement
+    const reqSelect = document.getElementById('editRequirementSelect');
+    if (reqSelect) {
+        if (reqType && reqId) {
+            reqSelect.value = `${reqType}:${reqId}`;
+        } else {
+            reqSelect.value = '';
+        }
+        updateRequirementFields('edit');
     }
+    
+    // Handle assignee
+    const editAssignedToId = document.getElementById('editAssignedToId');
+    const editAssignSearch = document.getElementById('editAssignSearch');
+    if (assignedTo && assigneeName) {
+        editAssignedToId.value = assignedTo;
+        editAssignSearch.value = `${assigneeName} (${assigneeEmail})`;
+    } else {
+        editAssignedToId.value = '';
+        editAssignSearch.value = '';
+    }
+    
+    document.getElementById('editTaskModal').classList.remove('hidden');
+}
 
-    window.selectAssignUser = (id, name, email) => {
-        assignedToId.value = id;
-        assignInput.value = `${name} (${email})`;
-        assignResults.classList.add('hidden');
-    }
+// User search helper - returns a function that handles search for any input/results pair
+function setupUserSearch(inputId, resultsId, hiddenId) {
+    const input = document.getElementById(inputId);
+    const results = document.getElementById(resultsId);
+    const hidden = document.getElementById(hiddenId);
+    let timeout;
+    
+    if (!input || !results || !hidden) return;
+    
+    input.addEventListener('input', function() {
+        clearTimeout(timeout);
+        const q = this.value.trim();
+        if (q.length < 2) { 
+            results.classList.add('hidden'); 
+            return; 
+        }
+        timeout = setTimeout(() => {
+            fetch(`/web-api/users/search?q=${encodeURIComponent(q)}`, { 
+                headers: { 'Accept': 'application/json' }, 
+                credentials: 'same-origin' 
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.users && data.users.length > 0) {
+                    results.innerHTML = data.users.map(u => {
+                        // Escape the data for safe HTML embedding
+                        const safeData = JSON.stringify({id: u.id, name: u.name, email: u.email});
+                        return `<div class="px-3 py-2 hover:bg-indigo-50 cursor-pointer user-search-result" data-user='${safeData.replace(/'/g, "&#39;")}'>${escapeHtml(u.name)} <span class='text-xs text-gray-500'>${escapeHtml(u.email)}</span></div>`;
+                    }).join('');
+                    
+                    // Add click handlers
+                    results.querySelectorAll('.user-search-result').forEach(el => {
+                        el.addEventListener('click', function() {
+                            const userData = JSON.parse(this.dataset.user);
+                            hidden.value = userData.id;
+                            input.value = `${userData.name} (${userData.email})`;
+                            results.classList.add('hidden');
+                        });
+                    });
+                    
+                    results.classList.remove('hidden');
+                } else {
+                    results.innerHTML = '<div class="px-3 py-2 text-gray-500">No users found</div>';
+                    results.classList.remove('hidden');
+                }
+            }).catch(() => {
+                results.innerHTML = '<div class="px-3 py-2 text-red-500">Search error</div>';
+                results.classList.remove('hidden');
+            });
+        }, 250);
+    });
+    
+    // Clear hidden value when user clears input
+    input.addEventListener('blur', function() {
+        setTimeout(() => {
+            if (!this.value.trim()) {
+                hidden.value = '';
+            }
+            results.classList.add('hidden');
+        }, 200);
+    });
+}
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Initialize user search for both modals
+document.addEventListener('DOMContentLoaded', function() {
+    setupUserSearch('assignSearch', 'assignResults', 'assignedToId');
+    setupUserSearch('editAssignSearch', 'editAssignResults', 'editAssignedToId');
 });
 </script>
 @endpush
+
+</x-app-layout>
