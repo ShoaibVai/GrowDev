@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\TaskStatusRequest;
 use App\Models\User;
 use App\Models\NotificationEvent;
 use Illuminate\Http\Request;
@@ -12,6 +13,165 @@ use App\Events\TaskUpdated;
 
 class TaskController extends Controller
 {
+    /**
+     * Display the task detail page.
+     * Accessible by project owner and task assignee.
+     */
+    public function show(Task $task)
+    {
+        $user = Auth::user();
+        
+        // Check if user is owner or assignee
+        if (!$task->isOwnedBy($user) && !$task->isAssignedTo($user)) {
+            abort(403, 'You do not have access to this task.');
+        }
+
+        $task->load([
+            'project.user',
+            'assignee',
+            'creator',
+            'requirement',
+            'pendingStatusRequest.requester',
+            'statusRequests' => fn($q) => $q->latest()->limit(10),
+        ]);
+
+        // Get the SRS document for this project
+        $srsDocument = $task->project->srsDocuments()->with([
+            'functionalRequirements',
+            'nonFunctionalRequirements',
+        ])->first();
+
+        // Check if current user is the project owner
+        $isOwner = $task->isOwnedBy($user);
+        $isAssignee = $task->isAssignedTo($user);
+
+        // Get pending status requests for the owner to review
+        $pendingRequests = [];
+        if ($isOwner) {
+            $pendingRequests = TaskStatusRequest::whereHas('task', function($q) use ($task) {
+                $q->where('project_id', $task->project_id);
+            })->where('approval_status', 'pending')
+            ->with(['task', 'requester'])
+            ->latest()
+            ->get();
+        }
+
+        return view('tasks.show', compact(
+            'task',
+            'srsDocument',
+            'isOwner',
+            'isAssignee',
+            'pendingRequests'
+        ));
+    }
+
+    /**
+     * Request a status change (for assignees).
+     */
+    public function requestStatusChange(Request $request, Task $task)
+    {
+        $user = Auth::user();
+
+        // Only assignees can request status changes
+        if (!$task->isAssignedTo($user)) {
+            abort(403, 'Only the task assignee can request status changes.');
+        }
+
+        // Check if there's already a pending request
+        if ($task->pendingStatusRequest) {
+            return back()->with('error', 'There is already a pending status change request for this task.');
+        }
+
+        $request->validate([
+            'requested_status' => 'required|in:To Do,In Progress,Review,Done',
+            'notes' => 'nullable|string|max:1000',
+        ]);
+
+        // If requesting same status, reject
+        if ($task->status === $request->requested_status) {
+            return back()->with('error', 'Task is already in the requested status.');
+        }
+
+        $statusRequest = TaskStatusRequest::create([
+            'task_id' => $task->id,
+            'requested_by' => $user->id,
+            'current_status' => $task->status,
+            'requested_status' => $request->requested_status,
+            'notes' => $request->notes,
+        ]);
+
+        // Notify project owner
+        $owner = $task->project->user;
+        if ($owner) {
+            $owner->notify(new \App\Notifications\TaskStatusChangeRequested($statusRequest));
+        }
+
+        return back()->with('success', 'Status change request submitted. Waiting for owner approval.');
+    }
+
+    /**
+     * Approve or reject a status change request (for project owners).
+     */
+    public function reviewStatusRequest(Request $request, TaskStatusRequest $statusRequest)
+    {
+        $user = Auth::user();
+        $task = $statusRequest->task;
+
+        // Only project owner can review
+        if (!$task->isOwnedBy($user)) {
+            abort(403, 'Only the project owner can review status change requests.');
+        }
+
+        // Check if already reviewed
+        if (!$statusRequest->isPending()) {
+            return back()->with('error', 'This request has already been reviewed.');
+        }
+
+        $request->validate([
+            'action' => 'required|in:approve,reject',
+            'review_notes' => 'nullable|string|max:1000',
+        ]);
+
+        $statusRequest->update([
+            'approval_status' => $request->action === 'approve' ? 'approved' : 'rejected',
+            'reviewed_by' => $user->id,
+            'review_notes' => $request->review_notes,
+            'reviewed_at' => now(),
+        ]);
+
+        if ($request->action === 'approve') {
+            $oldStatus = $task->status;
+            $task->update(['status' => $statusRequest->requested_status]);
+
+            // Log activity
+            \App\Models\TaskActivity::create([
+                'task_id' => $task->id,
+                'user_id' => $user->id,
+                'action' => 'status_changed',
+                'old_status' => $oldStatus,
+                'new_status' => $task->status,
+                'notes' => 'Approved status change request',
+            ]);
+
+            // Broadcast update
+            event(new TaskUpdated($task));
+
+            // Notify assignee of approval
+            if ($task->assignee) {
+                $task->assignee->notify(new \App\Notifications\TaskStatusRequestReviewed($statusRequest, 'approved'));
+            }
+
+            return back()->with('success', 'Status change approved. Task status updated.');
+        } else {
+            // Notify assignee of rejection
+            if ($task->assignee) {
+                $task->assignee->notify(new \App\Notifications\TaskStatusRequestReviewed($statusRequest, 'rejected'));
+            }
+
+            return back()->with('success', 'Status change request rejected.');
+        }
+    }
+
     public function store(Request $request, Project $project)
     {
         $this->authorize('update', $project);
@@ -203,5 +363,46 @@ class TaskController extends Controller
         $this->authorize('update', $task->project);
         $task->delete();
         return back()->with('success', 'Task deleted successfully.');
+    }
+
+    /**
+     * Display all tasks assigned to the current user.
+     */
+    public function myTasks(Request $request)
+    {
+        $user = Auth::user();
+        
+        $query = Task::where('assigned_to', $user->id)
+            ->with(['project', 'requirement', 'pendingStatusRequest']);
+
+        // Filter by status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter by priority
+        if ($request->filled('priority')) {
+            $query->where('priority', $request->priority);
+        }
+
+        // Sort
+        $sort = $request->get('sort', 'due_date');
+        $direction = $request->get('direction', 'asc');
+        
+        if ($sort === 'due_date') {
+            $query->orderByRaw('due_date IS NULL, due_date ' . $direction);
+        } else {
+            $query->orderBy($sort, $direction);
+        }
+
+        $tasks = $query->paginate(15);
+
+        // Get status counts for filters
+        $statusCounts = Task::where('assigned_to', $user->id)
+            ->selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
+        return view('tasks.my-tasks', compact('tasks', 'statusCounts'));
     }
 }

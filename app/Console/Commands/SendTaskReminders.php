@@ -16,13 +16,12 @@ class SendTaskReminders extends Command
 
     public function handle(): int
     {
-        $now = Carbon::now();
-        $soon = $now->copy()->addDay();
-        $startDate = $now->toDateString();
-        $endDate = $soon->toDateString();
+        $now = Carbon::now()->startOfDay();
+        $soon = $now->copy()->addDay()->endOfDay();
 
         $tasks = Task::whereNotNull('due_date')
-            ->whereBetween('due_date', [$startDate, $endDate])
+            ->whereDate('due_date', '>=', $now->toDateString())
+            ->whereDate('due_date', '<=', $soon->toDateString())
             ->whereIn('status', ['To Do', 'In Progress'])
             ->get();
 
@@ -33,14 +32,13 @@ class SendTaskReminders extends Command
                 if ($allowEmail) {
                     $task->assignee->notify(new TaskReminder($task));
                 } else {
-                    if ($pref && $pref->digest_frequency && $pref->digest_frequency !== 'none') {
-                        NotificationEvent::create([
-                            'user_id' => $task->assignee->id,
-                            'event_type' => 'task_reminder',
-                            'payload' => ['task_id' => $task->id, 'due_date' => $task->due_date],
-                            'sent' => false,
-                        ]);
-                    }
+                    // Store for digest even if digest_frequency is not set (will be included in next digest)
+                    NotificationEvent::create([
+                        'user_id' => $task->assignee->id,
+                        'event_type' => 'task_reminder',
+                        'payload' => ['task_id' => $task->id, 'due_date' => $task->due_date],
+                        'sent' => false,
+                    ]);
                 }
             }
         }

@@ -1,82 +1,19 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            📋 {{ __('Create SRS Document') }}
-        </h2>
+        <div class="flex justify-between items-center">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                📋 {{ __('Create SRS Document') }}
+            </h2>
+        </div>
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
-            <form method="POST" action="{{ route('documentation.srs.store') }}" class="space-y-8">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <form method="POST" action="{{ route('documentation.srs.store') }}" class="space-y-8" id="srs-form">
                 @csrf
                 @php
                     $projectOptions = $projects ?? collect();
-                    $prefilledProjectId = old('project_id', $selectedProjectId ?? null);
                 @endphp
-
-                <!-- Document Header -->
-                <div class="bg-white rounded-lg shadow-md p-8">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-6 border-b pb-4">
-                        📄 Document Header
-                    </h2>
-                    <div class="mb-6">
-                        <label for="project_id" class="block text-sm font-medium text-gray-700 mb-2">Linked Project *</label>
-                        @if($projectOptions->isEmpty())
-                            <div class="p-4 border border-amber-300 bg-amber-50 rounded-lg text-sm text-amber-900">
-                                <p class="font-semibold mb-1">No projects found.</p>
-                                <p>Create a project first so we can attach this SRS. <a href="{{ route('projects.create') }}" class="text-amber-800 underline font-medium">Create Project</a></p>
-                            </div>
-                        @else
-                            <select id="project_id" name="project_id" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                                <option value="">Select a project</option>
-                                @foreach($projectOptions as $project)
-                                    <option value="{{ $project->id }}" @selected($prefilledProjectId == $project->id)>
-                                        {{ $project->name }} @if($project->status) — {{ ucfirst(str_replace('_', ' ', $project->status)) }} @endif
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('project_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                            <p class="text-xs text-gray-500 mt-1">After saving, you can manage this project’s documentation directly from its project page.</p>
-                        @endif
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="md:col-span-2">
-                            <label for="title" class="block text-sm font-medium text-gray-700 mb-2">Project Name *</label>
-                            <input type="text" id="title" name="title" required 
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                   placeholder="e.g., E-Commerce Platform"
-                                   value="{{ old('title') }}">
-                            @error('title') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                        </div>
-                        <div>
-                            <label for="version" class="block text-sm font-medium text-gray-700 mb-2">Version</label>
-                            <input type="text" id="version" name="version" 
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                   value="{{ old('version', '1.0') }}" placeholder="1.0">
-                        </div>
-                        <div>
-                            <label for="date" class="block text-sm font-medium text-gray-700 mb-2">Date</label>
-                            <input type="date" id="date" name="date" 
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                   value="{{ old('date', date('Y-m-d')) }}">
-                        </div>
-                        <div>
-                            <label for="authors" class="block text-sm font-medium text-gray-700 mb-2">Author(s)</label>
-                            <input type="text" id="authors" name="authors" 
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                   value="{{ old('authors', auth()->user()->name) }}" placeholder="Author Name">
-                        </div>
-                        <div>
-                            <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                            <select id="status" name="status" 
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                                <option value="draft" @selected(old('status') === 'draft')>Draft</option>
-                                <option value="review" @selected(old('status') === 'review')>In Review</option>
-                                <option value="approved" @selected(old('status') === 'approved')>Approved</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Section 1: Introduction -->
                 <div class="bg-white rounded-lg shadow-md p-8">
@@ -85,53 +22,89 @@
                     </h2>
 
                     <div class="mb-6">
+                        <label for="project_id" class="block text-sm font-medium text-gray-700 mb-2">Linked Project *</label>
+                        <select id="project_id" name="project_id" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            <option value="">Select a project</option>
+                            @foreach($projectOptions as $project)
+                                <option value="{{ $project->id }}" @selected(old('project_id', $selectedProjectId) == $project->id)>
+                                    {{ $project->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('project_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
+                                <span class="text-indigo-600 font-semibold">1.1</span> Document Title *
+                            </label>
+                            <input type="text" id="title" name="title" required value="{{ old('title') }}"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            @error('title') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="version" class="block text-sm font-medium text-gray-700 mb-2">Version</label>
+                                <input type="text" id="version" name="version" value="{{ old('version', '1.0') }}"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                                <select id="status" name="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                    <option value="draft" @selected(old('status', 'draft') === 'draft')>Draft</option>
+                                    <option value="review" @selected(old('status') === 'review')>Under Review</option>
+                                    <option value="approved" @selected(old('status') === 'approved')>Approved</option>
+                                    <option value="final" @selected(old('status') === 'final')>Final</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
                         <label for="purpose" class="block text-sm font-medium text-gray-700 mb-2">
-                            <span class="text-indigo-600 font-semibold">1.1</span> Purpose
+                            <span class="text-indigo-600 font-semibold">1.2</span> Purpose
                         </label>
                         <textarea id="purpose" name="purpose" rows="3"
-                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                  placeholder="Describe the purpose of this SRS document and the software product...">{{ old('purpose') }}</textarea>
-                        @error('purpose') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                  placeholder="Describe the purpose of this SRS document...">{{ old('purpose') }}</textarea>
                     </div>
 
                     <div class="mb-6">
                         <label for="document_conventions" class="block text-sm font-medium text-gray-700 mb-2">
-                            <span class="text-indigo-600 font-semibold">1.2</span> Document Conventions
+                            <span class="text-indigo-600 font-semibold">1.3</span> Document Conventions
                         </label>
-                        <textarea id="document_conventions" name="document_conventions" rows="3"
-                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                  placeholder="Describe any standards or typographical conventions used...">{{ old('document_conventions') }}</textarea>
-                        @error('document_conventions') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        <textarea id="document_conventions" name="document_conventions" rows="2"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                  placeholder="Standards or typographical conventions used...">{{ old('document_conventions') }}</textarea>
                     </div>
 
-                    <div class="mb-6">
-                        <label for="intended_audience" class="block text-sm font-medium text-gray-700 mb-2">
-                            <span class="text-indigo-600 font-semibold">1.3</span> Intended Audience and Reading Suggestions
-                        </label>
-                        <textarea id="intended_audience" name="intended_audience" rows="3"
-                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                  placeholder="List the different types of readers and suggest which sections are most relevant to each...">{{ old('intended_audience') }}</textarea>
-                        @error('intended_audience') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="intended_audience" class="block text-sm font-medium text-gray-700 mb-2">
+                                <span class="text-indigo-600 font-semibold">1.4</span> Intended Audience
+                            </label>
+                            <textarea id="intended_audience" name="intended_audience" rows="2"
+                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                      placeholder="Target readers and reading suggestions...">{{ old('intended_audience') }}</textarea>
+                        </div>
+                        <div>
+                            <label for="product_scope" class="block text-sm font-medium text-gray-700 mb-2">
+                                <span class="text-indigo-600 font-semibold">1.5</span> Product Scope
+                            </label>
+                            <textarea id="product_scope" name="product_scope" rows="2"
+                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                      placeholder="Software objectives and business goals...">{{ old('product_scope') }}</textarea>
+                        </div>
                     </div>
 
-                    <div class="mb-6">
-                        <label for="product_scope" class="block text-sm font-medium text-gray-700 mb-2">
-                            <span class="text-indigo-600 font-semibold">1.4</span> Product Scope
-                        </label>
-                        <textarea id="product_scope" name="product_scope" rows="3"
-                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                  placeholder="Provide a short description of the software, its objectives, and how it supports business goals...">{{ old('product_scope') }}</textarea>
-                        @error('product_scope') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                    </div>
-
-                    <div class="mb-6">
+                    <div class="mt-6">
                         <label for="references" class="block text-sm font-medium text-gray-700 mb-2">
-                            <span class="text-indigo-600 font-semibold">1.5</span> References
+                            <span class="text-indigo-600 font-semibold">1.6</span> References
                         </label>
-                        <textarea id="references" name="references" rows="3"
-                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                  placeholder="List any other documents or web addresses this SRS refers to...">{{ old('references') }}</textarea>
-                        @error('references') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        <textarea id="references" name="references" rows="2"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                  placeholder="Related documents and references...">{{ old('references') }}</textarea>
                     </div>
                 </div>
 
@@ -146,317 +119,489 @@
                             <span class="text-indigo-600 font-semibold">2.1</span> Product Description
                         </label>
                         <textarea id="description" name="description" rows="3"
-                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                  placeholder="Brief description of the product/project...">{{ old('description') }}</textarea>
-                        @error('description') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">{{ old('description') }}</textarea>
                     </div>
 
-                    <div class="mb-6">
-                        <label for="product_perspective" class="block text-sm font-medium text-gray-700 mb-2">
-                            <span class="text-indigo-600 font-semibold">2.2</span> Product Perspective
-                        </label>
-                        <textarea id="product_perspective" name="product_perspective" rows="3"
-                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                  placeholder="Describe how the product fits into the larger system context...">{{ old('product_perspective') }}</textarea>
-                        @error('product_perspective') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label for="product_perspective" class="block text-sm font-medium text-gray-700 mb-2">
+                                <span class="text-indigo-600 font-semibold">2.2</span> Product Perspective
+                            </label>
+                            <textarea id="product_perspective" name="product_perspective" rows="3"
+                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                      placeholder="How the product fits into larger context...">{{ old('product_perspective') }}</textarea>
+                        </div>
+                        <div>
+                            <label for="product_features" class="block text-sm font-medium text-gray-700 mb-2">
+                                <span class="text-indigo-600 font-semibold">2.3</span> Product Features
+                            </label>
+                            <textarea id="product_features" name="product_features" rows="3"
+                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                      placeholder="Major features and capabilities...">{{ old('product_features') }}</textarea>
+                        </div>
                     </div>
 
-                    <div class="mb-6">
-                        <label for="product_features" class="block text-sm font-medium text-gray-700 mb-2">
-                            <span class="text-indigo-600 font-semibold">2.3</span> Product Features
-                        </label>
-                        <textarea id="product_features" name="product_features" rows="3"
-                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                  placeholder="Summarize the major features and capabilities of the software...">{{ old('product_features') }}</textarea>
-                        @error('product_features') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label for="user_classes" class="block text-sm font-medium text-gray-700 mb-2">
+                                <span class="text-indigo-600 font-semibold">2.4</span> User Classes and Characteristics
+                            </label>
+                            <textarea id="user_classes" name="user_classes" rows="3"
+                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                      placeholder="User types and their characteristics...">{{ old('user_classes') }}</textarea>
+                        </div>
+                        <div>
+                            <label for="operating_environment" class="block text-sm font-medium text-gray-700 mb-2">
+                                <span class="text-indigo-600 font-semibold">2.5</span> Operating Environment
+                            </label>
+                            <textarea id="operating_environment" name="operating_environment" rows="3"
+                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                      placeholder="Hardware, OS, and platform requirements...">{{ old('operating_environment') }}</textarea>
+                        </div>
                     </div>
 
-                    <div class="mb-6">
-                        <label for="user_classes" class="block text-sm font-medium text-gray-700 mb-2">
-                            <span class="text-indigo-600 font-semibold">2.4</span> User Classes and Characteristics
-                        </label>
-                        <textarea id="user_classes" name="user_classes" rows="3"
-                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                  placeholder="Identify the various user classes that will use the system...">{{ old('user_classes') }}</textarea>
-                        @error('user_classes') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                    </div>
-
-                    <div class="mb-6">
-                        <label for="operating_environment" class="block text-sm font-medium text-gray-700 mb-2">
-                            <span class="text-indigo-600 font-semibold">2.5</span> Operating Environment
-                        </label>
-                        <textarea id="operating_environment" name="operating_environment" rows="3"
-                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                  placeholder="Describe the environment in which the software will operate...">{{ old('operating_environment') }}</textarea>
-                        @error('operating_environment') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                    </div>
-
-                    <div class="mb-6">
-                        <label for="design_constraints" class="block text-sm font-medium text-gray-700 mb-2">
-                            <span class="text-indigo-600 font-semibold">2.6</span> Design and Implementation Constraints
-                        </label>
-                        <textarea id="design_constraints" name="design_constraints" rows="3"
-                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                  placeholder="Describe any items that will limit developer options...">{{ old('design_constraints') }}</textarea>
-                        @error('design_constraints') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label for="design_constraints" class="block text-sm font-medium text-gray-700 mb-2">
+                                <span class="text-indigo-600 font-semibold">2.6</span> Design Constraints
+                            </label>
+                            <textarea id="design_constraints" name="design_constraints" rows="2"
+                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">{{ old('design_constraints') }}</textarea>
+                        </div>
                         <div>
                             <label for="constraints" class="block text-sm font-medium text-gray-700 mb-2">
                                 <span class="text-indigo-600 font-semibold">2.7</span> Constraints
                             </label>
-                            <textarea id="constraints" name="constraints" rows="3"
-                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                      placeholder="List any project constraints...">{{ old('constraints') }}</textarea>
-                            @error('constraints') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            <textarea id="constraints" name="constraints" rows="2"
+                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">{{ old('constraints') }}</textarea>
                         </div>
                         <div>
                             <label for="assumptions" class="block text-sm font-medium text-gray-700 mb-2">
-                                <span class="text-indigo-600 font-semibold">2.8</span> Assumptions and Dependencies
+                                <span class="text-indigo-600 font-semibold">2.8</span> Assumptions
                             </label>
-                            <textarea id="assumptions" name="assumptions" rows="3"
-                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                      placeholder="List any assumptions and dependencies...">{{ old('assumptions') }}</textarea>
-                            @error('assumptions') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            <textarea id="assumptions" name="assumptions" rows="2"
+                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">{{ old('assumptions') }}</textarea>
                         </div>
                     </div>
                 </div>
 
-                <!-- Section 3: Specific Requirements -->
+                <!-- Section 3: External Interface Requirements -->
                 <div class="bg-white rounded-lg shadow-md p-8">
                     <h2 class="text-2xl font-bold text-gray-900 mb-6 border-b pb-4">
-                        <span class="text-indigo-600">3.</span> Specific Requirements
+                        <span class="text-indigo-600">3.</span> External Interface Requirements
                     </h2>
-
-                    <!-- 3.1 Functional Requirements -->
-                    <div class="mb-8">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-semibold text-gray-800">
-                                <span class="text-indigo-600">3.1</span> Functional Requirements
-                            </h3>
-                            <button type="button" id="add-fr-btn" class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition text-sm font-medium flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-                                </svg>
-                                Add Functional Requirement
-                            </button>
-                        </div>
-                        <div id="fr-container" class="space-y-4">
-                            <!-- Dynamic FR rows will be added here -->
-                        </div>
-                    </div>
-
-                    <!-- 3.2 Non-Functional Requirements -->
-                    <div class="mb-8">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-semibold text-gray-800">
-                                <span class="text-indigo-600">3.2</span> Non-Functional Requirements
-                            </h3>
-                            <button type="button" id="add-nfr-btn" class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition text-sm font-medium flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-                                </svg>
-                                Add Non-Functional Requirement
-                            </button>
-                        </div>
-                        <div id="nfr-container" class="space-y-4">
-                            <!-- Dynamic NFR rows will be added here -->
-                        </div>
-                    </div>
-
-                    <!-- 3.3 External Interface Requirements -->
                     <div class="mb-6">
                         <label for="external_interfaces" class="block text-sm font-medium text-gray-700 mb-2">
-                            <span class="text-indigo-600 font-semibold">3.3</span> External Interface Requirements
+                            External Interfaces Description
                         </label>
                         <textarea id="external_interfaces" name="external_interfaces" rows="4"
-                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                                   placeholder="Describe user interfaces, hardware interfaces, software interfaces, and communication interfaces...">{{ old('external_interfaces') }}</textarea>
-                        @error('external_interfaces') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                     </div>
                 </div>
 
+                <!-- Section 4: Functional Requirements -->
+                <div class="bg-white rounded-lg shadow-md p-8">
+                    <div class="flex justify-between items-center mb-6 border-b pb-4">
+                        <h2 class="text-2xl font-bold text-gray-900">
+                            <span class="text-indigo-600">4.</span> Functional Requirements
+                        </h2>
+                        <button type="button" onclick="addRequirement('functional')" 
+                                class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            Add Requirement
+                        </button>
+                    </div>
 
+                    <p class="text-sm text-gray-600 mb-4 bg-blue-50 p-3 rounded-lg">
+                        💡 <strong>Hierarchical Numbering:</strong> Use section numbers like 4.1, 4.1.1, 4.1.2, 4.2, etc. 
+                        Sub-requirements will be automatically nested under their parent sections.
+                    </p>
 
-                <!-- Buttons -->
-                <div class="flex gap-4 pt-6">
+                    <div id="functional-requirements-container" class="space-y-4">
+                        <div class="empty-message text-gray-500 text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
+                            <svg class="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                            </svg>
+                            <p>No functional requirements added yet.</p>
+                            <p class="text-sm mt-1">Click "Add Requirement" to get started.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 5: Non-Functional Requirements -->
+                <div class="bg-white rounded-lg shadow-md p-8">
+                    <div class="flex justify-between items-center mb-6 border-b pb-4">
+                        <h2 class="text-2xl font-bold text-gray-900">
+                            <span class="text-indigo-600">5.</span> Non-Functional Requirements
+                        </h2>
+                        <button type="button" onclick="addRequirement('non_functional')" 
+                                class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition font-semibold flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            Add Requirement
+                        </button>
+                    </div>
+
+                    <p class="text-sm text-gray-600 mb-4 bg-purple-50 p-3 rounded-lg">
+                        💡 <strong>Categories:</strong> Performance, Security, Reliability, Availability, Maintainability, 
+                        Scalability, Usability, Compatibility, Compliance.
+                    </p>
+
+                    <div id="non-functional-requirements-container" class="space-y-4">
+                        <div class="empty-message text-gray-500 text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
+                            <svg class="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                            </svg>
+                            <p>No non-functional requirements added yet.</p>
+                            <p class="text-sm mt-1">Click "Add Requirement" to get started.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 6: Other Requirements -->
+                <div class="bg-white rounded-lg shadow-md p-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6 border-b pb-4">
+                        <span class="text-indigo-600">6.</span> Other Requirements
+                    </h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label for="data_requirements" class="block text-sm font-medium text-gray-700 mb-2">
+                                <span class="text-indigo-600 font-semibold">6.1</span> Data Requirements
+                            </label>
+                            <textarea id="data_requirements" name="data_requirements" rows="3"
+                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                      placeholder="Database requirements, data formats, retention policies...">{{ old('data_requirements') }}</textarea>
+                        </div>
+                        <div>
+                            <label for="dependencies" class="block text-sm font-medium text-gray-700 mb-2">
+                                <span class="text-indigo-600 font-semibold">6.2</span> Dependencies
+                            </label>
+                            <textarea id="dependencies" name="dependencies" rows="3"
+                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                      placeholder="External dependencies and integrations...">{{ old('dependencies') }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Appendices -->
+                <div class="bg-white rounded-lg shadow-md p-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6 border-b pb-4">
+                        📎 Appendices
+                    </h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="glossary" class="block text-sm font-medium text-gray-700 mb-2">
+                                Glossary
+                            </label>
+                            <textarea id="glossary" name="glossary" rows="4"
+                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                      placeholder="Define technical terms and acronyms...">{{ old('glossary') }}</textarea>
+                        </div>
+                        <div>
+                            <label for="appendices" class="block text-sm font-medium text-gray-700 mb-2">
+                                Additional Appendices
+                            </label>
+                            <textarea id="appendices" name="appendices" rows="4"
+                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                      placeholder="Additional supporting information...">{{ old('appendices') }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap gap-4 pt-6 sticky bottom-0 bg-gray-100 p-4 rounded-lg shadow-lg">
                     <a href="{{ route('documentation.srs.index') }}" 
                        class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
-                        Cancel
+                        ← Back
                     </a>
-                    <button type="button" id="generate-json-btn"
-                            class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold">
-                        📄 Generate SRS Data
-                    </button>
                     <button type="submit" 
                             class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold">
-                        ✅ Create SRS Document
+                        💾 Create SRS
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Templates -->
-    <template id="fr-row-template">
-        <div class="fr-row grid grid-cols-1 md:grid-cols-12 gap-4 mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50 relative group transition-all duration-300 ease-in-out hover:shadow-md">
-            <div class="md:col-span-2">
-                <label class="block text-xs font-medium text-gray-500 uppercase mb-1">ID</label>
-                <input type="text" name="functional_requirements[][id]" class="fr-id w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="FR-001">
-            </div>
-            <div class="md:col-span-2">
-                <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Priority</label>
-                <select name="functional_requirements[][priority]" class="fr-priority w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                    <option value="Must-have">Must-have</option>
-                    <option value="Should-have">Should-have</option>
-                    <option value="Could-have">Could-have</option>
-                    <option value="Won't-have">Won't-have</option>
-                </select>
-            </div>
-            <div class="md:col-span-4">
-                <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Description</label>
-                <textarea name="functional_requirements[][description]" rows="2" class="fr-desc w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Requirement description..."></textarea>
-            </div>
-            <div class="md:col-span-3">
-                <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Acceptance Criteria</label>
-                <textarea name="functional_requirements[][acceptance]" rows="2" class="fr-criteria w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Criteria..."></textarea>
-            </div>
-            <div class="md:col-span-1 flex items-end justify-end">
-                <button type="button" class="remove-row-btn text-red-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition" title="Remove Requirement">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                    </svg>
-                </button>
-            </div>
-        </div>
-    </template>
-
-    <template id="nfr-row-template">
-        <div class="nfr-row grid grid-cols-1 md:grid-cols-12 gap-4 mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50 relative group transition-all duration-300 ease-in-out hover:shadow-md">
-            <div class="md:col-span-2">
-                <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Type</label>
-                <select name="non_functional_requirements[][type]" class="nfr-type w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                    <option value="Performance">Performance</option>
-                    <option value="Security">Security</option>
-                    <option value="Reliability">Reliability</option>
-                    <option value="Usability">Usability</option>
-                    <option value="Scalability">Scalability</option>
-                    <option value="Other">Other</option>
-                </select>
-            </div>
-            <div class="md:col-span-2">
-                <label class="block text-xs font-medium text-gray-500 uppercase mb-1">ID</label>
-                <input type="text" name="non_functional_requirements[][id]" class="nfr-id w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="NFR-001">
-            </div>
-            <div class="md:col-span-5">
-                <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Description</label>
-                <textarea name="non_functional_requirements[][description]" rows="2" class="nfr-desc w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Requirement description..."></textarea>
-            </div>
-            <div class="md:col-span-2">
-                <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Priority</label>
-                <select name="non_functional_requirements[][priority]" class="nfr-priority w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                    <option value="Must-have">Must-have</option>
-                    <option value="Should-have">Should-have</option>
-                    <option value="Could-have">Could-have</option>
-                    <option value="Won't-have">Won't-have</option>
-                </select>
-            </div>
-            <div class="md:col-span-1 flex items-end justify-end">
-                <button type="button" class="remove-row-btn text-red-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition" title="Remove Requirement">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                    </svg>
-                </button>
-            </div>
-        </div>
-    </template>
-
+    @push('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const frContainer = document.getElementById('fr-container');
-            const nfrContainer = document.getElementById('nfr-container');
-            const addFrBtn = document.getElementById('add-fr-btn');
-            const addNfrBtn = document.getElementById('add-nfr-btn');
-            const generateJsonBtn = document.getElementById('generate-json-btn');
-            const frTemplate = document.getElementById('fr-row-template');
-            const nfrTemplate = document.getElementById('nfr-row-template');
+        // Store categories for non-functional requirements
+        const nfrCategories = @json($nfrCategories ?? []);
+        
+        let functionalCounter = 0;
+        let nonFunctionalCounter = 0;
 
-            // Add Functional Requirement
-            addFrBtn.addEventListener('click', function() {
-                const clone = frTemplate.content.cloneNode(true);
-                frContainer.appendChild(clone);
-            });
+        function addRequirement(type) {
+            const container = document.getElementById(`${type.replace('_', '-')}-requirements-container`);
+            const emptyMessage = container.querySelector('.empty-message');
+            if (emptyMessage) emptyMessage.remove();
 
-            // Add Non-Functional Requirement
-            addNfrBtn.addEventListener('click', function() {
-                const clone = nfrTemplate.content.cloneNode(true);
-                nfrContainer.appendChild(clone);
-            });
+            const index = type === 'functional' ? functionalCounter++ : nonFunctionalCounter++;
+            const baseSection = type === 'functional' ? '4' : '5';
+            
+            // Calculate the next section number
+            const existingItems = container.querySelectorAll('.requirement-item');
+            let nextNumber = existingItems.length + 1;
+            const sectionNumber = `${baseSection}.${nextNumber}`;
 
-            // Remove Row (Event Delegation)
-            document.addEventListener('click', function(e) {
-                if (e.target.closest('.remove-row-btn')) {
-                    const row = e.target.closest('.fr-row') || e.target.closest('.nfr-row');
-                    if (row) {
-                        row.remove();
-                    }
-                }
-            });
+            const html = type === 'functional' 
+                ? createFunctionalRequirementHtml(index, sectionNumber)
+                : createNonFunctionalRequirementHtml(index, sectionNumber);
+            
+            container.insertAdjacentHTML('beforeend', html);
+        }
 
-            // Generate SRS Data
-            generateJsonBtn.addEventListener('click', function() {
-                const form = document.querySelector('form');
-                const formData = new FormData(form);
-                const srsData = {
-                    staticData: {
-                        title: formData.get('title'),
-                        purpose: formData.get('purpose'),
-                        document_conventions: formData.get('document_conventions'),
-                        intended_audience: formData.get('intended_audience'),
-                        product_scope: formData.get('product_scope'),
-                        references: formData.get('references'),
-                        description: formData.get('description'),
-                        product_perspective: formData.get('product_perspective'),
-                        product_features: formData.get('product_features'),
-                        user_classes: formData.get('user_classes'),
-                        operating_environment: formData.get('operating_environment'),
-                        design_constraints: formData.get('design_constraints'),
-                        constraints: formData.get('constraints'),
-                        assumptions: formData.get('assumptions'),
-                        external_interfaces: formData.get('external_interfaces'),
-                        version: formData.get('version'),
-                        status: formData.get('status'),
-                    },
-                    functionalRequirements: [],
-                    nonFunctionalRequirements: []
-                };
+        function addSubRequirement(button, type) {
+            const parentItem = button.closest('.requirement-item');
+            const parentSection = parentItem.querySelector('[name$="[section_number]"]').value;
+            const childrenContainer = parentItem.querySelector('.children-container');
+            
+            // Count existing children to determine next number
+            const existingChildren = childrenContainer.querySelectorAll(':scope > .requirement-item');
+            const nextChildNumber = existingChildren.length + 1;
+            const newSectionNumber = `${parentSection}.${nextChildNumber}`;
 
-                // Collect Functional Requirements
-                const frRows = document.querySelectorAll('.fr-row');
-                frRows.forEach(row => {
-                    srsData.functionalRequirements.push({
-                        id: row.querySelector('.fr-id').value,
-                        priority: row.querySelector('.fr-priority').value,
-                        description: row.querySelector('.fr-desc').value,
-                        acceptanceCriteria: row.querySelector('.fr-criteria').value
-                    });
-                });
+            const index = type === 'functional' ? functionalCounter++ : nonFunctionalCounter++;
+            
+            const html = type === 'functional' 
+                ? createFunctionalRequirementHtml(index, newSectionNumber, parentSection)
+                : createNonFunctionalRequirementHtml(index, newSectionNumber, parentSection);
+            
+            childrenContainer.insertAdjacentHTML('beforeend', html);
+        }
 
-                // Collect Non-Functional Requirements
-                const nfrRows = document.querySelectorAll('.nfr-row');
-                nfrRows.forEach(row => {
-                    srsData.nonFunctionalRequirements.push({
-                        type: row.querySelector('.nfr-type').value,
-                        id: row.querySelector('.nfr-id').value,
-                        description: row.querySelector('.nfr-desc').value,
-                        priority: row.querySelector('.nfr-priority').value
-                    });
-                });
+        function createFunctionalRequirementHtml(index, sectionNumber, parentSection = '') {
+            return `
+                <div class="requirement-item p-4 bg-gray-50 rounded-lg border border-gray-200 ${parentSection ? 'ml-8 border-l-4 border-l-indigo-300' : ''}" data-index="${index}">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Section #</label>
+                            <input type="text" name="functional_requirements[${index}][section_number]" 
+                                   value="${sectionNumber}" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 font-mono text-indigo-600 font-bold">
+                            <input type="hidden" name="functional_requirements[${index}][parent_section]" value="${parentSection}">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Requirement ID</label>
+                            <input type="text" name="functional_requirements[${index}][requirement_id]" 
+                                   placeholder="FR-${sectionNumber.replace(/\\./g, '')}" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                            <input type="text" name="functional_requirements[${index}][title]" 
+                                   placeholder="Requirement Title" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                                <select name="functional_requirements[${index}][priority]" required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="critical">Critical</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                <select name="functional_requirements[${index}][status]" 
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm">
+                                    <option value="draft" selected>Draft</option>
+                                    <option value="review">Review</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="implemented">Implemented</option>
+                                    <option value="verified">Verified</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
 
-                console.log('SRS Data Generated:', srsData);
-                alert('SRS Data generated and logged to console! (F12 to view)');
-            });
-        });
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea name="functional_requirements[${index}][description]" required rows="2"
+                                      placeholder="Describe the requirement in detail..."
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Acceptance Criteria</label>
+                            <textarea name="functional_requirements[${index}][acceptance_criteria]" rows="2"
+                                      placeholder="How will this requirement be verified?"
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Source/Stakeholder</label>
+                            <input type="text" name="functional_requirements[${index}][source]" 
+                                   placeholder="Who requested this requirement?"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="block text-sm font-medium text-gray-700">🎨 UX Considerations</label>
+                                <button type="button" onclick="addUxItem(this, ${index})" 
+                                        class="text-xs px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">+ Add</button>
+                            </div>
+                            <div class="ux-items-container space-y-1" data-index="${index}"></div>
+                        </div>
+                    </div>
+
+                    <div class="children-container space-y-4 mt-4"></div>
+
+                    <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
+                        <button type="button" onclick="addSubRequirement(this, 'functional')" 
+                                class="text-sm px-3 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition">
+                            + Add Sub-Requirement
+                        </button>
+                        <button type="button" onclick="removeRequirement(this)" 
+                                class="text-sm px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition">
+                            🗑️ Remove
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createNonFunctionalRequirementHtml(index, sectionNumber, parentSection = '') {
+            let categoryOptions = '';
+            for (const [value, label] of Object.entries(nfrCategories)) {
+                categoryOptions += `<option value="${value}">${label}</option>`;
+            }
+
+            return `
+                <div class="requirement-item p-4 bg-purple-50 rounded-lg border border-purple-200 ${parentSection ? 'ml-8 border-l-4 border-l-purple-300' : ''}" data-index="${index}">
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Section #</label>
+                            <input type="text" name="non_functional_requirements[${index}][section_number]" 
+                                   value="${sectionNumber}" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 font-mono text-purple-600 font-bold">
+                            <input type="hidden" name="non_functional_requirements[${index}][parent_section]" value="${parentSection}">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Requirement ID</label>
+                            <input type="text" name="non_functional_requirements[${index}][requirement_id]" 
+                                   placeholder="NFR-${sectionNumber.replace(/\\./g, '')}" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                            <input type="text" name="non_functional_requirements[${index}][title]" 
+                                   placeholder="Requirement Title" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                            <select name="non_functional_requirements[${index}][category]" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm">
+                                ${categoryOptions}
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                                <select name="non_functional_requirements[${index}][priority]" required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="critical">Critical</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                <select name="non_functional_requirements[${index}][status]" 
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm">
+                                    <option value="draft" selected>Draft</option>
+                                    <option value="review">Review</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="implemented">Implemented</option>
+                                    <option value="verified">Verified</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea name="non_functional_requirements[${index}][description]" required rows="2"
+                                      placeholder="Describe the non-functional requirement..."
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Acceptance Criteria</label>
+                            <textarea name="non_functional_requirements[${index}][acceptance_criteria]" rows="2"
+                                      placeholder="How will this be verified?"
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Measurement Method</label>
+                            <input type="text" name="non_functional_requirements[${index}][measurement]" 
+                                   placeholder="How to measure (e.g., load test)"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Target Value</label>
+                            <input type="text" name="non_functional_requirements[${index}][target_value]" 
+                                   placeholder="e.g., < 2 seconds, 99.9% uptime"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Source/Stakeholder</label>
+                            <input type="text" name="non_functional_requirements[${index}][source]" 
+                                   placeholder="Who requested this?"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                        </div>
+                    </div>
+
+                    <div class="children-container space-y-4 mt-4"></div>
+
+                    <div class="flex justify-between items-center mt-4 pt-4 border-t border-purple-200">
+                        <button type="button" onclick="addSubRequirement(this, 'non_functional')" 
+                                class="text-sm px-3 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition">
+                            + Add Sub-Requirement
+                        </button>
+                        <button type="button" onclick="removeRequirement(this)" 
+                                class="text-sm px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition">
+                            🗑️ Remove
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function addUxItem(button, reqIndex) {
+            const container = button.closest('.requirement-item').querySelector('.ux-items-container');
+            const html = `
+                <div class="ux-item flex gap-2">
+                    <input type="text" name="functional_requirements[${reqIndex}][ux_considerations][]" 
+                           placeholder="UX consideration..."
+                           class="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500">
+                    <button type="button" onclick="this.parentElement.remove()" 
+                            class="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600">✕</button>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        }
+
+        function removeRequirement(button) {
+            const item = button.closest('.requirement-item');
+            item.remove();
+        }
     </script>
+    @endpush
 </x-app-layout>

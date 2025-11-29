@@ -55,8 +55,18 @@ class DocumentationController extends Controller
     {
         $projects = auth()->user()->projects()->latest()->get();
         $selectedProjectId = $request->integer('project_id');
+        $nfrCategories = SrsNonFunctionalRequirement::CATEGORIES;
+        
+        // Determine roles available for the selected project (if any)
+        $roles = collect();
+        if ($selectedProjectId) {
+            $project = auth()->user()->projects()->find($selectedProjectId);
+            if ($project && $project->team) {
+                $roles = $project->team->roles()->get();
+            }
+        }
 
-        return view('documentation.srs.create', compact('projects', 'selectedProjectId'));
+        return view('documentation.srs.create', compact('projects', 'selectedProjectId', 'nfrCategories', 'roles'));
     }
 
     /**
@@ -85,12 +95,83 @@ class DocumentationController extends Controller
             'design_constraints' => 'nullable|string',
             'constraints' => 'nullable|string',
             'assumptions' => 'nullable|string',
+            'dependencies' => 'nullable|string',
             'external_interfaces' => 'nullable|string',
+            'data_requirements' => 'nullable|string',
+            'glossary' => 'nullable|string',
+            'appendices' => 'nullable|string',
             'version' => 'nullable|string',
             'status' => 'nullable|in:draft,review,approved,final',
+            'functional_requirements' => 'nullable|array',
+            'functional_requirements.*.requirement_id' => 'required_with:functional_requirements|string',
+            'functional_requirements.*.section_number' => 'required_with:functional_requirements|string',
+            'functional_requirements.*.title' => 'required_with:functional_requirements|string|max:255',
+            'functional_requirements.*.description' => 'required_with:functional_requirements|string',
+            'functional_requirements.*.acceptance_criteria' => 'nullable|string',
+            'functional_requirements.*.source' => 'nullable|string',
+            'functional_requirements.*.priority' => 'required_with:functional_requirements|in:low,medium,high,critical',
+            'functional_requirements.*.status' => 'nullable|in:draft,review,approved,implemented,verified',
+            'functional_requirements.*.ux_considerations' => 'nullable|array',
+            'functional_requirements.*.parent_section' => 'nullable|string',
+            'functional_requirements.*.roles' => 'nullable|array',
+            'functional_requirements.*.roles.*' => 'nullable|integer|exists:roles,id',
+            'non_functional_requirements' => 'nullable|array',
+            'non_functional_requirements.*.requirement_id' => 'required_with:non_functional_requirements|string',
+            'non_functional_requirements.*.section_number' => 'required_with:non_functional_requirements|string',
+            'non_functional_requirements.*.title' => 'required_with:non_functional_requirements|string|max:255',
+            'non_functional_requirements.*.description' => 'required_with:non_functional_requirements|string',
+            'non_functional_requirements.*.category' => 'required_with:non_functional_requirements|in:performance,security,reliability,availability,maintainability,scalability,usability,compatibility,compliance,other',
+            'non_functional_requirements.*.acceptance_criteria' => 'nullable|string',
+            'non_functional_requirements.*.measurement' => 'nullable|string',
+            'non_functional_requirements.*.target_value' => 'nullable|string',
+            'non_functional_requirements.*.source' => 'nullable|string',
+            'non_functional_requirements.*.priority' => 'required_with:non_functional_requirements|in:low,medium,high,critical',
+            'non_functional_requirements.*.status' => 'nullable|in:draft,review,approved,implemented,verified',
+            'non_functional_requirements.*.parent_section' => 'nullable|string',
+            'non_functional_requirements.*.roles' => 'nullable|array',
+            'non_functional_requirements.*.roles.*' => 'nullable|integer|exists:roles,id',
         ]);
 
-        $srsDocument = auth()->user()->srsDocuments()->create($validated);
+        $srsDocument = auth()->user()->srsDocuments()->create([
+            'project_id' => $validated['project_id'],
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'purpose' => $validated['purpose'] ?? null,
+            'document_conventions' => $validated['document_conventions'] ?? null,
+            'intended_audience' => $validated['intended_audience'] ?? null,
+            'product_scope' => $validated['product_scope'] ?? null,
+            'references' => $validated['references'] ?? null,
+            'project_overview' => $validated['project_overview'] ?? null,
+            'scope' => $validated['scope'] ?? null,
+            'product_perspective' => $validated['product_perspective'] ?? null,
+            'product_features' => $validated['product_features'] ?? null,
+            'user_classes' => $validated['user_classes'] ?? null,
+            'operating_environment' => $validated['operating_environment'] ?? null,
+            'design_constraints' => $validated['design_constraints'] ?? null,
+            'constraints' => $validated['constraints'] ?? null,
+            'assumptions' => $validated['assumptions'] ?? null,
+            'dependencies' => $validated['dependencies'] ?? null,
+            'external_interfaces' => $validated['external_interfaces'] ?? null,
+            'data_requirements' => $validated['data_requirements'] ?? null,
+            'glossary' => $validated['glossary'] ?? null,
+            'appendices' => $validated['appendices'] ?? null,
+            'version' => $validated['version'] ?? '1.0',
+            'status' => $validated['status'] ?? 'draft',
+        ]);
+
+        // Sync functional requirements with hierarchical structure
+        $this->syncHierarchicalRequirements(
+            $srsDocument, 
+            $validated['functional_requirements'] ?? [], 
+            'functional'
+        );
+
+        // Sync non-functional requirements with hierarchical structure
+        $this->syncHierarchicalRequirements(
+            $srsDocument, 
+            $validated['non_functional_requirements'] ?? [], 
+            'non_functional'
+        );
 
         // Notify team members of new SRS if they allow SRS update notifications
         if ($srsDocument->project && $srsDocument->project->team) {
@@ -112,8 +193,8 @@ class DocumentationController extends Controller
             }
         }
 
-        return redirect()->route('projects.show', $srsDocument->project_id)
-            ->with('success', 'SRS document created successfully.');
+        return redirect()->route('documentation.srs.edit', $srsDocument)
+            ->with('success', 'SRS document created successfully. You can now add requirements.');
     }
 
     /**

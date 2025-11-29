@@ -55,7 +55,7 @@
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-lg font-semibold">My Tasks</h3>
-                            <a href="{{ route('projects.index') }}" class="text-sm text-indigo-600 hover:underline">View Tasks</a>
+                            <a href="{{ route('tasks.my-tasks') }}" class="text-sm text-indigo-600 hover:underline">View All Tasks</a>
                         </div>
                         @if($tasksAssigned->count())
                             <div class="overflow-hidden rounded-md border">
@@ -63,7 +63,7 @@
                                     <thead class="bg-gray-50">
                                         <tr>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assignee</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -71,7 +71,45 @@
                                     </thead>
                                     <tbody class="bg-white divide-y divide-gray-200">
                                         @foreach($tasksAssigned as $task)
-                                            <x-recent-task :task="$task" />
+                                            <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='{{ route('tasks.show', $task) }}'">
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <a href="{{ route('tasks.show', $task) }}" class="text-sm font-medium text-gray-900 hover:text-indigo-600">
+                                                        {{ Str::limit($task->title, 30) }}
+                                                    </a>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {{ Str::limit($task->project->name ?? 'N/A', 20) }}
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    @php
+                                                        $priorityColors = [
+                                                            'Critical' => 'bg-red-100 text-red-800',
+                                                            'High' => 'bg-orange-100 text-orange-800',
+                                                            'Medium' => 'bg-yellow-100 text-yellow-800',
+                                                            'Low' => 'bg-green-100 text-green-800',
+                                                        ];
+                                                    @endphp
+                                                    <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $priorityColors[$task->priority] ?? 'bg-gray-100' }}">
+                                                        {{ $task->priority }}
+                                                    </span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {{ $task->due_date ? $task->due_date->format('M d') : '-' }}
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    @php
+                                                        $statusColors = [
+                                                            'To Do' => 'bg-gray-100 text-gray-800',
+                                                            'In Progress' => 'bg-blue-100 text-blue-800',
+                                                            'Review' => 'bg-yellow-100 text-yellow-800',
+                                                            'Done' => 'bg-green-100 text-green-800',
+                                                        ];
+                                                    @endphp
+                                                    <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $statusColors[$task->status] ?? 'bg-gray-100' }}">
+                                                        {{ $task->status }}
+                                                    </span>
+                                                </td>
+                                            </tr>
                                         @endforeach
                                     </tbody>
                                 </table>

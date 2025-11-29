@@ -34,8 +34,16 @@ Route::middleware('auth')->group(function () {
 
     // Project task routes
     Route::post('/projects/{project}/tasks', [TaskController::class, 'store'])->name('projects.tasks.store');
+    Route::get('/tasks/{task}', [TaskController::class, 'show'])->name('tasks.show');
     Route::put('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
     Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
+    
+    // Task status change request routes (for assignee approval workflow)
+    Route::post('/tasks/{task}/request-status', [TaskController::class, 'requestStatusChange'])->name('tasks.request-status');
+    Route::post('/task-status-requests/{statusRequest}/review', [TaskController::class, 'reviewStatusRequest'])->name('tasks.review-status-request');
+
+    // My Tasks page (all tasks assigned to user)
+    Route::get('/my-tasks', [TaskController::class, 'myTasks'])->name('tasks.my-tasks');
 
     // Team routes
     Route::post('/teams/{team}/invite', [\App\Http\Controllers\TeamController::class, 'invite'])->name('teams.invite');
