@@ -141,4 +141,28 @@ class TeamController extends Controller
 
         return back()->with('success', 'Member removed successfully.');
     }
+
+    /**
+     * Delete a team.
+     * Only the team owner can delete a team.
+     * This will also remove all members and pending invitations.
+     */
+    public function destroy(Team $team)
+    {
+        $this->authorize('delete', $team);
+
+        // Delete all pending invitations
+        $team->invitations()->delete();
+
+        // Delete all roles associated with the team
+        $team->roles()->delete();
+
+        // Detach all members
+        $team->members()->detach();
+
+        // Delete the team
+        $team->delete();
+
+        return redirect()->route('teams.index')->with('success', 'Team deleted successfully.');
+    }
 }

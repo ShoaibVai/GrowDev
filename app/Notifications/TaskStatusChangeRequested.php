@@ -4,7 +4,6 @@ namespace App\Notifications;
 
 use App\Models\TaskStatusRequest;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -12,7 +11,7 @@ use Illuminate\Notifications\Notification;
  * Notification sent to project owners when a task assignee requests a status change.
  * Includes details about the requested change and a link to review it.
  */
-class TaskStatusChangeRequested extends Notification implements ShouldQueue
+class TaskStatusChangeRequested extends Notification
 {
     use Queueable;
 

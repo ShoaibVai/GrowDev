@@ -12,20 +12,20 @@ class DatabaseSeeder extends Seeder
 
     /**
      * Seed the application's database.
+     * 
+     * Uses ProductionDataSeeder to restore real user data including:
+     * - Users with their original passwords and TOTP secrets
+     * - Teams and team memberships
+     * - Projects, tasks, and SRS documents
+     * 
+     * Run: php artisan migrate:fresh --seed
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Seed documentation templates first (required for SRS creation)
+        $this->call(DocumentationTemplateSeeder::class);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
-
-    // Seed documentation templates
-    $this->call(DocumentationTemplateSeeder::class);
-
-    // Seed teams
-    $this->call(TeamSeeder::class);
+        // Seed production data (users, teams, projects, tasks, etc.)
+        $this->call(ProductionDataSeeder::class);
     }
 }

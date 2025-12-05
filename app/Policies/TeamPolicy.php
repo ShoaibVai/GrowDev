@@ -33,4 +33,13 @@ class TeamPolicy
         }
         return false;
     }
+
+    /**
+     * Determine if the user can delete the team.
+     * Only the team owner can delete a team.
+     */
+    public function delete(User $user, Team $team): bool
+    {
+        return $team->owner_id === $user->id;
+    }
 }

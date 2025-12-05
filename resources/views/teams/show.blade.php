@@ -224,6 +224,23 @@
             </div>
             @endcan
 
+            <!-- Delete Team Section (Owner only) -->
+            @can('delete', $team)
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg border border-red-200">
+                <div class="p-6">
+                    <h3 class="text-lg font-medium text-red-600 mb-2">Danger Zone</h3>
+                    <p class="text-sm text-gray-600 mb-4">Once you delete a team, there is no going back. This will remove all members and pending invitations.</p>
+                    <form method="POST" action="{{ route('teams.destroy', $team) }}" onsubmit="return confirm('Are you sure you want to delete this team? This action cannot be undone.');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition">
+                            Delete Team
+                        </button>
+                    </form>
+                </div>
+            </div>
+            @endcan
+
         </div>
     </div>
 </x-app-layout>
