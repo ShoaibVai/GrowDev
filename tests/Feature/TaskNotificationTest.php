@@ -94,7 +94,7 @@ class TaskNotificationTest extends TestCase
         $this->assertNotNull($task);
 
         // Immediate notification should NOT be sent
-        Notification::assertNotSentTo($assignee, \App\Notifications\TaskAssigned::class);
+        Notification::assertNotSentTo($assignee, TaskAssigned::class);
 
         // Instead, a notification event should be created
         $this->assertDatabaseHas('notification_events', [
@@ -140,7 +140,7 @@ class TaskNotificationTest extends TestCase
         $this->assertEquals('In Progress', $task->status);
 
         // Immediate notification should NOT be sent
-        Notification::assertNotSentTo($assignee, \App\Notifications\TaskStatusChanged::class);
+        Notification::assertNotSentTo($assignee, TaskStatusChanged::class);
 
         // Instead, a notification event should be created
         $this->assertDatabaseHas('notification_events', [

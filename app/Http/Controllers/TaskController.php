@@ -2,14 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\TaskUpdated;
+use App\Models\NotificationEvent;
 use App\Models\Project;
+use App\Models\SrsFunctionalRequirement;
+use App\Models\SrsNonFunctionalRequirement;
 use App\Models\Task;
+use App\Models\TaskActivity;
 use App\Models\TaskStatusRequest;
 use App\Models\User;
-use App\Models\NotificationEvent;
+use App\Notifications\TaskAssigned;
+use App\Notifications\TaskStatusChanged;
+use App\Notifications\TaskStatusChangeRequested;
+use App\Notifications\TaskStatusRequestReviewed;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Events\TaskUpdated;
 
 class TaskController extends Controller
 {
@@ -100,10 +107,10 @@ class TaskController extends Controller
             'notes' => $request->notes,
         ]);
 
-        // Notify project owner
+        // Notify project owner about the status change request
         $owner = $task->project->user;
         if ($owner) {
-            $owner->notify(new \App\Notifications\TaskStatusChangeRequested($statusRequest));
+            $owner->notify(new TaskStatusChangeRequested($statusRequest));
         }
 
         return back()->with('success', 'Status change request submitted. Waiting for owner approval.');
@@ -143,8 +150,8 @@ class TaskController extends Controller
             $oldStatus = $task->status;
             $task->update(['status' => $statusRequest->requested_status]);
 
-            // Log activity
-            \App\Models\TaskActivity::create([
+            // Log the status change in task activity history
+            TaskActivity::create([
                 'task_id' => $task->id,
                 'user_id' => $user->id,
                 'action' => 'status_changed',
@@ -153,19 +160,19 @@ class TaskController extends Controller
                 'notes' => 'Approved status change request',
             ]);
 
-            // Broadcast update
+            // Broadcast real-time update for Kanban board
             event(new TaskUpdated($task));
 
-            // Notify assignee of approval
+            // Notify the assignee that their request was approved
             if ($task->assignee) {
-                $task->assignee->notify(new \App\Notifications\TaskStatusRequestReviewed($statusRequest, 'approved'));
+                $task->assignee->notify(new TaskStatusRequestReviewed($statusRequest, 'approved'));
             }
 
             return back()->with('success', 'Status change approved. Task status updated.');
         } else {
-            // Notify assignee of rejection
+            // Notify the assignee that their request was rejected
             if ($task->assignee) {
-                $task->assignee->notify(new \App\Notifications\TaskStatusRequestReviewed($statusRequest, 'rejected'));
+                $task->assignee->notify(new TaskStatusRequestReviewed($statusRequest, 'rejected'));
             }
 
             return back()->with('success', 'Status change request rejected.');
@@ -185,18 +192,18 @@ class TaskController extends Controller
             'requirement_id' => 'nullable|integer',
         ]);
 
-        // Map requirement type to model class
+        // Map the requirement type string to the corresponding model class
         $requirementType = null;
         $requirementId = null;
         $requirement = null;
         
         if ($request->filled('requirement_id') && $request->filled('requirement_type')) {
             if ($request->requirement_type === 'functional') {
-                $requirementType = \App\Models\SrsFunctionalRequirement::class;
-                $requirement = \App\Models\SrsFunctionalRequirement::find($request->requirement_id);
+                $requirementType = SrsFunctionalRequirement::class;
+                $requirement = SrsFunctionalRequirement::find($request->requirement_id);
             } else {
-                $requirementType = \App\Models\SrsNonFunctionalRequirement::class;
-                $requirement = \App\Models\SrsNonFunctionalRequirement::find($request->requirement_id);
+                $requirementType = SrsNonFunctionalRequirement::class;
+                $requirement = SrsNonFunctionalRequirement::find($request->requirement_id);
             }
             $requirementId = $request->requirement_id;
         }
@@ -213,14 +220,14 @@ class TaskController extends Controller
             'requirement_id' => $requirementId,
         ]);
 
-        // Notify assignee if set
+        // Send notification to the assigned user (respects notification preferences)
         if ($task->assigned_to) {
             $assignee = User::find($task->assigned_to);
             if ($assignee) {
                 $pref = $assignee->notificationPreference;
                 $allowEmail = $pref ? (bool) $pref->email_on_task_assigned : true;
                 if ($allowEmail) {
-                    $assignee->notify(new \App\Notifications\TaskAssigned($task, $requirement));
+                    $assignee->notify(new TaskAssigned($task, $requirement));
                 } else {
                     // store event for digest
                     NotificationEvent::create([
@@ -243,7 +250,7 @@ class TaskController extends Controller
             }
         }
 
-        // Broadcast task creation for realtime Kanban
+        // Broadcast task creation for real-time Kanban board updates
         event(new TaskUpdated($task));
 
         return back()->with('success', 'Task added successfully.');
@@ -266,18 +273,18 @@ class TaskController extends Controller
         $oldStatus = $task->status;
         $oldAssignee = $task->assigned_to;
         
-        // Handle requirement update
+        // Map the requirement type to model class for linking
         $requirementType = null;
         $requirementId = null;
         $requirement = null;
         
         if ($request->filled('requirement_id') && $request->filled('requirement_type')) {
             if ($request->requirement_type === 'functional') {
-                $requirementType = \App\Models\SrsFunctionalRequirement::class;
-                $requirement = \App\Models\SrsFunctionalRequirement::find($request->requirement_id);
+                $requirementType = SrsFunctionalRequirement::class;
+                $requirement = SrsFunctionalRequirement::find($request->requirement_id);
             } else {
-                $requirementType = \App\Models\SrsNonFunctionalRequirement::class;
-                $requirement = \App\Models\SrsNonFunctionalRequirement::find($request->requirement_id);
+                $requirementType = SrsNonFunctionalRequirement::class;
+                $requirement = SrsNonFunctionalRequirement::find($request->requirement_id);
             }
             $requirementId = $request->requirement_id;
         }
@@ -292,15 +299,14 @@ class TaskController extends Controller
             'requirement_id' => $request->has('requirement_id') ? $requirementId : $task->requirement_id,
         ]);
 
-        // Send status change notification if status changed
-        // Status change notifications
+        // Notify assignee if task status changed (respects notification preferences)
         if ($oldStatus !== $task->status) {
             $assignee = User::find($task->assigned_to);
             if ($assignee) {
                 $pref = $assignee->notificationPreference;
                 $allowEmail = $pref ? (bool) $pref->email_on_task_status_change : true;
                 if ($allowEmail) {
-                    $assignee->notify(new \App\Notifications\TaskStatusChanged($task, $oldStatus));
+                    $assignee->notify(new TaskStatusChanged($task, $oldStatus));
                 } else {
                     NotificationEvent::create([
                         'user_id' => $assignee->id,
@@ -310,18 +316,18 @@ class TaskController extends Controller
                     ]);
                 }
             }
-            // Broadcast task update for realtime Kanban
+            // Broadcast update for real-time Kanban board sync
             event(new TaskUpdated($task));
         }
 
-        // Assignment change notifications
+        // Notify new assignee if task was reassigned (respects notification preferences)
         if ($oldAssignee !== $task->assigned_to && $task->assigned_to) {
             $newAssignee = User::find($task->assigned_to);
             if ($newAssignee) {
                 $pref = $newAssignee->notificationPreference;
                 $allowEmail = $pref ? (bool) $pref->email_on_task_assigned : true;
                 if ($allowEmail) {
-                    $newAssignee->notify(new \App\Notifications\TaskAssigned($task, $requirement));
+                    $newAssignee->notify(new TaskAssigned($task, $requirement));
                 } else {
                     NotificationEvent::create([
                         'user_id' => $newAssignee->id,
@@ -343,9 +349,9 @@ class TaskController extends Controller
             }
         }
 
-        // Log task activity
+        // Record status change in task activity history for audit trail
         if ($oldStatus !== $task->status) {
-            \App\Models\TaskActivity::create([
+            TaskActivity::create([
                 'task_id' => $task->id,
                 'user_id' => auth()->id(),
                 'action' => 'status_changed',

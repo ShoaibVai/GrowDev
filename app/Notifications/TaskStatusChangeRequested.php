@@ -8,10 +8,19 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
+/**
+ * Notification sent to project owners when a task assignee requests a status change.
+ * Includes details about the requested change and a link to review it.
+ */
 class TaskStatusChangeRequested extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    /**
+     * Create a new notification instance.
+     *
+     * @param TaskStatusRequest $statusRequest The pending status change request
+     */
     public function __construct(
         public TaskStatusRequest $statusRequest
     ) {}

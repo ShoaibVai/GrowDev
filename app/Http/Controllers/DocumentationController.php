@@ -405,7 +405,7 @@ class DocumentationController extends Controller
             // Delete any existing role mappings for current functional requirements
             $existingIds = $srsDocument->functionalRequirements()->pluck('id')->toArray();
             if (!empty($existingIds)) {
-                \App\Models\RoleRequirementMapping::where('requirement_type', \App\Models\SrsFunctionalRequirement::class)
+                \App\Models\RoleRequirementMapping::where('requirement_type', SrsFunctionalRequirement::class)
                     ->whereIn('requirement_id', $existingIds)
                     ->delete();
             }
@@ -414,7 +414,7 @@ class DocumentationController extends Controller
         } else {
             $existingIds = $srsDocument->nonFunctionalRequirements()->pluck('id')->toArray();
             if (!empty($existingIds)) {
-                \App\Models\RoleRequirementMapping::where('requirement_type', \App\Models\SrsNonFunctionalRequirement::class)
+                \App\Models\RoleRequirementMapping::where('requirement_type', SrsNonFunctionalRequirement::class)
                     ->whereIn('requirement_id', $existingIds)
                     ->delete();
             }

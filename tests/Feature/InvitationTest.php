@@ -55,7 +55,7 @@ class InvitationTest extends TestCase
 
         $this->assertDatabaseHas('invitations', ['email' => $invitee->email, 'team_id' => $team->id]);
 
-        Notification::assertNotSentTo($invitee, \App\Notifications\TeamInvitation::class);
+        Notification::assertNotSentTo($invitee, TeamInvitation::class);
         $this->assertDatabaseHas('notification_events', ['user_id' => $invitee->id, 'event_type' => 'team_invitation', 'sent' => false]);
     }
 

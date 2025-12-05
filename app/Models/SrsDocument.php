@@ -6,6 +6,37 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property int|null $project_id
+ * @property string $title
+ * @property string|null $description
+ * @property string|null $purpose
+ * @property string|null $document_conventions
+ * @property string|null $intended_audience
+ * @property string|null $product_scope
+ * @property string|null $references
+ * @property string|null $project_overview
+ * @property string|null $scope
+ * @property string|null $product_perspective
+ * @property string|null $product_features
+ * @property string|null $user_classes
+ * @property string|null $operating_environment
+ * @property string|null $design_constraints
+ * @property string|null $constraints
+ * @property string|null $assumptions
+ * @property string|null $dependencies
+ * @property string|null $external_interfaces
+ * @property string|null $system_features
+ * @property string|null $data_requirements
+ * @property string|null $appendices
+ * @property string|null $glossary
+ * @property string|null $version
+ * @property string|null $status
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ */
 class SrsDocument extends Model
 {
     protected $fillable = [

@@ -5,10 +5,28 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $email
+ * @property string|null $password
+ * @property string|null $totp_secret
+ * @property string|null $phone_number
+ * @property string|null $professional_summary
+ * @property string|null $location
+ * @property string|null $website
+ * @property string|null $linkedin_url
+ * @property string|null $github_url
+ * @property \Illuminate\Support\Carbon|null $email_verified_at
+ * @property string|null $remember_token
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -75,17 +93,17 @@ class User extends Authenticatable
     /**
      * Get the notification preference for the user.
      */
-    public function notificationPreference(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function notificationPreference(): HasOne
     {
-        return $this->hasOne(\App\Models\NotificationPreference::class);
+        return $this->hasOne(NotificationPreference::class);
     }
     
     /**
      * Get the notification events for the user.
      */
-    public function notificationEvents(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function notificationEvents(): HasMany
     {
-        return $this->hasMany(\App\Models\NotificationEvent::class);
+        return $this->hasMany(NotificationEvent::class);
     }
 
     /**

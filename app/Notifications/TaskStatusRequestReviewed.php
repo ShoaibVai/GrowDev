@@ -8,10 +8,20 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
+/**
+ * Notification sent to task assignees when their status change request is reviewed.
+ * Informs them whether the request was approved or rejected.
+ */
 class TaskStatusRequestReviewed extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    /**
+     * Create a new notification instance.
+     *
+     * @param TaskStatusRequest $statusRequest The reviewed status change request
+     * @param string $decision Either 'approved' or 'rejected'
+     */
     public function __construct(
         public TaskStatusRequest $statusRequest,
         public string $decision

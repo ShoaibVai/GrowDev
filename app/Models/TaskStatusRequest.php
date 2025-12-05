@@ -5,6 +5,20 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $task_id
+ * @property int $requested_by
+ * @property string $current_status
+ * @property string $requested_status
+ * @property string|null $notes
+ * @property string $approval_status
+ * @property int|null $reviewed_by
+ * @property string|null $review_notes
+ * @property \Illuminate\Support\Carbon|null $reviewed_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ */
 class TaskStatusRequest extends Model
 {
     protected $fillable = [
