@@ -25,6 +25,9 @@ class DatabaseSeeder extends Seeder
         // Seed documentation templates first (required for SRS creation)
         $this->call(DocumentationTemplateSeeder::class);
 
+        // Seed system roles for AI task generation
+        $this->call(SystemRolesSeeder::class);
+
         // Seed production data (users, teams, projects, tasks, etc.)
         $this->call(ProductionDataSeeder::class);
     }

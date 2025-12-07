@@ -4,13 +4,21 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 📋 {{ __('Edit SRS Document') }}
             </h2>
-            <span class="px-3 py-1 text-sm rounded-full 
-                {{ $srsDocument->status === 'draft' ? 'bg-yellow-100 text-yellow-800' : '' }}
-                {{ $srsDocument->status === 'review' ? 'bg-blue-100 text-blue-800' : '' }}
-                {{ $srsDocument->status === 'approved' ? 'bg-green-100 text-green-800' : '' }}
-                {{ $srsDocument->status === 'final' ? 'bg-purple-100 text-purple-800' : '' }}">
-                v{{ $srsDocument->version ?? '1.0' }} - {{ ucfirst($srsDocument->status ?? 'draft') }}
-            </span>
+            <div class="flex items-center gap-3">
+                @if($srsDocument->project_id)
+                    <a href="{{ route('projects.ai-tasks.preview', $srsDocument->project_id) }}" 
+                       class="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium rounded-lg hover:from-indigo-600 hover:to-purple-700 transition shadow flex items-center gap-2">
+                        🤖 Generate Tasks
+                    </a>
+                @endif
+                <span class="px-3 py-1 text-sm rounded-full 
+                    {{ $srsDocument->status === 'draft' ? 'bg-yellow-100 text-yellow-800' : '' }}
+                    {{ $srsDocument->status === 'review' ? 'bg-blue-100 text-blue-800' : '' }}
+                    {{ $srsDocument->status === 'approved' ? 'bg-green-100 text-green-800' : '' }}
+                    {{ $srsDocument->status === 'final' ? 'bg-purple-100 text-purple-800' : '' }}">
+                    v{{ $srsDocument->version ?? '1.0' }} - {{ ucfirst($srsDocument->status ?? 'draft') }}
+                </span>
+            </div>
         </div>
     </x-slot>
 

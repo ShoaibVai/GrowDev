@@ -42,18 +42,23 @@ class Task extends Model
         'project_id',
         'title',
         'description',
+        'ai_generated_description',
+        'is_ai_generated',
         'priority',
         'status',
         'assigned_to',
         'created_by',
         'due_date',
+        'estimated_hours',
         'category',
         'requirement_type',
         'requirement_id',
+        'required_role_id',
     ];
 
     protected $casts = [
         'due_date' => 'date',
+        'is_ai_generated' => 'boolean',
     ];
 
     public function project(): BelongsTo
@@ -93,6 +98,32 @@ class Task extends Model
     public function pendingStatusRequest(): HasOne
     {
         return $this->hasOne(TaskStatusRequest::class)->where('approval_status', 'pending');
+    }
+
+    /**
+     * Get the required role for this task.
+     */
+    public function requiredRole(): BelongsTo
+    {
+        return $this->belongsTo(Role::class, 'required_role_id');
+    }
+
+    /**
+     * Get tasks that this task depends on.
+     */
+    public function dependencies()
+    {
+        return $this->belongsToMany(Task::class, 'task_dependencies', 'task_id', 'depends_on_task_id')
+            ->withTimestamps();
+    }
+
+    /**
+     * Get tasks that depend on this task.
+     */
+    public function dependents()
+    {
+        return $this->belongsToMany(Task::class, 'task_dependencies', 'depends_on_task_id', 'task_id')
+            ->withTimestamps();
     }
 
     /**

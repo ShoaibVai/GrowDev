@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AITaskController;
 use App\Http\Controllers\DocumentationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
@@ -40,6 +41,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/projects/{project}/board', [ProjectController::class, 'board'])->name('projects.board');
     Route::get('/projects/{project}/members/summary', [ProjectController::class, 'membersSummary'])->name('projects.members.summary');
     Route::patch('/projects/{project}/requirements/{type}/{requirement}', [ProjectController::class, 'updateRequirementStatus'])->name('projects.requirements.update');
+
+    // AI Task Generation routes
+    Route::get('/projects/{project}/ai-tasks', [AITaskController::class, 'preview'])->name('projects.ai-tasks.preview');
+    Route::post('/projects/{project}/ai-tasks/generate', [AITaskController::class, 'generate'])->name('projects.ai-tasks.generate');
+    Route::post('/projects/{project}/ai-tasks/store', [AITaskController::class, 'store'])->name('projects.ai-tasks.store');
 
     // Project task routes
     Route::post('/projects/{project}/tasks', [TaskController::class, 'store'])->name('projects.tasks.store');

@@ -210,6 +210,24 @@
                 </div>
             </div>
 
+            <!-- AI Task Generation Card -->
+            @can('update', $project)
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 text-white">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-lg font-bold mb-1">🤖 AI Task Generation</h3>
+                            <p class="text-sm opacity-90">Automatically generate tasks from your project requirements using AI</p>
+                        </div>
+                        <a href="{{ route('projects.ai-tasks.preview', $project) }}" 
+                           class="px-4 py-2 bg-white text-indigo-600 font-bold rounded-lg hover:bg-gray-100 transition shadow">
+                            Generate Tasks
+                        </a>
+                    </div>
+                </div>
+            </div>
+            @endcan
+
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                         <div class="flex justify-between items-center mb-4">
