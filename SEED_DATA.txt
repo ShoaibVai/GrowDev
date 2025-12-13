@@ -1,0 +1,32 @@
+PROJECT SEED DATA
+=================
+
+ADMIN USER
+----------
+Email: admin@growdev.com
+Password: password
+Role: System Administrator
+
+TEST USERS
+----------
+1. Test User
+   Email: test@example.com
+   Password: password (reset during seed)
+
+2. ss
+   Email: ss@gmail.com
+   Password: [Original Hash Preserved]
+
+3. dd
+   Email: dd@gmail.com
+   Password: [Original Hash Preserved]
+
+TEAMS
+-----
+1. Test User's Team (Owner: Test User)
+2. Team Alpha (Owner: ss)
+
+NOTES
+-----
+- The 'admin' user has access to the /admin dashboard.
+- Use the setup.bat (Windows) or setup.sh (Linux/Mac) to reset the database to this state.

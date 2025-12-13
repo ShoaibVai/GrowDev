@@ -87,6 +87,10 @@ class NotificationController extends Controller
         $data = $notification->data;
         $type = $data['type'] ?? null;
 
+        if (isset($data['action_url'])) {
+            return $data['action_url'];
+        }
+
         return match ($type) {
             'task_status_change_requested' => isset($data['task_id']) ? "/tasks/{$data['task_id']}" : null,
             'task_status_request_reviewed' => isset($data['task_id']) ? "/tasks/{$data['task_id']}" : null,

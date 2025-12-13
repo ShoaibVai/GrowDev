@@ -14,20 +14,28 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        $projectsQuery = $user->projects()->with('tasks')->latest();
-        $projects = $projectsQuery->take(6)->get();
+        // Projects - Optimized to reduce queries
+        $projects = $user->projects()->with('tasks')->latest()->take(6)->get();
 
-        $totalProjects = $user->projects()->count();
-        $activeProjects = $user->projects()->where('status', 'active')->count();
-        $completedProjects = $user->projects()->where('status', 'completed')->count();
+        $projectStats = $user->projects()
+            ->selectRaw('count(*) as total')
+            ->selectRaw("sum(case when status = 'active' then 1 else 0 end) as active")
+            ->selectRaw("sum(case when status = 'completed' then 1 else 0 end) as completed")
+            ->first();
+
+        $totalProjects = $projectStats->total ?? 0;
+        $activeProjects = $projectStats->active ?? 0;
+        $completedProjects = $projectStats->completed ?? 0;
 
         $teams = $user->teams()->get();
         $teamsCount = $teams->count();
 
         // Tasks assigned to the user
-        $tasksAssignedQuery = Task::where('assigned_to', $user->id)->latest();
-        $tasksAssigned = $tasksAssignedQuery->take(6)->get();
-        $openTasksCount = $tasksAssignedQuery->whereIn('status', ['To Do', 'In Progress', 'Review'])->count();
+        $tasksAssigned = Task::where('assigned_to', $user->id)->latest()->take(6)->get();
+        
+        $openTasksCount = Task::where('assigned_to', $user->id)
+            ->whereIn('status', ['To Do', 'In Progress', 'Review'])
+            ->count();
 
         // Upcoming tasks (next 7 days)
         $upcomingTasks = Task::where('assigned_to', $user->id)

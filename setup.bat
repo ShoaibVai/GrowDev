@@ -106,15 +106,22 @@ call php artisan optimize:clear
 if errorlevel 1 goto :error
 
 echo.
+echo [Step] Seeding Database...
+call php artisan migrate:fresh --seed
+if errorlevel 1 goto :error
+
+echo.
 
 echo ==============================================
 echo   %SCRIPT_NAME% - COMPLETE
-
+echo.
+echo   Admin Credentials:
+echo     Email:    admin@growdev.com
+echo     Password: password
+echo.
 echo   Next steps:
 echo     1. php artisan serve
-
 echo     2. npm run dev      ^<-- for Vite dev server
-
 echo ==============================================
 
 goto :end

@@ -11,9 +11,19 @@ class TeamController extends Controller
 {
     public function index()
     {
-        $teams = Auth::user()->teams()->get();
-        $ownedTeams = Team::where('owner_id', Auth::id())->get();
-        return view('teams.index', compact('teams', 'ownedTeams'));
+        $user = Auth::user();
+        $teams = $user->teams()->get();
+        $ownedTeams = Team::where('owner_id', $user->id)->get();
+        
+        $pendingInvitations = \App\Models\Invitation::where('status', 'pending')
+            ->where(function($query) use ($user) {
+                $query->where('user_id', $user->id)
+                      ->orWhere('email', $user->email);
+            })
+            ->with(['team', 'inviter'])
+            ->get();
+
+        return view('teams.index', compact('teams', 'ownedTeams', 'pendingInvitations'));
     }
 
     public function create()
@@ -119,7 +129,11 @@ class TeamController extends Controller
         ]);
         $data = [];
         if ($request->filled('role')) $data['role'] = $request->role;
-        if ($request->filled('role_id')) $data['role_id'] = $request->role_id;
+        
+        // Handle role_id update (including setting to null)
+        if ($request->has('role_id')) {
+            $data['role_id'] = $request->role_id ?: null;
+        }
 
         $team->members()->updateExistingPivot($user->id, $data);
 

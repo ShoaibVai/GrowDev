@@ -65,6 +65,12 @@
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                                                 </svg>
                                             </div>
+                                        @elseif($type === 'team_invitation')
+                                            <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                                                <svg class="h-5 w-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                                                </svg>
+                                            </div>
                                         @else
                                             <div class="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
                                                 <svg class="h-5 w-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -105,6 +111,25 @@
                                                     <p class="text-sm text-gray-600">
                                                         You have been assigned to "{{ $notification->data['task_title'] ?? 'a task' }}"
                                                     </p>
+                                                @elseif($type === 'team_invitation')
+                                                    <p class="text-sm font-medium text-gray-900">
+                                                        {{ $notification->data['title'] ?? 'Team Invitation' }}
+                                                    </p>
+                                                    <p class="text-sm text-gray-600">
+                                                        {{ $notification->data['message'] ?? '' }}
+                                                    </p>
+                                                    <div class="mt-3 flex gap-3">
+                                                        @if(isset($notification->data['action_url']))
+                                                            <a href="{{ $notification->data['action_url'] }}" class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                                Accept
+                                                            </a>
+                                                        @endif
+                                                        @if(isset($notification->data['decline_url']))
+                                                            <a href="{{ $notification->data['decline_url'] }}" class="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                                Decline
+                                                            </a>
+                                                        @endif
+                                                    </div>
                                                 @else
                                                     <p class="text-sm font-medium text-gray-900">
                                                         Notification

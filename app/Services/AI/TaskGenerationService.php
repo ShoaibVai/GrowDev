@@ -169,7 +169,8 @@ class TaskGenerationService
         }
 
         try {
-            $response = Http::timeout(60)
+            $response = Http::withoutVerifying()
+                ->timeout(60)
                 ->withHeaders([
                     'Authorization' => 'Bearer ' . $this->apiKey,
                     'Content-Type' => 'application/json',

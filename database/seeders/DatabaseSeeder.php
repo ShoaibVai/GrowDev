@@ -28,6 +28,9 @@ class DatabaseSeeder extends Seeder
         // Seed system roles for AI task generation
         $this->call(SystemRolesSeeder::class);
 
+        // Seed Admin User
+        $this->call(AdminUserSeeder::class);
+
         // Seed production data (users, teams, projects, tasks, etc.)
         $this->call(ProductionDataSeeder::class);
     }

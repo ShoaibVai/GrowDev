@@ -71,10 +71,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/teams/{team}/roles', [\App\Http\Controllers\RoleController::class, 'store'])->name('teams.roles.store');
     Route::delete('/teams/{team}/roles/{role}', [\App\Http\Controllers\RoleController::class, 'destroy'])->name('teams.roles.destroy');
 
-    // Invitation accept/decline (available to guest to allow sign-in flow)
-    Route::get('/invitations/accept/{token}', [\App\Http\Controllers\InvitationController::class, 'accept'])->name('invitations.accept');
-    Route::get('/invitations/decline/{token}', [\App\Http\Controllers\InvitationController::class, 'decline'])->name('invitations.decline');
-
     // SRS Documentation routes
     Route::get('/documentation/srs', [DocumentationController::class, 'indexSrs'])->name('documentation.srs.index');
     Route::get('/documentation/srs/create', [DocumentationController::class, 'createSrs'])->name('documentation.srs.create');
@@ -84,6 +80,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/documentation/srs/{srsDocument}/pdf', [DocumentationController::class, 'generateSrsPdf'])->name('documentation.srs.pdf');
     Route::delete('/documentation/srs/{srsDocument}', [DocumentationController::class, 'destroySrs'])->name('documentation.srs.destroy');
 
+    // Admin Routes
+    Route::get('/admin', [\App\Http\Controllers\AdminController::class, 'index'])->name('admin.index');
+    Route::get('/admin/export/{type}', [\App\Http\Controllers\AdminController::class, 'export'])->name('admin.export');
+
 });
+
+// Invitation accept/decline (publicly accessible to allow redirection to login)
+Route::get('/invitations/accept/{token}', [\App\Http\Controllers\InvitationController::class, 'accept'])->name('invitations.accept');
+Route::get('/invitations/decline/{token}', [\App\Http\Controllers\InvitationController::class, 'decline'])->name('invitations.decline');
 
 require __DIR__.'/auth.php';

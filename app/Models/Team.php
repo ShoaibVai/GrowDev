@@ -32,7 +32,7 @@ class Team extends Model
 
     public function members(): BelongsToMany
     {
-        return $this->belongsToMany(User::class)->withPivot('role')->withTimestamps();
+        return $this->belongsToMany(User::class)->withPivot('role', 'role_id')->withTimestamps();
     }
 
     public function projects(): HasMany
