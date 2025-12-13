@@ -12,13 +12,30 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
 
+/**
+ * DocumentationController
+ * 
+ * Handles all documentation-related operations including:
+ * - SRS (Software Requirements Specification) document management
+ * - PDF generation and export
+ * - Requirements management (Functional and Non-Functional)
+ * - Role mapping for requirements
+ * 
+ * @package App\Http\Controllers
+ */
 class DocumentationController extends Controller
 {
     use AuthorizesRequests;
     // ===== SRS METHODS =====
 
     /**
-     * Show all SRS documents for the user.
+     * Show all SRS documents for the authenticated user.
+     * 
+     * Supports filtering by search query and team assignment.
+     * Supports multiple sorting options (latest, oldest, alphabetical).
+     *
+     * @param Request $request Query parameters for filtering and sorting
+     * @return View SRS documents list view
      */
     public function indexSrs(Request $request): View
     {
@@ -482,13 +499,28 @@ class DocumentationController extends Controller
     }
 
     /**
-     * Generate SRS PDF.
+     * Generate and download SRS document as PDF.
+     * 
+     * This method:
+     * 1. Authorizes the user to view the SRS document (via policy)
+     * 2. Renders the SRS data using the PDF view template
+     * 3. Generates a PDF file using DomPDF
+     * 4. Triggers browser download with SRS title as filename
+     *
+     * @param SrsDocument $srsDocument The SRS document to export
+     * @return \Illuminate\Http\Response PDF file download response
+     * @throws \Illuminate\Auth\Access\AuthorizationException If user cannot view the document
      */
     public function generateSrsPdf(SrsDocument $srsDocument)
     {
+        // Verify user authorization via SrsDocumentPolicy
+        // Ensures only the document owner can download it
         $this->authorize('view', $srsDocument);
 
+        // Load the PDF view template with SRS data
         $pdf = Pdf::loadView('documentation.srs.pdf', compact('srsDocument'));
+        
+        // Return downloadable PDF with formatted filename
         return $pdf->download('SRS_' . $srsDocument->title . '.pdf');
     }
 

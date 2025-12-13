@@ -15,10 +15,32 @@ use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Barryvdh\DomPDF\Facade\Pdf;
 
+/**
+ * ProfileController
+ * 
+ * Handles user profile management including:
+ * - Profile information editing (name, email, contact details)
+ * - Work experience, education, skills, and certifications management
+ * - Project portfolio management
+ * - CV (Curriculum Vitae) PDF export
+ * - Notification preferences
+ * - Account deletion
+ * 
+ * @package App\Http\Controllers
+ */
 class ProfileController extends Controller
 {
     /**
-     * Show the profile edit form.
+     * Show the profile edit form with all user information.
+     * 
+     * Loads comprehensive user data including:
+     * - Basic profile information
+     * - Work experiences (manual and auto-generated)
+     * - Projects (manual and auto-generated)
+     * - Education, skills, and certifications
+     *
+     * @param Request $request HTTP request
+     * @return View Profile edit view with user data
      */
     public function edit(Request $request): View
     {
@@ -407,7 +429,15 @@ class ProfileController extends Controller
     }
 
     /**
-     * Generate and download CV as PDF.
+     * Generate and download CV (Curriculum Vitae) as PDF.
+     * 
+     * This method:
+     * 1. Loads all user profile relationships (experiences, education, skills, certifications, projects)
+     * 2. Renders the CV using a professional PDF template
+     * 3. Configures PDF margins to 0 for better page utilization (A4 format)
+     * 4. Generates and triggers browser download with user name and date
+     *
+     * @return \Illuminate\Http\Response PDF file download response
      */
     public function generatePDF()
     {
@@ -415,7 +445,8 @@ class ProfileController extends Controller
             'workExperiences',
             'educations',
             'skills',
-            'certifications'
+            'certifications',
+            'projects'
         ]);
 
         $pdf = Pdf::loadView('cv.pdf', ['user' => $user])

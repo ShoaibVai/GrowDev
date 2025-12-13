@@ -255,6 +255,25 @@
             </div>
         @endif
 
+        <!-- Projects -->
+        @if ($user->projects->count() > 0)
+            <div class="section">
+                <div class="section-title">PROJECTS</div>
+                @foreach ($user->projects as $project)
+                    <div class="entry">
+                        <div class="entry-header">
+                            <div>
+                                <div class="entry-title">{{ $project->name }}</div>
+                                @if ($project->description)
+                                    <div class="entry-subtitle">{{ $project->description }}</div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+
         <!-- Skills -->
         @if ($user->skills->count() > 0)
             <div class="section">

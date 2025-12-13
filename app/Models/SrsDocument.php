@@ -7,35 +7,46 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * @property int $id
- * @property int $user_id
- * @property int|null $project_id
- * @property string $title
- * @property string|null $description
- * @property string|null $purpose
- * @property string|null $document_conventions
- * @property string|null $intended_audience
- * @property string|null $product_scope
- * @property string|null $references
- * @property string|null $project_overview
- * @property string|null $scope
- * @property string|null $product_perspective
- * @property string|null $product_features
- * @property string|null $user_classes
- * @property string|null $operating_environment
- * @property string|null $design_constraints
- * @property string|null $constraints
- * @property string|null $assumptions
- * @property string|null $dependencies
- * @property string|null $external_interfaces
- * @property string|null $system_features
- * @property string|null $data_requirements
- * @property string|null $appendices
- * @property string|null $glossary
- * @property string|null $version
- * @property string|null $status
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * SrsDocument Model
+ * 
+ * Represents a Software Requirements Specification (SRS) document.
+ * SRS documents define all functional and non-functional requirements for a software project.
+ * 
+ * Key Features:
+ * - Multiple sections for comprehensive requirements documentation
+ * - Support for functional and non-functional requirements
+ * - Version tracking and status management
+ * - Associated with a user and optional project
+ * 
+ * @property int $id Primary key
+ * @property int $user_id Owner of the SRS document
+ * @property int|null $project_id Associated project (if any)
+ * @property string $title Document title
+ * @property string|null $description Brief description of the SRS
+ * @property string|null $purpose Document purpose and objectives
+ * @property string|null $document_conventions Conventions used in the document
+ * @property string|null $intended_audience Target audience for the SRS
+ * @property string|null $product_scope Scope of the software product
+ * @property string|null $references Related documents and references
+ * @property string|null $project_overview High-level overview of the project
+ * @property string|null $scope Detailed scope of requirements
+ * @property string|null $product_perspective How the product fits in the ecosystem
+ * @property string|null $product_features Major features of the product
+ * @property string|null $user_classes Different types of users
+ * @property string|null $operating_environment Operating environment specifications
+ * @property string|null $design_constraints Design and implementation constraints
+ * @property string|null $constraints Overall constraints on the product
+ * @property string|null $assumptions Assumptions made in requirements
+ * @property string|null $dependencies External dependencies
+ * @property string|null $external_interfaces External system interfaces
+ * @property string|null $system_features System features and capabilities
+ * @property string|null $data_requirements Data storage and management requirements
+ * @property string|null $appendices Additional appendices
+ * @property string|null $glossary Glossary of terms
+ * @property string|null $version Document version number
+ * @property string|null $status Document status (draft, finalized, etc.)
+ * @property \Illuminate\Support\Carbon|null $created_at Creation timestamp
+ * @property \Illuminate\Support\Carbon|null $updated_at Last update timestamp
  */
 class SrsDocument extends Model
 {
