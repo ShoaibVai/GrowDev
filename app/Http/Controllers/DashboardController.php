@@ -51,7 +51,7 @@ class DashboardController extends Controller
             ->latest()
             ->get();
 
-        return view('dashboard', compact(
+        return view('dashboard-modern', compact(
             'projects', 'totalProjects', 'activeProjects', 'completedProjects',
             'teams', 'teamsCount', 'tasksAssigned', 'openTasksCount', 'upcomingTasks',
             'recentSrs', 'pendingInvitations'

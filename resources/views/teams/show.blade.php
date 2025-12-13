@@ -19,7 +19,7 @@
                                 <tr>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Access / Role</th>
                                     @can('update', $team)
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                     @endcan
@@ -35,37 +35,53 @@
                                             <div class="text-sm text-gray-500">{{ $member->email }}</div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $member->pivot->role === 'Owner' ? 'bg-indigo-100 text-indigo-800' : 'bg-green-100 text-green-800' }}">
-                                                {{ $member->pivot->role }}
-                                            </span>
+                                            <div class="flex flex-col gap-1 items-start">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $member->pivot->role === 'Owner' ? 'bg-indigo-100 text-indigo-800' : ($member->pivot->role === 'Admin' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800') }}">
+                                                    {{ $member->pivot->role }}
+                                                </span>
+                                                @if($member->pivot->role_id)
+                                                    @php 
+                                                        $memberRole = $roles->firstWhere('id', $member->pivot->role_id);
+                                                    @endphp
+                                                    @if($memberRole)
+                                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                            {{ $memberRole->name }}
+                                                        </span>
+                                                    @endif
+                                                @endif
+                                            </div>
                                         </td>
                                         @can('update', $team)
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             @if($member->id !== Auth::id() && $member->pivot->role !== 'Owner')
-                                                <div class="flex items-center gap-2">
-                                                    <form action="{{ route('teams.assignRole', [$team, $member]) }}" method="POST" class="inline-flex items-center gap-2">
+                                                <div class="flex flex-col gap-2">
+                                                    <form action="{{ route('teams.assignRole', [$team, $member]) }}" method="POST" class="flex items-center gap-2">
                                                         @csrf
                                                         @method('PATCH')
-                                                        <select name="role" onchange="this.form.submit()" class="text-xs border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                                        <select name="role" onchange="this.form.submit()" class="text-xs border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 w-32">
                                                             <option value="Member" {{ $member->pivot->role === 'Member' ? 'selected' : '' }}>Member</option>
                                                             <option value="Admin" {{ $member->pivot->role === 'Admin' ? 'selected' : '' }}>Admin</option>
                                                         </select>
-                                                        @if(isset($roles) && $roles->count())
-                                                            <select name="role_id" onchange="this.form.submit()" class="text-xs border-gray-300 rounded-md shadow-sm">
-                                                                <option value="">-- Role --</option>
-                                                                @foreach($roles as $role)
-                                                                    <option value="{{ $role->id }}" {{ ($member->pivot->role_id ?? '') == $role->id ? 'selected' : '' }}>{{ $role->name }}</option>
-                                                                @endforeach
-                                                            </select>
-                                                        @endif
                                                     </form>
-                                                    <form action="{{ route('teams.removeMember', [$team, $member]) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to remove this member?');">
+                                                    
+                                                    @if(isset($roles) && $roles->count())
+                                                    <form action="{{ route('teams.assignRole', [$team, $member]) }}" method="POST" class="flex items-center gap-2">
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        <select name="role_id" onchange="this.form.submit()" class="text-xs border-gray-300 rounded-md shadow-sm w-32">
+                                                            <option value="">-- Tech Role --</option>
+                                                            @foreach($roles as $role)
+                                                                <option value="{{ $role->id }}" {{ ($member->pivot->role_id ?? '') == $role->id ? 'selected' : '' }}>{{ $role->name }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </form>
+                                                    @endif
+
+                                                    <form action="{{ route('teams.removeMember', [$team, $member]) }}" method="POST" class="inline mt-1" onsubmit="return confirm('Are you sure you want to remove this member?');">
                                                         @csrf
                                                         @method('DELETE')
-                                                        <button type="submit" class="text-red-600 hover:text-red-800" title="Remove member">
-                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                                            </svg>
+                                                        <button type="submit" class="text-red-600 hover:text-red-800 text-xs underline" title="Remove member">
+                                                            Remove Member
                                                         </button>
                                                     </form>
                                                 </div>

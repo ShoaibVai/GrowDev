@@ -28,8 +28,10 @@ class TaskController extends Controller
     {
         $user = Auth::user();
         
-        // Check if user is owner or assignee
-        if (!$task->isOwnedBy($user) && !$task->isAssignedTo($user)) {
+        // Check if user is owner, assignee, or team member
+        $isTeamMember = $task->project->team && $task->project->team->members()->where('users.id', $user->id)->exists();
+
+        if (!$task->isOwnedBy($user) && !$task->isAssignedTo($user) && !$isTeamMember) {
             abort(403, 'You do not have access to this task.');
         }
 
@@ -181,7 +183,14 @@ class TaskController extends Controller
 
     public function store(Request $request, Project $project)
     {
-        $this->authorize('update', $project);
+        // Allow project owner or team members to create tasks
+        $user = Auth::user();
+        $isOwner = $project->user_id === $user->id;
+        $isTeamMember = $project->team && $project->team->members()->where('users.id', $user->id)->exists();
+
+        if (!$isOwner && !$isTeamMember) {
+            abort(403, 'You are not authorized to create tasks in this project.');
+        }
 
         $request->validate([
             'title' => 'required|string|max:255',
@@ -258,7 +267,15 @@ class TaskController extends Controller
 
     public function update(Request $request, Task $task)
     {
-        $this->authorize('update', $task->project);
+        // Allow project owner, assignee, or team members to update
+        $user = Auth::user();
+        $isOwner = $task->project->user_id === $user->id;
+        $isAssignee = $task->assigned_to === $user->id;
+        $isTeamMember = $task->project->team && $task->project->team->members()->where('users.id', $user->id)->exists();
+
+        if (!$isOwner && !$isAssignee && !$isTeamMember) {
+            abort(403, 'You are not authorized to update this task.');
+        }
 
         $request->validate([
             'title' => 'required|string|max:255',

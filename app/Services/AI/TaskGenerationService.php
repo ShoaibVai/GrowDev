@@ -163,8 +163,8 @@ class TaskGenerationService
         $systemPrompt = $this->getSystemPrompt();
         $userPrompt = $this->getUserPrompt($payload);
 
-        // If no API key, use mock response for development
-        if (empty($this->apiKey)) {
+        // If no API key or dummy key, use mock response
+        if (empty($this->apiKey) || str_starts_with($this->apiKey, 'dummy') || str_starts_with($this->apiKey, 'sk-dummy')) {
             return $this->getMockResponse($payload);
         }
 
