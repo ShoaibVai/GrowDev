@@ -141,4 +141,36 @@ class Task extends Model
     {
         return $this->assigned_to === $user->id;
     }
+
+    /**
+     * Scope a query to only include tasks assigned to a specific user.
+     */
+    public function scopeAssignedTo($query, $userId)
+    {
+        return $query->where('assigned_to', $userId);
+    }
+
+    /**
+     * Scope a query to only include active (not completed/cancelled) tasks.
+     */
+    public function scopeActive($query)
+    {
+        return $query->whereNotIn('status', ['completed', 'cancelled']);
+    }
+
+    /**
+     * Scope a query to only include overdue tasks.
+     */
+    public function scopeOverdue($query)
+    {
+        return $query->where('due_date', '<', now())->whereNotIn('status', ['completed', 'cancelled']);
+    }
+
+    /**
+     * Check if the task is overdue.
+     */
+    public function isOverdue(): bool
+    {
+        return $this->due_date && $this->due_date->isPast() && !in_array($this->status, ['completed', 'cancelled']);
+    }
 }

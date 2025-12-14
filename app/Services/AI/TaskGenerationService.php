@@ -119,40 +119,53 @@ class TaskGenerationService
     protected function getTeamComposition(Project $project): array
     {
         if (!$project->team) {
+            $activeTasksCount = Task::where('project_id', $project->id)
+                ->where('assigned_to', $project->user_id)
+                ->whereIn('status', ['To Do', 'In Progress', 'Review'])
+                ->count();
+                
             return [
                 [
                     'user_id' => $project->user_id,
                     'name' => $project->user->name ?? 'Owner',
                     'role' => 'Full Stack Developer',
-                    'active_tasks' => Task::where('project_id', $project->id)
-                        ->where('assigned_to', $project->user_id)
-                        ->whereIn('status', ['To Do', 'In Progress', 'Review'])
-                        ->count(),
+                    'active_tasks' => $activeTasksCount,
                 ]
             ];
         }
 
-        return $project->team->members()
+        // Get team members with pivot data
+        $members = $project->team->members()
             ->withPivot(['role', 'role_id'])
-            ->get()
-            ->map(function ($member) use ($project) {
-                $role = null;
-                if ($member->pivot->role_id) {
-                    $role = Role::find($member->pivot->role_id)?->name;
-                }
-                $role = $role ?? $member->pivot->role ?? 'Team Member';
+            ->get();
+            
+        // Fetch all roles in one query
+        $roleIds = $members->pluck('pivot.role_id')->filter()->unique();
+        $roles = Role::whereIn('id', $roleIds)->pluck('name', 'id');
+        
+        // Get all active task counts in one query
+        $memberIds = $members->pluck('id');
+        $taskCounts = Task::where('project_id', $project->id)
+            ->whereIn('assigned_to', $memberIds)
+            ->whereIn('status', ['To Do', 'In Progress', 'Review'])
+            ->selectRaw('assigned_to, count(*) as count')
+            ->groupBy('assigned_to')
+            ->pluck('count', 'assigned_to');
 
-                return [
-                    'user_id' => $member->id,
-                    'name' => $member->name,
-                    'role' => $role,
-                    'active_tasks' => Task::where('project_id', $project->id)
-                        ->where('assigned_to', $member->id)
-                        ->whereIn('status', ['To Do', 'In Progress', 'Review'])
-                        ->count(),
-                ];
-            })
-            ->toArray();
+        return $members->map(function ($member) use ($roles, $taskCounts) {
+            $role = null;
+            if ($member->pivot->role_id && isset($roles[$member->pivot->role_id])) {
+                $role = $roles[$member->pivot->role_id];
+            }
+            $role = $role ?? $member->pivot->role ?? 'Team Member';
+
+            return [
+                'user_id' => $member->id,
+                'name' => $member->name,
+                'role' => $role,
+                'active_tasks' => $taskCounts[$member->id] ?? 0,
+            ];
+        })->toArray();
     }
 
     /**

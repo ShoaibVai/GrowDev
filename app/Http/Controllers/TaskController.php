@@ -28,20 +28,23 @@ class TaskController extends Controller
     {
         $user = Auth::user();
         
+        // Eager load relationships for authorization check
+        $task->loadMissing('project.team.members');
+        
         // Check if user is owner, assignee, or team member
-        $isTeamMember = $task->project->team && $task->project->team->members()->where('users.id', $user->id)->exists();
+        $isTeamMember = $task->project->team && $task->project->team->members->contains('id', $user->id);
 
         if (!$task->isOwnedBy($user) && !$task->isAssignedTo($user) && !$isTeamMember) {
             abort(403, 'You do not have access to this task.');
         }
 
         $task->load([
-            'project.user',
-            'assignee',
-            'creator',
+            'project.user:id,name,email',
+            'assignee:id,name,email',
+            'creator:id,name,email',
             'requirement',
-            'pendingStatusRequest.requester',
-            'statusRequests' => fn($q) => $q->latest()->limit(10),
+            'pendingStatusRequest.requester:id,name',
+            'statusRequests' => fn($q) => $q->with('requester:id,name')->latest()->limit(10),
         ]);
 
         // Get the SRS document for this project
@@ -186,10 +189,14 @@ class TaskController extends Controller
         // Allow project owner or team members to create tasks
         $user = Auth::user();
         $isOwner = $project->user_id === $user->id;
-        $isTeamMember = $project->team && $project->team->members()->where('users.id', $user->id)->exists();
-
-        if (!$isOwner && !$isTeamMember) {
-            abort(403, 'You are not authorized to create tasks in this project.');
+        
+        if (!$isOwner) {
+            $project->loadMissing('team.members');
+            $isTeamMember = $project->team && $project->team->members->contains('id', $user->id);
+            
+            if (!$isTeamMember) {
+                abort(403, 'You are not authorized to create tasks in this project.');
+            }
         }
 
         $request->validate([
@@ -271,10 +278,14 @@ class TaskController extends Controller
         $user = Auth::user();
         $isOwner = $task->project->user_id === $user->id;
         $isAssignee = $task->assigned_to === $user->id;
-        $isTeamMember = $task->project->team && $task->project->team->members()->where('users.id', $user->id)->exists();
-
-        if (!$isOwner && !$isAssignee && !$isTeamMember) {
-            abort(403, 'You are not authorized to update this task.');
+        
+        if (!$isOwner && !$isAssignee) {
+            $task->project->loadMissing('team.members');
+            $isTeamMember = $task->project->team && $task->project->team->members->contains('id', $user->id);
+            
+            if (!$isTeamMember) {
+                abort(403, 'You are not authorized to update this task.');
+            }
         }
 
         $request->validate([
@@ -396,7 +407,11 @@ class TaskController extends Controller
         $user = Auth::user();
         
         $query = Task::where('assigned_to', $user->id)
-            ->with(['project', 'requirement', 'pendingStatusRequest']);
+            ->with([
+                'project:id,name,status',
+                'requirement',
+                'pendingStatusRequest:id,task_id,approval_status'
+            ]);
 
         // Filter by status
         if ($request->filled('status')) {
@@ -420,11 +435,15 @@ class TaskController extends Controller
 
         $tasks = $query->paginate(15);
 
-        // Get status counts for filters
-        $statusCounts = Task::where('assigned_to', $user->id)
-            ->selectRaw('status, COUNT(*) as count')
-            ->groupBy('status')
-            ->pluck('count', 'status');
+        // Get status counts for filters - use cached query for efficiency
+        $statusCounts = \Illuminate\Support\Facades\Cache::remember(
+            "user_{$user->id}_task_status_counts",
+            300, // 5 minutes
+            fn() => Task::where('assigned_to', $user->id)
+                ->selectRaw('status, COUNT(*) as count')
+                ->groupBy('status')
+                ->pluck('count', 'status')
+        );
 
         return view('tasks.my-tasks', compact('tasks', 'statusCounts'));
     }

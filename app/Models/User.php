@@ -86,6 +86,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get only active projects for the user.
+     */
+    public function activeProjects(): HasMany
+    {
+        return $this->hasMany(Project::class)->where('status', 'active');
+    }
+
+    /**
      * Get the teams the user belongs to.
      */
     public function teams(): BelongsToMany

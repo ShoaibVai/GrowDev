@@ -70,16 +70,22 @@ class DocumentationController extends Controller
      */
     public function createSrs(Request $request): View
     {
-        $projects = auth()->user()->projects()->latest()->get();
+        $projects = auth()->user()->projects()
+            ->select('id', 'name', 'team_id')
+            ->latest()
+            ->get();
+            
         $selectedProjectId = $request->integer('project_id');
         $nfrCategories = SrsNonFunctionalRequirement::CATEGORIES;
         
         // Determine roles available for the selected project (if any)
         $roles = collect();
         if ($selectedProjectId) {
-            $project = auth()->user()->projects()->find($selectedProjectId);
+            $project = auth()->user()->projects()
+                ->with('team.roles:id,name,team_id')
+                ->find($selectedProjectId);
             if ($project && $project->team) {
-                $roles = $project->team->roles()->get();
+                $roles = $project->team->roles;
             }
         }
 

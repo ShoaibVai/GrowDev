@@ -29,13 +29,17 @@ class AITaskController extends Controller
     {
         $this->authorize('update', $project);
 
-        $srsDocument = $project->srsDocuments()->with([
-            'functionalRequirements',
-            'nonFunctionalRequirements',
-        ])->first();
+        $srsDocument = $project->srsDocuments()
+            ->with([
+                'functionalRequirements:id,srs_document_id,requirement_id,title,priority',
+                'nonFunctionalRequirements:id,srs_document_id,requirement_id,category,metric',
+            ])
+            ->first();
 
         $teamMembers = $this->getTeamWithRoles($project);
-        $systemRoles = Role::where('is_system_role', true)->get();
+        $systemRoles = Role::where('is_system_role', true)
+            ->select('id', 'name', 'description')
+            ->get();
 
         return view('projects.ai-tasks.preview', compact(
             'project',
@@ -205,6 +209,11 @@ class AITaskController extends Controller
     protected function getTeamWithRoles(Project $project)
     {
         if (!$project->team) {
+            $activeTasksCount = Task::where('project_id', $project->id)
+                ->where('assigned_to', $project->user_id)
+                ->whereIn('status', ['To Do', 'In Progress', 'Review'])
+                ->count();
+                
             return collect([
                 (object)[
                     'id' => $project->user_id,
@@ -212,36 +221,43 @@ class AITaskController extends Controller
                     'email' => $project->user->email ?? '',
                     'role' => 'Project Owner',
                     'role_name' => 'Project Owner',
-                    'active_tasks' => Task::where('project_id', $project->id)
-                        ->where('assigned_to', $project->user_id)
-                        ->whereIn('status', ['To Do', 'In Progress', 'Review'])
-                        ->count(),
+                    'active_tasks' => $activeTasksCount,
                 ]
             ]);
         }
 
-        return $project->team->members()
+        // Get all role IDs and fetch roles in one query
+        $members = $project->team->members()
             ->withPivot(['role', 'role_id'])
-            ->get()
-            ->map(function ($member) use ($project) {
-                $roleName = $member->pivot->role ?? 'Team Member';
-                if ($member->pivot->role_id) {
-                    $role = Role::find($member->pivot->role_id);
-                    $roleName = $role?->name ?? $roleName;
-                }
+            ->get();
+            
+        $roleIds = $members->pluck('pivot.role_id')->filter()->unique()->values();
+        $roles = Role::whereIn('id', $roleIds)->get()->keyBy('id');
+        
+        // Get active task counts for all members in one query
+        $memberIds = $members->pluck('id');
+        $taskCounts = Task::where('project_id', $project->id)
+            ->whereIn('assigned_to', $memberIds)
+            ->whereIn('status', ['To Do', 'In Progress', 'Review'])
+            ->select('assigned_to', DB::raw('count(*) as count'))
+            ->groupBy('assigned_to')
+            ->pluck('count', 'assigned_to');
 
-                return (object)[
-                    'id' => $member->id,
-                    'name' => $member->name,
-                    'email' => $member->email,
-                    'role' => $roleName,
-                    'role_name' => $roleName,
-                    'role_id' => $member->pivot->role_id,
-                    'active_tasks' => Task::where('project_id', $project->id)
-                        ->where('assigned_to', $member->id)
-                        ->whereIn('status', ['To Do', 'In Progress', 'Review'])
-                        ->count(),
-                ];
-            });
+        return $members->map(function ($member) use ($roles, $taskCounts) {
+            $roleName = $member->pivot->role ?? 'Team Member';
+            if ($member->pivot->role_id && isset($roles[$member->pivot->role_id])) {
+                $roleName = $roles[$member->pivot->role_id]->name;
+            }
+
+            return (object)[
+                'id' => $member->id,
+                'name' => $member->name,
+                'email' => $member->email,
+                'role' => $roleName,
+                'role_name' => $roleName,
+                'role_id' => $member->pivot->role_id,
+                'active_tasks' => $taskCounts[$member->id] ?? 0,
+            ];
+        });
     }
 }

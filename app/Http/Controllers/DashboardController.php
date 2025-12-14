@@ -30,15 +30,20 @@ class DashboardController extends Controller
         $teams = $user->teams()->get();
         $teamsCount = $teams->count();
 
-        // Tasks assigned to the user
-        $tasksAssigned = Task::where('assigned_to', $user->id)->latest()->take(6)->get();
+        // Tasks assigned to the user - with eager loading
+        $tasksAssigned = Task::where('assigned_to', $user->id)
+            ->with('project:id,name,status')
+            ->latest()
+            ->take(6)
+            ->get();
         
         $openTasksCount = Task::where('assigned_to', $user->id)
             ->whereIn('status', ['To Do', 'In Progress', 'Review'])
             ->count();
 
-        // Upcoming tasks (next 7 days)
+        // Upcoming tasks (next 7 days) - with eager loading
         $upcomingTasks = Task::where('assigned_to', $user->id)
+            ->with('project:id,name')
             ->whereNotNull('due_date')
             ->whereBetween('due_date', [now(), now()->addDays(7)])
             ->orderBy('due_date')

@@ -14,10 +14,16 @@ class ProjectController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Auth::user()->projects()->with('tasks')->latest();
+        $query = Auth::user()->projects()
+            ->with(['tasks' => fn($q) => $q->select('id', 'project_id', 'status', 'assigned_to')])
+            ->latest();
+            
         if ($request->filled('q')) {
-            $query->where('name', 'like', '%' . $request->q . '%')
-                  ->orWhere('description', 'like', '%' . $request->q . '%');
+            $searchTerm = '%' . $request->q . '%';
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('name', 'like', $searchTerm)
+                  ->orWhere('description', 'like', $searchTerm);
+            });
         }
 
         if ($request->filled('team_id')) {
@@ -110,22 +116,18 @@ class ProjectController extends Controller
             ? $project->team->members()->pluck('users.name', 'users.id')
             : collect([auth()->id() => 'Me']);
 
-        // Get SRS documents for this project with requirements
+        // Get SRS documents for this project with requirements - optimized single query
         $srsDocument = $project->srsDocuments()->with([
-            'functionalRequirements' => fn($q) => $q->whereNull('parent_id')->with('children'),
-            'nonFunctionalRequirements' => fn($q) => $q->whereNull('parent_id')->with('children'),
+            'functionalRequirements' => fn($q) => $q->select('id', 'srs_document_id', 'parent_id', 'title', 'section_number', 'priority', 'implementation_status')->orderBy('section_number'),
+            'nonFunctionalRequirements' => fn($q) => $q->select('id', 'srs_document_id', 'parent_id', 'title', 'section_number', 'priority', 'implementation_status', 'category')->orderBy('section_number'),
         ])->first();
 
-        $functionalRequirements = $srsDocument ? $srsDocument->functionalRequirements : collect();
-        $nonFunctionalRequirements = $srsDocument ? $srsDocument->nonFunctionalRequirements : collect();
+        $functionalRequirements = $srsDocument ? $srsDocument->functionalRequirements->whereNull('parent_id') : collect();
+        $nonFunctionalRequirements = $srsDocument ? $srsDocument->nonFunctionalRequirements->whereNull('parent_id') : collect();
 
-        // Flatten requirements for task dropdown (include children)
-        $allFunctionalReqs = $srsDocument 
-            ? \App\Models\SrsFunctionalRequirement::where('srs_document_id', $srsDocument->id)->orderBy('section_number')->get()
-            : collect();
-        $allNonFunctionalReqs = $srsDocument 
-            ? \App\Models\SrsNonFunctionalRequirement::where('srs_document_id', $srsDocument->id)->orderBy('section_number')->get()
-            : collect();
+        // Use already loaded data instead of querying again
+        $allFunctionalReqs = $srsDocument ? $srsDocument->functionalRequirements : collect();
+        $allNonFunctionalReqs = $srsDocument ? $srsDocument->nonFunctionalRequirements : collect();
 
         return view('projects.show', compact(
             'project', 'tasks', 'members', 'srsDocument',
@@ -137,7 +139,11 @@ class ProjectController extends Controller
     public function board(Project $project)
     {
         $this->authorize('view', $project);
-        $tasks = $project->tasks()->orderBy('created_at')->get()->groupBy('status');
+        $tasks = $project->tasks()
+            ->with(['assignee:id,name', 'requirement'])
+            ->orderBy('created_at')
+            ->get()
+            ->groupBy('status');
         return view('projects.board', compact('project', 'tasks'));
     }
 
@@ -145,15 +151,30 @@ class ProjectController extends Controller
     {
         $this->authorize('view', $project);
         $members = $project->team ? $project->team->members : collect([auth()->user()]);
-        $summary = $members->map(function ($m) use ($project) {
-            $activeTasks = $project->tasks()->where('assigned_to', $m->id)->whereIn('status', ['To Do', 'In Progress', 'Review'])->count();
-            $totalTasks = $project->tasks()->where('assigned_to', $m->id)->count();
+        
+        // Optimize with single query using conditional aggregation
+        $memberIds = $members->pluck('id');
+        $taskCounts = \App\Models\Task::where('project_id', $project->id)
+            ->whereIn('assigned_to', $memberIds)
+            ->selectRaw('assigned_to, COUNT(*) as total_tasks')
+            ->selectRaw("SUM(CASE WHEN status IN ('To Do', 'In Progress', 'Review') THEN 1 ELSE 0 END) as active_tasks")
+            ->groupBy('assigned_to')
+            ->pluck('active_tasks', 'assigned_to')
+            ->union(
+                \App\Models\Task::where('project_id', $project->id)
+                    ->whereIn('assigned_to', $memberIds)
+                    ->selectRaw('assigned_to, COUNT(*) as total_tasks')
+                    ->groupBy('assigned_to')
+                    ->pluck('total_tasks', 'assigned_to')
+            );
+        
+        $summary = $members->map(function ($m) use ($taskCounts) {
             return [
                 'id' => $m->id,
                 'name' => $m->name,
                 'email' => $m->email,
-                'active_tasks' => $activeTasks,
-                'total_tasks' => $totalTasks,
+                'active_tasks' => $taskCounts[$m->id]['active'] ?? 0,
+                'total_tasks' => $taskCounts[$m->id]['total'] ?? 0,
             ];
         });
         return response()->json(['members' => $summary]);

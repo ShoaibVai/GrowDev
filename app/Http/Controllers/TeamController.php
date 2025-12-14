@@ -50,11 +50,20 @@ class TeamController extends Controller
     public function show(Team $team)
     {
         $this->authorize('view', $team);
-        $pendingInvitations = $team->invitations()->where('status', 'pending')->get();
+        
+        // Eager load members to prevent N+1 queries
+        $team->load('members');
+        
+        $pendingInvitations = $team->invitations()
+            ->where('status', 'pending')
+            ->with('inviter:id,name,email')
+            ->get();
+            
         // Get team specific roles AND system roles
         $roles = \App\Models\Role::where('team_id', $team->id)
                     ->orWhere('is_system_role', true)
                     ->get();
+                    
         return view('teams.show', compact('team', 'pendingInvitations', 'roles'));
     }
 
