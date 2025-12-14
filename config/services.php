@@ -35,10 +35,21 @@ return [
         ],
     ],
 
-    'openai' => [
-        'api_key' => env('OPENAI_API_KEY'),
-        'endpoint' => env('OPENAI_ENDPOINT', 'https://api.openai.com/v1/chat/completions'),
-        'model' => env('OPENAI_MODEL', 'gpt-4o-mini'),
+    /*
+    |--------------------------------------------------------------------------
+    | Google Gemini AI Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for Google's Gemini AI API used for task generation.
+    | The API is called directly from the frontend for better performance.
+    |
+    */
+    'gemini' => [
+        'api_key' => env('GEMINI_API_KEY'),
+        'project' => env('GEMINI_PROJECT', 'growdev'),
+        'project_name' => env('GEMINI_PROJECT_NAME', 'projects/788207188016'),
+        'project_number' => env('GEMINI_PROJECT_NUMBER', '788207188016'),
+        'model' => env('GEMINI_MODEL', 'gemini-flash-latest'),
     ],
 
 ];

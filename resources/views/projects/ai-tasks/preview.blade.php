@@ -1,4 +1,6 @@
 <x-app-layout>
+    @vite(['resources/js/modules/ai-tasks.js'])
+    
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -129,44 +131,133 @@
         let generatedTasks = [];
         const teamMembers = @json($teamMembers);
         const systemRoles = @json($systemRoles);
+        
+        @php
+            $functionalReqs = $srsDocument?->functionalRequirements->map(fn($req) => [
+                'id' => $req->id,
+                'section' => $req->section_number ?? '',
+                'title' => $req->title,
+                'description' => $req->description ?? '',
+                'priority' => $req->priority ?? 'Medium',
+                'acceptance_criteria' => $req->acceptance_criteria ?? '',
+            ])->toArray() ?? [];
+            
+            $nonFunctionalReqs = $srsDocument?->nonFunctionalRequirements->map(fn($req) => [
+                'id' => $req->id,
+                'section' => $req->section_number ?? '',
+                'title' => $req->title,
+                'description' => $req->description ?? '',
+                'category' => $req->category ?? '',
+                'priority' => $req->priority ?? 'Medium',
+                'target_value' => $req->target_value ?? '',
+            ])->toArray() ?? [];
+            
+            $teamData = $teamMembers->map(fn($m) => [
+                'user_id' => $m->id,
+                'name' => $m->name,
+                'role' => $m->role_name ?? $m->role,
+                'active_tasks' => $m->active_tasks,
+            ])->toArray();
+        @endphp
+        
+        const projectContext = {
+            project: {
+                name: @json($project->name),
+                description: @json($project->description),
+                type: @json($project->type),
+                status: @json($project->status)
+            },
+            team: @json($teamData),
+            functional_requirements: @json($functionalReqs),
+            non_functional_requirements: @json($nonFunctionalReqs),
+            available_roles: @json($systemRoles->pluck('name'))
+        };
 
-        function generateTasks() {
+        async function generateTasks() {
             // Show loading state
             document.getElementById('loadingState').classList.remove('hidden');
             document.getElementById('tasksPreview').classList.add('hidden');
             document.getElementById('errorState').classList.add('hidden');
             document.getElementById('generateBtn').disabled = true;
 
-            fetch('{{ route('projects.ai-tasks.generate', $project) }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                credentials: 'same-origin'
-            })
-            .then(response => response.json())
-            .then(data => {
+            try {
+                // Wait for module to load if not ready yet
+                if (!window.puterAI) {
+                    console.log('Waiting for AI module to load...');
+                    await new Promise(resolve => {
+                        const checkInterval = setInterval(() => {
+                            if (window.puterAI) {
+                                clearInterval(checkInterval);
+                                resolve();
+                            }
+                        }, 100);
+                        // Timeout after 5 seconds
+                        setTimeout(() => {
+                            clearInterval(checkInterval);
+                            resolve();
+                        }, 5000);
+                    });
+                }
+
+                if (!window.puterAI) {
+                    throw new Error('AI module failed to load. Please refresh the page.');
+                }
+
+                // Use Gemini API to generate tasks (loaded via ai-tasks.js module)
+                const result = await window.puterAI.generateTasks(projectContext);
+                
                 document.getElementById('loadingState').classList.add('hidden');
                 document.getElementById('generateBtn').disabled = false;
 
-                if (data.success) {
-                    generatedTasks = data.tasks;
-                    renderTasks(data.tasks);
+                if (result.success) {
+                    // Assign tasks to team members
+                    generatedTasks = assignTasksToTeam(result.tasks);
+                    renderTasks(generatedTasks);
                     document.getElementById('tasksPreview').classList.remove('hidden');
                 } else {
-                    document.getElementById('errorMessage').textContent = data.error || 'Unknown error occurred';
+                    document.getElementById('errorMessage').textContent = result.error || 'Unknown error occurred';
                     document.getElementById('errorState').classList.remove('hidden');
                 }
-            })
-            .catch(error => {
+            } catch (error) {
+                console.error('Task generation error:', error);
                 document.getElementById('loadingState').classList.add('hidden');
                 document.getElementById('generateBtn').disabled = false;
-                document.getElementById('errorMessage').textContent = 'Network error: ' + error.message;
+                document.getElementById('errorMessage').textContent = 'Error: ' + error.message;
                 document.getElementById('errorState').classList.remove('hidden');
+            }
+        }
+
+        function assignTasksToTeam(tasks) {
+            // Simple assignment based on role match and workload
+            return tasks.map(task => {
+                const assignee = findBestAssignee(task.required_role);
+                return {
+                    ...task,
+                    assigned_to: assignee?.id || null,
+                    assignee_name: assignee?.name || null
+                };
             });
         }
+
+        function findBestAssignee(requiredRole) {
+            // Find exact match with lowest workload
+            let candidates = teamMembers.filter(m => m.role === requiredRole || m.role_name === requiredRole);
+            
+            if (candidates.length === 0) {
+                // Try Full Stack Developer as fallback
+                candidates = teamMembers.filter(m => m.role === 'Full Stack Developer' || m.role_name === 'Full Stack Developer');
+            }
+            
+            if (candidates.length === 0) {
+                // Assign to member with lowest workload
+                candidates = teamMembers;
+            }
+
+            // Sort by active tasks and return first
+            return candidates.sort((a, b) => (a.active_tasks || 0) - (b.active_tasks || 0))[0];
+        }
+
+        window.renderTasks = renderTasks;
 
         function renderTasks(tasks) {
             const container = document.getElementById('tasksList');
