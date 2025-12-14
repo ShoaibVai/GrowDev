@@ -13,10 +13,13 @@ class DatabaseSeeder extends Seeder
     /**
      * Seed the application's database.
      * 
-     * Uses ProductionDataSeeder to restore real user data including:
-     * - Users with their original passwords and TOTP secrets
-     * - Teams and team memberships
-     * - Projects, tasks, and SRS documents
+     * Uses ShowcaseDataSeeder to create comprehensive demo data including:
+     * - Multiple teams with diverse users and roles
+     * - Real-world projects with detailed descriptions
+     * - Tasks with various statuses and priorities
+     * - Complete SRS documentation with requirements
+     * - User profiles with skills and experience
+     * - Project diagrams and technical documentation
      * 
      * Run: php artisan migrate:fresh --seed
      */
@@ -31,7 +34,7 @@ class DatabaseSeeder extends Seeder
         // Seed Admin User
         $this->call(AdminUserSeeder::class);
 
-        // Seed production data (users, teams, projects, tasks, etc.)
-        $this->call(ProductionDataSeeder::class);
+        // Seed comprehensive showcase data
+        $this->call(ShowcaseDataSeeder::class);
     }
 }

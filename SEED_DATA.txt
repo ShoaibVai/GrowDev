@@ -1,32 +1,143 @@
-PROJECT SEED DATA
-=================
+PROJECT SEED DATA - COMPREHENSIVE SHOWCASE
+==========================================
 
 ADMIN USER
 ----------
 Email: admin@growdev.com
 Password: password
 Role: System Administrator
+Access: /admin dashboard for system management
 
-TEST USERS
-----------
-1. Test User
-   Email: test@example.com
-   Password: password (reset during seed)
+DEMO USERS (All use password: "password")
+------------------------------------------
+1. Alice Johnson (alice@growdev.com)
+   Role: Senior Full-Stack Developer, Team Lead
+   Team: Enterprise Solutions Team (Owner)
+   Skills: Laravel, React, AWS, PostgreSQL, Docker
+   Projects: Cloud Banking Platform, Healthcare Management System
 
-2. ss
-   Email: ss@gmail.com
-   Password: [Original Hash Preserved]
+2. Bob Martinez (bob@growdev.com)
+   Role: Product Manager
+   Team: E-Commerce Platform Team (Owner)
+   Projects: AI-Powered Shopping Assistant, Inventory Management Pro
+   Focus: User-centered design and agile methodologies
 
-3. dd
-   Email: dd@gmail.com
-   Password: [Original Hash Preserved]
+3. Carol Smith (carol@growdev.com)
+   Role: UI/UX Designer
+   Teams: E-Commerce Platform Team, Mobile Innovation Lab (Owner)
+   Projects: AI Shopping Assistant, Inventory Management, Fitness Tracking PWA
+   Skills: Figma, Adobe XD, User Research
 
-TEAMS
------
-1. Test User's Team (Owner: Test User)
-2. Team Alpha (Owner: ss)
+4. David Chen (david@growdev.com)
+   Role: Backend Engineer
+   Team: Enterprise Solutions Team
+   Projects: Cloud Banking Platform, Healthcare Management System
+   Skills: PHP, Node.js, MongoDB, Redis, Microservices
 
-NOTES
------
-- The 'admin' user has access to the /admin dashboard.
-- Use the setup.bat (Windows) or setup.sh (Linux/Mac) to reset the database to this state.
+5. Emma Wilson (emma@growdev.com)
+   Role: Frontend Developer
+   Teams: E-Commerce Platform Team, Mobile Innovation Lab
+   Projects: AI Shopping Assistant, Inventory Management Pro, Fitness Tracking PWA
+   Skills: JavaScript, TypeScript, React, Vue.js, CSS/SASS
+
+6. Frank Kumar (frank@growdev.com)
+   Role: QA Engineer
+   Teams: Enterprise Solutions Team, E-Commerce Platform Team
+   Focus: Automated testing, CI/CD pipelines
+   Projects: Cloud Banking Platform, AI Shopping Assistant
+
+7. Grace Lee (grace@growdev.com)
+   Role: DevOps Engineer
+   Team: Enterprise Solutions Team
+   Skills: Kubernetes, Terraform, Jenkins, AWS (Certified)
+   Projects: Cloud Banking Platform, Healthcare Management System
+   Certifications: CKA, AWS DevOps Engineer Professional
+
+8. Henry Taylor (henry@growdev.com)
+   Role: Junior Developer
+   Teams: Enterprise Solutions Team, Mobile Innovation Lab
+   Background: Recent coding bootcamp graduate
+   Projects: Healthcare Management System, Fitness Tracking PWA
+
+TEAMS & PROJECTS
+----------------
+
+1. ENTERPRISE SOLUTIONS TEAM (Owner: Alice)
+   Members: Alice, David, Frank, Grace, Henry
+   
+   Projects:
+   a) Cloud Banking Platform
+      - Real-time transaction processing
+      - Multi-factor authentication
+      - Fraud detection system
+      - PCI-DSS compliant
+      - Complete SRS documentation
+      - 5 tasks (various statuses)
+      
+   b) Healthcare Management System
+      - HIPAA-compliant patient records
+      - Telemedicine integration
+      - Appointment scheduling
+      - 3 tasks in progress
+
+2. E-COMMERCE PLATFORM TEAM (Owner: Bob)
+   Members: Bob, Carol, Emma, Frank
+   
+   Projects:
+   a) AI-Powered Shopping Assistant
+      - ML-based recommendations
+      - Voice search capability
+      - AR virtual try-on feature
+      - Multiple payment gateways
+      - Complete SRS documentation
+      - 5 tasks (various priorities)
+      
+   b) Inventory Management Pro
+      - Barcode scanning
+      - Real-time analytics
+      - Automated reordering
+      - Multi-warehouse support
+      - 3 tasks planned
+
+3. MOBILE INNOVATION LAB (Owner: Carol)
+   Members: Carol, Emma, Henry
+   
+   Projects:
+   a) Fitness Tracking PWA
+      - Workout logging
+      - Wearable device integration
+      - Social challenges
+      - Nutrition tracking
+      - 3 tasks (design complete)
+
+SHOWCASE FEATURES
+-----------------
+✓ 8 realistic users with complete profiles
+✓ 3 teams with different structures
+✓ 5 diverse projects across industries
+✓ 20 tasks with various statuses and priorities
+✓ 2 complete SRS documents with functional/non-functional requirements
+✓ 3 project diagrams (architecture, flowcharts, sequence diagrams)
+✓ 2 technical documentation entries
+✓ User skills, certifications, education records
+✓ Work experience histories
+✓ Task activities showing collaboration
+✓ Notification preferences configured
+
+KEY HIGHLIGHTS
+--------------
+- Cloud Banking Platform: Complete enterprise banking solution with security features
+- AI Shopping Assistant: Modern e-commerce with ML and AR capabilities
+- Healthcare System: HIPAA-compliant medical records management
+- All tasks demonstrate real-world scenarios with proper descriptions
+- SRS documents show professional requirements engineering
+- User profiles showcase team diversity and expertise
+- Multiple task statuses: To Do, In Progress, Review, Done
+
+SETUP INSTRUCTIONS
+------------------
+Run: setup.bat (Windows) or setup.sh (Linux/Mac)
+Or manually: php artisan migrate:fresh --seed
+
+This will create a complete, production-ready demonstration of the GrowDev
+project management system with realistic data showcasing all features.
