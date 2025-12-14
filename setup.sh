@@ -20,4 +20,8 @@ npm run build
 
 echo "Setup Complete!"
 echo "Admin Credentials: admin@growdev.com / password"
+echo ""
+echo "IMPORTANT: Configure your Gemini API key in .env file:"
+echo "GEMINI_API_KEY=your_key_here"
+echo ""
 echo "Run 'php artisan serve' to start the server."

@@ -22,7 +22,7 @@ SEED_DATA.txt
 docs/
 ├── api/                      # API documentation
 ├── features/                 # Feature guides
-│   └── PUTER_INTEGRATION.md
+│   └── GEMINI_INTEGRATION.md
 ├── setup/                    # Installation guides
 │   ├── INSTALLATION.md
 │   └── SEED_DATA.txt
@@ -45,7 +45,7 @@ resources/js/
 ├── bootstrap.js
 ├── ai-tasks.js
 └── services/
-    └── puterAI.js
+    └── geminiAI.js
 ```
 
 **After:**
@@ -55,7 +55,7 @@ resources/js/
 │   ├── ai-tasks.js
 │   └── README.md
 ├── services/             # Business logic services
-│   └── puterAI.js
+│   └── geminiiAI.js
 ├── utils/                # Utility functions
 │   └── README.md
 ├── config/               # Configuration & constants
@@ -167,8 +167,8 @@ GrowDev/
    - Troubleshooting
 
 ### Feature Guides
-7. **[docs/features/PUTER_INTEGRATION.md](features/PUTER_INTEGRATION.md)** - AI integration
-   - How Puter.js works
+7. **[docs/features/GEMINI_INTEGRATION.md](features/GEMINI_INTEGRATION.md)** - AI integration
+   - How Gemini API works
    - Implementation details
    - Usage examples
    - Configuration
@@ -246,7 +246,7 @@ php artisan serve
 2. **[docs/PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)** - Understand the structure
 3. **[docs/QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Learn common commands
 4. **[CONTRIBUTING.md](../CONTRIBUTING.md)** - Before contributing
-5. **[docs/features/PUTER_INTEGRATION.md](features/PUTER_INTEGRATION.md)** - AI features
+5. **[docs/features/GEMINI_INTEGRATION.md](features/GEMINI_INTEGRATION.md)** - AI features
 
 ---
 
@@ -280,7 +280,7 @@ php artisan serve
 | [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) | Architecture guide | Developers |
 | [QUICK_REFERENCE.md](QUICK_REFERENCE.md) | Command reference | Developers |
 | [INSTALLATION.md](setup/INSTALLATION.md) | Setup guide | New users |
-| [PUTER_INTEGRATION.md](features/PUTER_INTEGRATION.md) | AI features | Developers |
+| [GEMINI_INTEGRATION.md](features/GEMINI_INTEGRATION.md) | AI features | Developers |
 
 ---
 

@@ -182,11 +182,11 @@
 
             try {
                 // Wait for module to load if not ready yet
-                if (!window.puterAI) {
+                if (!window.geminiAI) {
                     console.log('Waiting for AI module to load...');
                     await new Promise(resolve => {
                         const checkInterval = setInterval(() => {
-                            if (window.puterAI) {
+                            if (window.geminiAI) {
                                 clearInterval(checkInterval);
                                 resolve();
                             }
@@ -199,12 +199,12 @@
                     });
                 }
 
-                if (!window.puterAI) {
+                if (!window.geminiAI) {
                     throw new Error('AI module failed to load. Please refresh the page.');
                 }
 
                 // Use Gemini API to generate tasks (loaded via ai-tasks.js module)
-                const result = await window.puterAI.generateTasks(projectContext);
+                const result = await window.geminiAI.generateTasks(projectContext);
                 
                 document.getElementById('loadingState').classList.add('hidden');
                 document.getElementById('generateBtn').disabled = false;

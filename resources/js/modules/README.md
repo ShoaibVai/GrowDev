@@ -64,7 +64,7 @@ export { init };
 ## Current Modules
 
 ### ai-tasks.js
-Handles AI-powered task generation using Puter.js.
+Handles AI-powered task generation using Google Gemini API.
 
 **Features:**
 - Task generation from requirements

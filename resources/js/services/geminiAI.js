@@ -199,6 +199,4 @@ Return a JSON array of task objects with the structure:
 
 // Export singleton instance
 export const geminiAI = new GeminiAIService();
-// Keep puterAI for backward compatibility
-export const puterAI = geminiAI;
 export default geminiAI;

@@ -55,7 +55,7 @@ GrowDev/
 ├── 📚 docs/                          # Documentation
 │   ├── api/                         # API documentation
 │   ├── features/                    # Feature guides
-│   │   └── PUTER_INTEGRATION.md
+│   │   └── GEMINI_INTEGRATION.md
 │   └── setup/                       # Setup & installation
 │       ├── INSTALLATION.md
 │       └── SEED_DATA.txt
@@ -75,7 +75,7 @@ GrowDev/
 │   │   │   ├── ai-tasks.js
 │   │   │   └── README.md
 │   │   ├── services/                # JavaScript services
-│   │   │   └── puterAI.js
+│   │   │   └── geminiAI.js
 │   │   ├── utils/                   # Utility functions
 │   │   │   └── README.md
 │   │   ├── config/                  # JS configuration
@@ -298,7 +298,7 @@ Controller
 - **Views**: `kebab-case.blade.php`
   - Example: `create-project.blade.php`
 - **JavaScript**: `camelCase.js`
-  - Example: `aiTasks.js`, `puterAI.js`
+  - Example: `aiTasks.js`, `geminiAI.js`
 
 ### 2. **Code Organization**
 

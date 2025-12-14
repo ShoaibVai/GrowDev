@@ -80,6 +80,12 @@ if errorlevel 1 goto :error
 
 echo.
 
+echo [Step] Building frontend assets...
+call npm run build
+if errorlevel 1 goto :error
+
+echo.
+
 :: Generate application key if missing (empty or default placeholder)
 set "APP_KEY_FOUND="
 for /f "tokens=1,* delims==" %%A in ('findstr /b "APP_KEY=" ".env"') do (
@@ -96,8 +102,31 @@ if "!APP_KEY_FOUND!"=="" (
 echo.
 
 echo [Step] Running migrations and seeders...
-call php artisan migrate --seed
+call php artisan migrate:fresh --seed
 if errorlevel 1 goto :error
+
+echo.
+echo ==============================================
+echo   SETUP COMPLETE!
+echo ==============================================
+echo.
+echo [INFO] Application is ready to use.
+echo [INFO] Don't forget to configure your Gemini API key in .env file:
+echo        GEMINI_API_KEY=your_key_here
+echo.
+echo [INFO] To start the server, run: php artisan serve
+echo.
+pause
+goto :eof
+
+:error
+echo.
+echo [ERROR] Setup failed. Please check the error messages above.
+pause
+exit /b 1
+
+:end
+pause
 
 echo.
 

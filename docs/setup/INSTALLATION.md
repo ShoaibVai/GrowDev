@@ -199,22 +199,18 @@ REDIS_PASSWORD=null
 REDIS_PORT=6379
 ```
 
-### AI Configuration (Optional)
+### AI Configuration
 
-#### Using Puter.js (Default)
+#### Using Google Gemini API
 
-No configuration needed - works out of the box!
-
-```env
-PUTER_ENABLED=true
-```
-
-#### Using OpenAI API (Legacy)
+Get your API key from [Google AI Studio](https://aistudio.google.com/).
 
 ```env
-OPENAI_API_KEY=your_openai_api_key
-OPENAI_MODEL=gpt-4o-mini
-OPENAI_ENDPOINT=https://api.openai.com/v1/chat/completions
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_PROJECT=your_project_id
+GEMINI_PROJECT_NAME=projects/your_project_number
+GEMINI_PROJECT_NUMBER=your_project_number
+GEMINI_MODEL=gemini-flash-latest
 ```
 
 ### Storage Configuration
@@ -422,7 +418,7 @@ php artisan view:clear
 After successful installation:
 
 1. Read the [main README](../../README.md) for feature overview
-2. Check [AI Integration Guide](../features/PUTER_INTEGRATION.md)
+2. Check [AI Integration Guide](../features/GEMINI_INTEGRATION.md)
 3. Explore demo projects and tasks
 4. Configure production settings
 5. Set up automated backups

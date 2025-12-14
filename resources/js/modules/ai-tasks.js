@@ -1,6 +1,6 @@
-import { puterAI } from '../services/puterAI.js';
+import { geminiAI } from '../services/geminiAI.js';
 
-// Make puterAI available globally for the AI tasks page
-window.puterAI = puterAI;
+// Make geminiAI available globally for the AI tasks page
+window.geminiAI = geminiAI;
 
-console.log('AI Tasks module loaded with Puter.js integration');
+console.log('AI Tasks module loaded with Gemini AI integration');
