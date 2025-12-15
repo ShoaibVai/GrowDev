@@ -567,6 +567,21 @@ class ShowcaseDataSeeder extends Seeder
                 'constraints' => 'Must work offline with service workers. AR features require camera access. ML model size limited to 50MB for mobile. Response time under 2 seconds for recommendations.',
                 'assumptions' => 'Users grant camera permissions for AR features. Product images are high quality and consistent. Users have modern devices with adequate processing power.',
             ],
+            [
+                'id' => 3,
+                'project_id' => 5,
+                'user_id' => 4,
+                'title' => 'Fitness Tracking PWA - Software Requirements Specification',
+                'version' => '1.0',
+                'purpose' => 'Define requirements for a progressive web app that helps users track fitness activities, nutrition, and connect with wearable devices for comprehensive health monitoring.',
+                'references' => 'PWA Best Practices, Web Bluetooth API Documentation, Health Data Standards (FHIR), OAuth 2.0 for Wearable Integration',
+                'product_perspective' => 'Cross-platform progressive web app with offline capabilities. Integrates with popular fitness wearables and health platforms. Can be installed on mobile devices like a native app.',
+                'product_features' => 'Workout tracking, Nutrition logging, Social challenges, Wearable device sync, Progress analytics, Customizable goals, Achievement badges, Community features',
+                'user_classes' => 'Fitness Enthusiasts, Personal Trainers, Health Coaches, Casual Users',
+                'operating_environment' => 'Progressive Web App supporting iOS and Android browsers, Desktop browsers, Offline-first architecture with service workers',
+                'constraints' => 'Must work offline with data sync when online. Wearable integration requires user permissions. Limited to 50MB storage for offline data.',
+                'assumptions' => 'Users have modern smartphones with health sensors. Internet connectivity available periodically for sync. Users grant necessary permissions for health data access.',
+            ],
         ];
 
         foreach ($documents as $docData) {
@@ -615,6 +630,31 @@ class ShowcaseDataSeeder extends Seeder
                 'description' => 'The system shall flag transactions exceeding $5,000 or unusual transaction patterns for manual review. Real-time alerts sent to users for suspicious activity.',
                 'priority' => 'critical',
             ],
+            // Fitness Tracking PWA Requirements
+            [
+                'srs_document_id' => 3,
+                'requirement_id' => 'FR-WORKOUT-001',
+                'section_number' => '4.1.1',
+                'title' => 'Workout Logging',
+                'description' => 'The system shall allow users to log workouts with exercise type, duration, intensity, and calories burned. Support for both manual entry and automatic tracking from wearables.',
+                'priority' => 'critical',
+            ],
+            [
+                'srs_document_id' => 3,
+                'requirement_id' => 'FR-NUTRITION-001',
+                'section_number' => '4.2.1',
+                'title' => 'Nutrition Tracking',
+                'description' => 'The system shall enable users to log meals with calorie counts, macronutrients, and meal photos. Include barcode scanning for quick food entry.',
+                'priority' => 'high',
+            ],
+            [
+                'srs_document_id' => 3,
+                'requirement_id' => 'FR-SOCIAL-001',
+                'section_number' => '4.3.1',
+                'title' => 'Social Challenges',
+                'description' => 'The system shall allow users to create and join fitness challenges with friends. Display leaderboards and send progress notifications.',
+                'priority' => 'medium',
+            ],
         ];
 
         foreach ($functionalRequirements as $reqData) {
@@ -658,6 +698,34 @@ class ShowcaseDataSeeder extends Seeder
                 'title' => 'System Uptime',
                 'description' => 'The system shall maintain 99.99% uptime (less than 53 minutes downtime annually). Planned maintenance must occur during off-peak hours with 48-hour notice.',
                 'priority' => 'critical',
+            ],
+            // Fitness Tracking PWA Non-Functional Requirements
+            [
+                'srs_document_id' => 3,
+                'requirement_id' => 'NFR-PERF-001',
+                'section_number' => '5.1.1',
+                'category' => 'performance',
+                'title' => 'App Load Time',
+                'description' => 'The PWA shall load within 2 seconds on 3G networks and under 1 second on WiFi. Offline-cached content should load instantly.',
+                'priority' => 'high',
+            ],
+            [
+                'srs_document_id' => 3,
+                'requirement_id' => 'NFR-USABILITY-001',
+                'section_number' => '5.2.1',
+                'category' => 'usability',
+                'title' => 'Offline Functionality',
+                'description' => 'The app shall work offline with full workout logging capabilities. Data must sync automatically when connection is restored.',
+                'priority' => 'critical',
+            ],
+            [
+                'srs_document_id' => 3,
+                'requirement_id' => 'NFR-COMPAT-001',
+                'section_number' => '5.3.1',
+                'category' => 'compatibility',
+                'title' => 'Wearable Integration',
+                'description' => 'The system shall integrate with Fitbit, Apple Watch, Garmin, and other popular fitness wearables via their respective APIs.',
+                'priority' => 'high',
             ],
         ];
 
