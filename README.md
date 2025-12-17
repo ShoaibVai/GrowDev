@@ -26,6 +26,7 @@
 - [Usage](#-usage)
 - [Documentation](#-documentation)
 - [Contributing](#-contributing)
+- [Team Contribution](#-team-contribution)
 - [License](#-license)
 
 ---
@@ -382,7 +383,18 @@ If you discover any security vulnerabilities, please email security@growdev.com 
 
 ---
 
-## 📝 License
+## � Team Contribution
+
+We would like to acknowledge the following contributors for their work on GrowDev:
+
+| Contributor | Role | Key Contributions |
+|------------|------|-------------------|
+| **Shoaib Ibna Omar** | Lead Developer | • **Core Architecture**: Project setup, Auth system, Database design<br>• **AI Integration**: Gemini API task generation<br>• **Features**: Kanban Board, SRS System, Team Management, Notifications<br>• **Frontend**: Dashboard UI, CV Management<br>• **Documentation**: Comprehensive guides and API docs |
+| **Mansura Yeasmin** | Backend Developer | • **Security**: Implemented cache control headers for authenticated pages<br>• **Data Management**: Database seeding and initial data setup |
+
+---
+
+## �📝 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
