@@ -410,14 +410,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ---
 
-## 📞 Support
-
-- **Documentation**: [docs/](docs/)
-- **Issues**: GitHub Issues
-- **Email**: support@growdev.com
-
----
-
 <div align="center">
 
 **Made with ❤️ by the GrowDev Team**
