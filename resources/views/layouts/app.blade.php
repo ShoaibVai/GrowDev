@@ -19,6 +19,120 @@
         
         <style>
             [x-cloak] { display: none !important; }
+            
+            /* Smooth scroll behavior */
+            html {
+                scroll-behavior: smooth;
+            }
+            
+            /* Custom scrollbar */
+            ::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+            }
+            
+            ::-webkit-scrollbar-track {
+                background: #f1f1f1;
+            }
+            
+            ::-webkit-scrollbar-thumb {
+                background: #6366f1;
+                border-radius: 4px;
+            }
+            
+            ::-webkit-scrollbar-thumb:hover {
+                background: #4f46e5;
+            }
+            
+            /* Page transition */
+            .page-content {
+                animation: fadeInUp 0.5s ease-out;
+            }
+            
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            /* Card animations */
+            .card {
+                transform-origin: center;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            
+            /* Gradient text */
+            .gradient-text {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+            
+            /* Button hover glow */
+            .btn-glow:hover {
+                box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+            }
+            
+            /* Loading animation */
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+            
+            .animate-spin {
+                animation: spin 1s linear infinite;
+            }
+            
+            /* Pulse animation */
+            @keyframes pulse {
+                0%, 100% {
+                    opacity: 1;
+                }
+                50% {
+                    opacity: .5;
+                }
+            }
+            
+            .animate-pulse {
+                animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+            
+            /* Floating animation */
+            @keyframes float {
+                0%, 100% {
+                    transform: translateY(0);
+                }
+                50% {
+                    transform: translateY(-10px);
+                }
+            }
+            
+            .animate-float {
+                animation: float 3s ease-in-out infinite;
+            }
+            
+            /* Form focus glow */
+            input:focus, select:focus, textarea:focus {
+                box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+                border-color: #6366f1;
+                transition: all 0.3s ease;
+            }
+            
+            /* Success/Error states */
+            input.success {
+                border-color: #10b981 !important;
+                box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+            }
+            
+            input.error {
+                border-color: #ef4444 !important;
+                box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+            }
         </style>
     </head>
     <body class="h-full font-sans antialiased text-gray-900">
