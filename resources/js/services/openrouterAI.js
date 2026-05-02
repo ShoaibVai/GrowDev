@@ -17,10 +17,10 @@ class OpenRouterAIService {
         if (!this.apiKey) {
             console.warn('VITE_OPENROUTER_API_KEY is not configured. AI task generation will not work.');
         }
-        // Use a reliable and cost-effective model from OpenRouter
-        // Options: "gpt-4", "claude-3-opus", "claude-3-sonnet", "meta-llama/llama-2-70b-chat", etc.
-        this.model = import.meta.env.VITE_OPENROUTER_MODEL || 'openai/gpt-3.5-turbo';
+        // Use a reliable free model from OpenRouter. Override with VITE_OPENROUTER_MODEL.
+        this.model = import.meta.env.VITE_OPENROUTER_MODEL || 'meta-llama/llama-3.1-8b-instruct:free';
         this.apiEndpoint = 'https://openrouter.ai/api/v1/chat/completions';
+        this.timeout = 30000; // 30 second timeout
         this.initialized = true;
     }
 
@@ -35,31 +35,34 @@ class OpenRouterAIService {
         const userPrompt = this.getUserPrompt(projectContext);
 
         try {
-            const response = await fetch(this.apiEndpoint, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${this.apiKey}`,
-                    'Content-Type': 'application/json',
-                    'HTTP-Referer': window.location.origin,
-                    'X-Title': 'GrowDev Task Generator'
-                },
-                body: JSON.stringify({
-                    model: this.model,
-                    messages: [
-                        {
-                            role: 'system',
-                            content: systemPrompt
-                        },
-                        {
-                            role: 'user',
-                            content: userPrompt
-                        }
-                    ],
-                    temperature: 0.7,
-                    top_p: 0.95,
-                    max_tokens: 8192,
-                })
-            });
+            // Abort after timeout so the loading screen doesn't hang forever
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+
+            let response;
+            try {
+                response = await fetch(this.apiEndpoint, {
+                    method: 'POST',
+                    signal: controller.signal,
+                    headers: {
+                        'Authorization': `Bearer ${this.apiKey}`,
+                        'Content-Type': 'application/json',
+                        'HTTP-Referer': window.location.origin,
+                        'X-Title': 'GrowDev Task Generator'
+                    },
+                    body: JSON.stringify({
+                        model: this.model,
+                        messages: [
+                            { role: 'system', content: systemPrompt },
+                            { role: 'user', content: userPrompt }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 2048,
+                    })
+                });
+            } finally {
+                clearTimeout(timeoutId);
+            }
 
             if (!response.ok) {
                 const errorData = await response.json();
