@@ -1,0 +1,67 @@
+# Laravel & PHP files (not needed for frontend)
+app/
+bootstrap/
+config/
+database/
+routes/
+storage/
+tests/
+artisan
+*.php
+
+# Composer
+composer.json
+composer.lock
+
+# Laravel files
+.env*
+.env.*.php
+.env.*.example
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Development
+.editorconfig
+.phpstorm.meta.php
+.php_cs.cache
+phpunit.xml
+phpstan.neon
+pint.json
+
+# Scripts
+scripts/
+
+# Documentation
+docs/
+README.md
+LICENSE
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+
+# Node modules (will be installed during build)
+node_modules/
+
+# Build artifacts (will be regenerated)
+public/build/hot
+dist/
+
+# Logs
+storage/logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db

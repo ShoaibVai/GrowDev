@@ -6,7 +6,10 @@
  */
 class GeminiAIService {
     constructor() {
-        this.apiKey = 'AIzaSyCWK2g9CeDcvQThgaHdWKSIwvJRbbV-Ib8';
+        this.apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+        if (!this.apiKey) {
+            console.warn('VITE_GEMINI_API_KEY is not configured. AI task generation will not work.');
+        }
         this.model = 'gemini-flash-latest';
         this.apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`;
         this.initialized = true;

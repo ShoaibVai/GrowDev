@@ -1,7 +1,15 @@
 
 const https = require('https');
+const dotenv = require('dotenv');
 
-const apiKey = 'AIzaSyCWK2g9CeDcvQThgaHdWKSIwvJRbbV-Ib8';
+// Load environment variables from .env file
+dotenv.config();
+
+const apiKey = process.env.GEMINI_API_KEY;
+if (!apiKey) {
+    console.error('Error: GEMINI_API_KEY is not set in .env file');
+    process.exit(1);
+}
 const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
 
 https.get(url, (res) => {

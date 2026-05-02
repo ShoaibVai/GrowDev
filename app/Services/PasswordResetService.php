@@ -43,9 +43,9 @@ class PasswordResetService
             'user_agent' => request()->userAgent(),
         ];
 
-        // Serialize and encrypt the payload
-        $serialized = serialize($payload);
-        $encrypted = Crypt::encryptString($serialized);
+        // JSON encode (safer than serialize) and encrypt the payload
+        $jsonEncoded = json_encode($payload);
+        $encrypted = Crypt::encryptString($jsonEncoded);
         
         // Create URL-safe token
         $urlSafeToken = base64_encode($encrypted);
@@ -71,10 +71,13 @@ class PasswordResetService
             $encrypted = base64_decode($encryptedToken);
             
             // Decrypt the token
-            $serialized = Crypt::decryptString($encrypted);
+            $jsonEncoded = Crypt::decryptString($encrypted);
             
-            // Unserialize the payload
-            $payload = unserialize($serialized);
+            // JSON decode the payload (safer than unserialize)
+            $payload = json_decode($jsonEncoded, associative: true);
+            if (!is_array($payload)) {
+                return null;
+            }
             
             // Verify token hasn't expired (60 minutes)
             $expiresAt = Carbon::createFromTimestamp($payload['timestamp'])->addMinutes(60);
