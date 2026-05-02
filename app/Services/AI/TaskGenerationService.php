@@ -20,9 +20,9 @@ class TaskGenerationService
 
     public function __construct()
     {
-        $this->apiEndpoint = config('services.openai.endpoint', 'https://api.openai.com/v1/chat/completions');
-        $this->apiKey = config('services.openai.api_key') ?: '';
-        $this->model = config('services.openai.model', 'gpt-4o-mini');
+        $this->apiEndpoint = config('services.openrouter.endpoint', 'https://openrouter.ai/api/v1/chat/completions');
+        $this->apiKey = config('services.openrouter.api_key') ?: '';
+        $this->model = config('services.openrouter.model', 'openai/gpt-3.5-turbo');
     }
 
     /**
