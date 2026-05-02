@@ -37,12 +37,32 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Google Gemini AI Configuration
+    /*
+    |--------------------------------------------------------------------------
+    | OpenRouter AI Configuration
     |--------------------------------------------------------------------------
     |
-    | Configuration for Google's Gemini AI API used for task generation.
+    | Configuration for OpenRouter API which provides access to multiple
+    | AI models including GPT-4, Claude, Llama, Mistral, and 200+ others.
     | The API is called directly from the frontend for better performance.
     |
+    | @see https://openrouter.ai/
+    */
+    'openrouter' => [
+        'api_key' => env('OPENROUTER_API_KEY'),
+        'model' => env('OPENROUTER_MODEL', 'openai/gpt-3.5-turbo'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | DEPRECATED: Google Gemini AI Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Gemini API has been replaced with OpenRouter.
+    | These settings are kept for backwards compatibility only.
+    | Please use 'openrouter' configuration above.
+    |
+    | @deprecated Use 'openrouter' configuration instead
     */
     'gemini' => [
         'api_key' => env('GEMINI_API_KEY'),

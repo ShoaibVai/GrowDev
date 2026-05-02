@@ -1,6 +1,9 @@
-import { geminiAI } from '../services/geminiAI.js';
+import { openrouterAI } from '../services/openrouterAI.js';
 
-// Make geminiAI available globally for the AI tasks page
-window.geminiAI = geminiAI;
+// Make openrouterAI available globally for the AI tasks page
+window.openrouterAI = openrouterAI;
 
-console.log('AI Tasks module loaded with Gemini AI integration');
+// Also export as geminiAI for backwards compatibility
+window.geminiAI = openrouterAI;
+
+console.log('AI Tasks module loaded with OpenRouter AI integration');

@@ -182,11 +182,11 @@
 
             try {
                 // Wait for module to load if not ready yet
-                if (!window.geminiAI) {
+                if (!window.openrouterAI) {
                     console.log('Waiting for AI module to load...');
                     await new Promise(resolve => {
                         const checkInterval = setInterval(() => {
-                            if (window.geminiAI) {
+                            if (window.openrouterAI) {
                                 clearInterval(checkInterval);
                                 resolve();
                             }
@@ -199,12 +199,12 @@
                     });
                 }
 
-                if (!window.geminiAI) {
+                if (!window.openrouterAI) {
                     throw new Error('AI module failed to load. Please refresh the page.');
                 }
 
-                // Use Gemini API to generate tasks (loaded via ai-tasks.js module)
-                const result = await window.geminiAI.generateTasks(projectContext);
+                // Use OpenRouter API to generate tasks (loaded via ai-tasks.js module)
+                const result = await window.openrouterAI.generateTasks(projectContext);
                 
                 document.getElementById('loadingState').classList.add('hidden');
                 document.getElementById('generateBtn').disabled = false;

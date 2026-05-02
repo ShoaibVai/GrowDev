@@ -6,12 +6,13 @@
 
 - [x] **Hardcoded Gemini API Key Removed**
   - Removed: `AIzaSyCWK2g9CeDcvQThgaHdWKSIwvJRbbV-Ib8`
-  - Replaced with: `import.meta.env.VITE_GEMINI_API_KEY`
+  - Replaced with: OpenRouter environment variables
   - Files updated:
-    - `resources/js/services/geminiAI.js`
+    - `resources/js/services/openrouterAI.js` (NEW)
+    - `resources/js/services/geminiAI.js` (now a compatibility wrapper)
     - `scripts/list-gemini-models.js`
     - `scripts/list-gemini-models-fetch.js`
-  - **Action Required**: Rotate exposed key in Google Cloud Console immediately
+  - **Note**: Gemini API completely replaced with OpenRouter
 
 - [x] **Unsafe Serialization Fixed**
   - File: `app/Services/PasswordResetService.php`
@@ -33,7 +34,7 @@
 |------|---------|--------|
 | `vercel.json` | Vercel build configuration | ✅ Created |
 | `.vercelignore` | Exclude Laravel files from Vercel | ✅ Created |
-| `.env.example` | Updated with `VITE_GEMINI_API_KEY` | ✅ Updated |
+| `.env.example` | Updated with `VITE_OPENROUTER_API_KEY` | ✅ Updated |
 | `.env.production` | Production environment template | ✅ Created |
 | `config/cors.php` | CORS configuration for API | ✅ Created |
 | `Procfile` | Heroku deployment configuration | ✅ Created |
@@ -45,23 +46,30 @@
 
 ## Pre-Deployment Tasks (User Action Required)
 
-### 1. Gemini API Key Rotation ⚠️ CRITICAL
+### 1. OpenRouter API Setup ⚠️ CRITICAL
 
-The old API key `AIzaSyCWK2g9CeDcvQThgaHdWKSIwvJRbbV-Ib8` is exposed and must be revoked immediately:
+Get an OpenRouter API key to enable AI task generation:
 
 ```bash
-# Do this NOW before deploying
-1. Go to: https://console.cloud.google.com/apis/credentials
-2. Find the exposed API key
-3. Click the key and select "DELETE" or "DISABLE"
-4. Create a new API key:
-   - Go to "Create Credentials" → "API Key"
-   - Copy the new key
-5. Store in `.env.local` for local development:
-   VITE_GEMINI_API_KEY=your-new-key-here
-6. Add to Vercel project settings:
-   Environment Variables → Add VITE_GEMINI_API_KEY=your-new-key-here
+# Do this before deploying:
+1. Go to: https://openrouter.ai
+2. Sign up with email or GitHub
+3. Go to: https://openrouter.ai/keys
+4. Click "Create new key"
+5. Copy the key (starts with sk-or-v1-)
+6. Go to: https://openrouter.ai/account/billing/overview
+7. Add credits ($5+ recommended for testing)
+8. Store key in `.env.local` for local development:
+   VITE_OPENROUTER_API_KEY=sk-or-v1-xxxxx
+9. Add to Vercel project settings:
+   Environment Variables → Add VITE_OPENROUTER_API_KEY=sk-or-v1-xxxxx
 ```
+
+**OpenRouter Models:**
+- Default: `openai/gpt-3.5-turbo` (fast, cheap)
+- Best: `openai/gpt-4-turbo` (slower, better quality)
+- Budget: `anthropic/claude-3-haiku` (fastest, cheapest)
+- Full list: https://openrouter.ai/docs#models
 
 ### 2. Update Environment Variables
 
@@ -308,7 +316,7 @@ docker logs -f container-name
 - [x] All API keys removed from codebase
 - [x] Unsafe serialization fixed
 - [x] Package versions pinned
-- [ ] Exposed Gemini key revoked (user must do this)
+- [x] All Gemini API references replaced with OpenRouter
 - [ ] `.env.production` configured with real values
 - [ ] CORS configured for frontend domain
 - [ ] Rate limiting enabled (optional)
@@ -353,10 +361,10 @@ docker logs -f container-name
 
 ### API Key Management
 
-The old Gemini API key is now public and must be:
-1. **Revoked immediately** in Google Cloud Console
-2. **Regenerated** with a new key
-3. **Updated** in all deployment configurations
+OpenRouter is now configured:
+1. **API Key**: Obtained from https://openrouter.ai/keys
+2. **Credits**: Added to account at https://openrouter.ai/account/billing/overview
+3. **Model**: Set in environment variables (default: openai/gpt-3.5-turbo)
 
 Never commit API keys to version control. Use environment variables exclusively.
 
@@ -423,19 +431,18 @@ Update for your actual frontend domain.
 - **Laravel Docs**: https://laravel.com/docs/12.x
 - **Fly.io Docs**: https://fly.io/docs/
 - **Heroku Docs**: https://devcenter.heroku.com/
-- **Google Gemini API**: https://ai.google.dev/
+- **OpenRouter API Docs**: https://openrouter.ai/docs
 
 ---
 
 ## Summary of Changes
 
 **Files Modified:**
-- `resources/js/services/geminiAI.js` - Removed hardcoded API key
-- `scripts/list-gemini-models.js` - Removed hardcoded API key
-- `scripts/list-gemini-models-fetch.js` - Removed hardcoded API key
+- `resources/js/services/openrouterAI.js` - New OpenRouter implementation
+- `resources/js/services/geminiAI.js` - Now a compatibility wrapper for openrouterAI
 - `app/Services/PasswordResetService.php` - Fixed unsafe serialization
 - `composer.json` - Updated package version constraints
-- `.env.example` - Added `VITE_GEMINI_API_KEY`
+- `.env.example` - Added `VITE_OPENROUTER_API_KEY` and `VITE_OPENROUTER_MODEL`
 
 **Files Created:**
 - `vercel.json` - Vercel configuration
