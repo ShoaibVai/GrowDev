@@ -1,6 +1,6 @@
 {
   "buildCommand": "npm run build",
-  "outputDirectory": "public/build",
+  "outputDirectory": "public",
   "framework": "vite",
   "regions": [
     "iad1"
@@ -12,7 +12,7 @@
   },
   "headers": [
     {
-      "source": "/build/(.*)",
+      "source": "/build/assets/(.*)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -38,11 +38,26 @@
       ]
     }
   ],
-  "redirects": [
+  "rewrites": [
     {
-      "source": "/api/(.+)",
-      "destination": "https://api.example.com/api/$1",
-      "permanent": false
+      "source": "/build/(.*)",
+      "destination": "/build/$1"
+    },
+    {
+      "source": "/favicon.ico",
+      "destination": "/favicon.ico"
+    },
+    {
+      "source": "/robots.txt",
+      "destination": "/robots.txt"
+    },
+    {
+      "source": "/logo.svg",
+      "destination": "/logo.svg"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "https://growdev-backend-6399468b862c.herokuapp.com/$1"
     }
   ]
 }

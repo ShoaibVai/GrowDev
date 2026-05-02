@@ -7,7 +7,9 @@ routes/
 storage/
 tests/
 artisan
-*.php
+artisan.php
+index.php
+server.php
 
 # Composer
 composer.json
