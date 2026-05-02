@@ -36,16 +36,16 @@ Route::middleware('auth')->group(function () {
     // User search API (for AJAX calls from web views - uses session auth)
     Route::get('/web-api/users/search', [\App\Http\Controllers\Api\UserSearchController::class, 'search'])->name('web.users.search');
     
-    // Project routes
-    Route::resource('projects', ProjectController::class);
-    Route::get('/projects/{project}/board', [ProjectController::class, 'board'])->name('projects.board');
-    Route::get('/projects/{project}/members/summary', [ProjectController::class, 'membersSummary'])->name('projects.members.summary');
-    Route::patch('/projects/{project}/requirements/{type}/{requirement}', [ProjectController::class, 'updateRequirementStatus'])->name('projects.requirements.update');
+    // Project routes (whereNumber prevents DB errors on non-numeric IDs like /projects/a)
+    Route::resource('projects', ProjectController::class)->whereNumber('project');
+    Route::get('/projects/{project}/board', [ProjectController::class, 'board'])->whereNumber('project')->name('projects.board');
+    Route::get('/projects/{project}/members/summary', [ProjectController::class, 'membersSummary'])->whereNumber('project')->name('projects.members.summary');
+    Route::patch('/projects/{project}/requirements/{type}/{requirement}', [ProjectController::class, 'updateRequirementStatus'])->whereNumber('project')->name('projects.requirements.update');
 
     // AI Task Generation routes
-    Route::get('/projects/{project}/ai-tasks', [AITaskController::class, 'preview'])->name('projects.ai-tasks.preview');
-    Route::post('/projects/{project}/ai-tasks/generate', [AITaskController::class, 'generate'])->name('projects.ai-tasks.generate');
-    Route::post('/projects/{project}/ai-tasks/store', [AITaskController::class, 'store'])->name('projects.ai-tasks.store');
+    Route::get('/projects/{project}/ai-tasks', [AITaskController::class, 'preview'])->whereNumber('project')->name('projects.ai-tasks.preview');
+    Route::post('/projects/{project}/ai-tasks/generate', [AITaskController::class, 'generate'])->whereNumber('project')->name('projects.ai-tasks.generate');
+    Route::post('/projects/{project}/ai-tasks/store', [AITaskController::class, 'store'])->whereNumber('project')->name('projects.ai-tasks.store');
 
     // Project task routes
     Route::post('/projects/{project}/tasks', [TaskController::class, 'store'])->name('projects.tasks.store');
