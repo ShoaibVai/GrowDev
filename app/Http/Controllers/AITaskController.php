@@ -7,6 +7,7 @@ use App\Models\Role;
 use App\Models\SrsFunctionalRequirement;
 use App\Models\SrsNonFunctionalRequirement;
 use App\Models\Task;
+use App\Services\AI\TaskGenerationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -83,6 +84,70 @@ class AITaskController extends Controller
                 'priority' => $req->priority ?? 'Medium',
             ]) ?? [],
             'available_roles' => $systemRoles->pluck('name'),
+        ]);
+    }
+
+    public function startLayeredGeneration(Request $request, Project $project, TaskGenerationService $service)
+    {
+        $this->authorize('view', $project);
+
+        $validated = $request->validate([
+            'srs_document_id' => 'nullable|integer|exists:srs_documents,id',
+            'mock_ai' => 'nullable|boolean',
+        ]);
+
+        $srsDocument = !empty($validated['srs_document_id'])
+            ? $project->srsDocuments()->findOrFail($validated['srs_document_id'])
+            : $project->srsDocuments()->with(['functionalRequirements', 'nonFunctionalRequirements'])->first();
+
+        $runId = $service->startLayeredGeneration(
+            $project,
+            $srsDocument,
+            Auth::id(),
+            (bool) ($validated['mock_ai'] ?? false)
+        );
+
+        return response()->json([
+            'success' => true,
+            'run_id' => $runId,
+            'status' => 'queued',
+            'poll_url' => route('projects.ai-tasks.layered.status', [$project, $runId]),
+        ]);
+    }
+
+    public function layeredStatus(Project $project, string $runId, TaskGenerationService $service)
+    {
+        $this->authorize('view', $project);
+
+        $state = $service->getLayeredStatus($runId);
+
+        abort_unless((int) ($state['project_id'] ?? 0) === $project->id, 404);
+
+        return response()->json([
+            'success' => true,
+            'run_id' => $runId,
+            'status' => $state['status'],
+            'layer' => $state['layer'] ?? 0,
+            'preview' => $state['preview'] ?? null,
+            'error' => $state['error'] ?? null,
+        ]);
+    }
+
+    public function commitLayeredGeneration(Project $project, string $runId, TaskGenerationService $service)
+    {
+        $this->authorize('view', $project);
+
+        $state = $service->getLayeredStatus($runId);
+
+        abort_unless((int) ($state['project_id'] ?? 0) === $project->id, 404);
+
+        $tasks = $service->commitLayeredGeneration($project, $runId, Auth::id());
+
+        return response()->json([
+            'success' => true,
+            'created' => $tasks->count(),
+            'task_ids' => $tasks->pluck('id')->values(),
+            'redirect' => route('projects.show', $project),
         ]);
     }
 

@@ -1,6 +1,32 @@
 <div x-data="timeLogger({{ $task->id }})" class="mt-6 border-t border-gray-200 pt-6">
     <h3 class="text-lg font-semibold text-gray-900 mb-4">Time Tracking</h3>
 
+    <div class="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div>
+                <p class="text-sm text-gray-500">Timer</p>
+                <p class="text-xl font-bold text-gray-900" x-text="formatSeconds(timer.time_spent_seconds)"></p>
+                <p class="text-xs text-gray-500">
+                    <span x-text="timer.timer_state"></span>
+                    <template x-if="timer.due_at">
+                        <span> · Due <span x-text="formatDate(timer.due_at)"></span></span>
+                    </template>
+                </p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <button type="button" @click="startTimer" x-show="timer.timer_state === 'idle' || !timer.timer_state"
+                        class="px-3 py-1.5 bg-green-600 text-white text-sm rounded-md hover:bg-green-700">Start</button>
+                <button type="button" @click="pauseTimer" x-show="timer.timer_state === 'running'"
+                        class="px-3 py-1.5 bg-amber-600 text-white text-sm rounded-md hover:bg-amber-700">Pause</button>
+                <button type="button" @click="resumeTimer" x-show="timer.timer_state === 'paused'"
+                        class="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700">Resume</button>
+                <button type="button" @click="stopTimer" x-show="timer.timer_state === 'running' || timer.timer_state === 'paused'"
+                        class="px-3 py-1.5 bg-gray-800 text-white text-sm rounded-md hover:bg-gray-900">Stop</button>
+            </div>
+        </div>
+        <p x-show="timer.is_overdue" class="mt-3 text-sm text-red-600 font-medium">This task is overdue.</p>
+    </div>
+
     <div class="grid grid-cols-2 gap-4 mb-4">
         <div class="bg-gray-50 rounded-lg p-4 text-center">
             <p class="text-sm text-gray-500">Estimated</p>
@@ -52,12 +78,19 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('timeLogger', (taskId) => ({
         logs: [],
         totalHours: 0,
+        timer: {
+            timer_state: 'idle',
+            time_spent_seconds: {{ (int) ($task->time_spent_seconds ?? 0) }},
+            due_at: @json($task->due_at?->toISOString()),
+            is_overdue: @json($task->isOverdue()),
+        },
         hours: '',
         description: '',
         logged_at: new Date().toISOString().split('T')[0],
 
         init() {
             this.loadLogs();
+            this.loadTimer();
         },
 
         loadLogs() {
@@ -68,6 +101,57 @@ document.addEventListener('alpine:init', () => {
                     this.totalHours = data.total_hours;
                 })
                 .catch(() => {});
+        },
+
+        loadTimer() {
+            fetch(`/tasks/${taskId}/timer`)
+                .then(r => r.json())
+                .then(data => {
+                    this.timer = data;
+                })
+                .catch(() => {});
+        },
+
+        timerAction(action) {
+            fetch(`/tasks/${taskId}/timer/${action}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                },
+            })
+            .then(r => r.json())
+            .then(data => {
+                this.timer = data;
+            });
+        },
+
+        startTimer() {
+            this.timerAction('start');
+        },
+
+        pauseTimer() {
+            this.timerAction('pause');
+        },
+
+        resumeTimer() {
+            this.timerAction('resume');
+        },
+
+        stopTimer() {
+            this.timerAction('stop');
+            this.loadLogs();
+        },
+
+        formatSeconds(seconds) {
+            seconds = parseInt(seconds || 0, 10);
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            return `${hours}h ${minutes}m`;
+        },
+
+        formatDate(value) {
+            return new Date(value).toLocaleString();
         },
 
         logTime() {

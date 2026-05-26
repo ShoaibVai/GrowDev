@@ -106,6 +106,58 @@
                         </div>
                     </div>
 
+                    @if($task->component || $task->prompt_brief || $task->scaffoldTask)
+                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                            <div class="p-6">
+                                <div class="flex items-start justify-between gap-4 mb-4">
+                                    <div>
+                                        <h3 class="text-lg font-bold text-gray-900">AI Scaffold Context</h3>
+                                        <p class="text-sm text-gray-500">
+                                            {{ $task->component ?? 'General component' }}
+                                            @if($task->is_scaffold)
+                                                <span class="ml-2 px-2 py-0.5 rounded-full text-xs bg-indigo-100 text-indigo-700">Scaffold</span>
+                                            @endif
+                                        </p>
+                                    </div>
+                                    @if($task->prompt_section)
+                                        <button type="button" onclick="document.getElementById('promptPanel').classList.toggle('hidden')" class="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                                            View coding prompt
+                                        </button>
+                                    @endif
+                                </div>
+
+                                @if($task->scaffoldTask)
+                                    <div class="mb-4 rounded-lg border {{ $task->scaffoldTask->isScaffoldComplete() ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50' }} p-4 text-sm">
+                                        <p class="font-medium text-gray-900">
+                                            Depends on scaffold #{{ $task->scaffoldTask->id }}: {{ $task->scaffoldTask->title }}
+                                        </p>
+                                        <p class="mt-1 {{ $task->scaffoldTask->isScaffoldComplete() ? 'text-green-700' : 'text-amber-700' }}">
+                                            {{ $task->scaffoldTask->isScaffoldComplete() ? 'Scaffold is complete.' : 'Scaffold must be completed before this task is marked done or merged.' }}
+                                        </p>
+                                    </div>
+                                @elseif($task->is_scaffold && $task->scaffoldOwner)
+                                    <p class="mb-4 text-sm text-gray-600">Scaffold owner: {{ $task->scaffoldOwner->name }}</p>
+                                @endif
+
+                                @if($task->prompt_brief)
+                                    <p class="text-sm text-gray-700 mb-4">{{ $task->prompt_brief }}</p>
+                                @endif
+
+                                @if(!empty($task->predicted_files))
+                                    <div class="flex flex-wrap gap-2 mb-4">
+                                        @foreach($task->predicted_files as $file)
+                                            <span class="px-2 py-1 rounded bg-gray-100 text-xs text-gray-600">{{ $file }}</span>
+                                        @endforeach
+                                    </div>
+                                @endif
+
+                                @if($task->prompt_section)
+                                    <pre id="promptPanel" class="hidden whitespace-pre-wrap text-xs bg-gray-900 text-gray-100 rounded-lg p-4 overflow-x-auto">{{ $task->prompt_section }}</pre>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+
                     <!-- Linked Requirement Card -->
                     @if($task->requirement)
                         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">

@@ -1,0 +1,51 @@
+name: Scaffold Gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  scaffold-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Collect changed files
+        id: files
+        shell: bash
+        run: |
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          git diff --name-only "origin/${{ github.base_ref }}...HEAD" > changed_files.txt
+          jq -R -s -c 'split("\n") | map(select(length > 0))' changed_files.txt > changed_files.json
+
+      - name: Query GrowDev scaffold gate
+        shell: bash
+        env:
+          GATE_URL: ${{ secrets.GROWDEV_CI_GATE_URL }}
+          GATE_TOKEN: ${{ secrets.GROWDEV_CI_GATE_TOKEN }}
+          PROJECT_ID: ${{ secrets.GROWDEV_PROJECT_ID }}
+        run: |
+          payload=$(jq -n \
+            --argjson files "$(cat changed_files.json)" \
+            --arg project_id "$PROJECT_ID" \
+            --arg pr_number "${{ github.event.pull_request.number }}" \
+            --arg actor "${{ github.actor }}" \
+            --arg repo "${{ github.repository }}" \
+            --arg sha "${{ github.sha }}" \
+            '{project_id: ($project_id | tonumber), changed_files: $files, pr_number: $pr_number, actor: $actor, repo: $repo, sha: $sha}')
+
+          http_code=$(curl -sS -o gate_response.json -w "%{http_code}" \
+            -X POST "$GATE_URL/api/ci/scaffold-gate" \
+            -H "Authorization: Bearer $GATE_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$payload")
+
+          cat gate_response.json
+
+          allowed=$(jq -r '.allowed' gate_response.json)
+          if [ "$http_code" != "200" ] || [ "$allowed" != "true" ]; then
+            echo "Scaffold gate failed."
+            exit 1
+          fi

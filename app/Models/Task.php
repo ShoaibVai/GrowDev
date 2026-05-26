@@ -45,23 +45,64 @@ class Task extends Model
         'description',
         'ai_generated_description',
         'is_ai_generated',
+        'ai_generation_run_uuid',
+        'prompt_schema_version',
         'priority',
         'status',
         'assigned_to',
+        'assigned_at',
         'created_by',
         'due_date',
+        'due_at',
         'estimated_hours',
+        'time_estimate_hours',
         'category',
+        'component',
+        'component_key',
+        'predicted_files',
+        'interface_contracts',
         'requirement_type',
         'requirement_id',
         'required_role_id',
+        'required_role',
+        'is_scaffold',
+        'scaffold_owner_id',
+        'scaffold_task_id',
+        'scaffold_merged_at',
+        'scaffold_exceptions',
+        'prompt_section',
+        'prompt_payload',
+        'prompt_brief',
+        'timer_state',
+        'time_spent_seconds',
+        'timer_started_at',
+        'timer_paused_at',
+        'last_timer_tick_at',
+        'timer_started_by',
+        'last_reminded_at',
+        'overdue_escalated_at',
         'sprint_id',
         'sort_order',
     ];
 
     protected $casts = [
         'due_date' => 'date',
+        'assigned_at' => 'datetime',
+        'due_at' => 'datetime',
+        'predicted_files' => 'array',
+        'interface_contracts' => 'array',
+        'scaffold_exceptions' => 'array',
+        'prompt_payload' => 'array',
         'is_ai_generated' => 'boolean',
+        'is_scaffold' => 'boolean',
+        'scaffold_merged_at' => 'datetime',
+        'time_estimate_hours' => 'decimal:2',
+        'time_spent_seconds' => 'integer',
+        'timer_started_at' => 'datetime',
+        'timer_paused_at' => 'datetime',
+        'last_timer_tick_at' => 'datetime',
+        'last_reminded_at' => 'datetime',
+        'overdue_escalated_at' => 'datetime',
     ];
 
     public function project(): BelongsTo
@@ -109,6 +150,26 @@ class Task extends Model
     public function requiredRole(): BelongsTo
     {
         return $this->belongsTo(Role::class, 'required_role_id');
+    }
+
+    public function scaffoldOwner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'scaffold_owner_id');
+    }
+
+    public function scaffoldTask(): BelongsTo
+    {
+        return $this->belongsTo(Task::class, 'scaffold_task_id');
+    }
+
+    public function scaffoldDependents(): HasMany
+    {
+        return $this->hasMany(Task::class, 'scaffold_task_id');
+    }
+
+    public function timerStarter(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'timer_started_by');
     }
 
     public function sprint(): BelongsTo
@@ -173,7 +234,7 @@ class Task extends Model
      */
     public function scopeActive($query)
     {
-        return $query->whereNotIn('status', ['completed', 'cancelled']);
+        return $query->whereNotIn('status', ['Done', 'completed', 'cancelled']);
     }
 
     /**
@@ -181,7 +242,36 @@ class Task extends Model
      */
     public function scopeOverdue($query)
     {
-        return $query->where('due_date', '<', now())->whereNotIn('status', ['completed', 'cancelled']);
+        return $query
+            ->where(function ($q) {
+                $q->where('due_at', '<', now())
+                    ->orWhere(function ($legacy) {
+                        $legacy->whereNull('due_at')->where('due_date', '<', now()->toDateString());
+                    });
+            })
+            ->whereNotIn('status', ['Done', 'completed', 'cancelled']);
+    }
+
+    public function scopeScaffolds($query)
+    {
+        return $query->where('is_scaffold', true);
+    }
+
+    public function scopeForComponent($query, ?string $componentKey)
+    {
+        return $query->where('component_key', $componentKey);
+    }
+
+    public function scopeRunningTimers($query)
+    {
+        return $query->where('timer_state', 'running')->whereNotNull('last_timer_tick_at');
+    }
+
+    public function scopeOverdueByDueAt($query)
+    {
+        return $query->whereNotNull('due_at')
+            ->where('due_at', '<', now())
+            ->whereNotIn('status', ['Done', 'completed', 'cancelled']);
     }
 
     /**
@@ -189,6 +279,19 @@ class Task extends Model
      */
     public function isOverdue(): bool
     {
-        return $this->due_date && $this->due_date->isPast() && !in_array($this->status, ['completed', 'cancelled']);
+        if (in_array($this->status, ['Done', 'completed', 'cancelled'], true)) {
+            return false;
+        }
+
+        if ($this->due_at) {
+            return $this->due_at->isPast();
+        }
+
+        return $this->due_date && $this->due_date->isPast();
+    }
+
+    public function isScaffoldComplete(): bool
+    {
+        return $this->scaffold_merged_at !== null || in_array($this->status, ['Done', 'completed'], true);
     }
 }

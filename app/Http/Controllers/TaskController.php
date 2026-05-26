@@ -16,6 +16,7 @@ use App\Notifications\TaskAssigned;
 use App\Notifications\TaskStatusChanged;
 use App\Notifications\TaskStatusChangeRequested;
 use App\Notifications\TaskStatusRequestReviewed;
+use App\Services\AI\TaskGenerationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -44,6 +45,8 @@ class TaskController extends Controller
             'assignee:id,name,email',
             'creator:id,name,email',
             'requirement',
+            'scaffoldOwner:id,name,email',
+            'scaffoldTask:id,title,status,scaffold_merged_at,component',
             'pendingStatusRequest.requester:id,name',
             'statusRequests' => fn($q) => $q->with('requester:id,name')->latest()->limit(10),
         ]);
@@ -205,6 +208,8 @@ class TaskController extends Controller
             'priority' => 'required|in:Low,Medium,High,Critical',
             'assigned_to' => 'nullable|exists:users,id',
             'due_date' => 'nullable|date',
+            'description' => 'nullable|string',
+            'estimated_hours' => 'nullable|numeric|min:0.25|max:200',
             'requirement_type' => 'nullable|in:functional,non_functional',
             'requirement_id' => 'nullable|integer',
         ]);
@@ -231,8 +236,12 @@ class TaskController extends Controller
             'priority' => $request->priority,
             'status' => 'To Do',
             'assigned_to' => $request->assigned_to,
+            'assigned_at' => $request->assigned_to ? now() : null,
             'created_by' => Auth::id(),
             'due_date' => $request->due_date,
+            'due_at' => $request->assigned_to ? app(TaskGenerationService::class)->calculateDueAt($request->estimated_hours) : null,
+            'estimated_hours' => $request->estimated_hours,
+            'time_estimate_hours' => $request->estimated_hours,
             'requirement_type' => $requirementType,
             'requirement_id' => $requirementId,
         ]);
@@ -295,13 +304,26 @@ class TaskController extends Controller
             'priority' => 'nullable|in:Low,Medium,High,Critical',
             'assigned_to' => 'nullable|exists:users,id',
             'due_date' => 'nullable|date',
+            'estimated_hours' => 'nullable|numeric|min:0.25|max:200',
             'requirement_type' => 'nullable|in:functional,non_functional',
             'requirement_id' => 'nullable|integer',
             'sort_order' => 'nullable|integer|min:0',
         ]);
 
+        if ($request->status === 'Done' && $task->scaffoldTask && !$task->scaffoldTask->isScaffoldComplete()) {
+            $message = 'This task cannot be marked done until its scaffold task is complete.';
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $message], 422);
+            }
+
+            return back()->with('error', $message);
+        }
+
         $oldStatus = $task->status;
         $oldAssignee = $task->assigned_to;
+        $newAssignee = $request->has('assigned_to') ? $request->assigned_to : $task->assigned_to;
+        $estimate = $request->has('estimated_hours') ? $request->estimated_hours : ($task->time_estimate_hours ?: $task->estimated_hours);
         
         // Map the requirement type to model class for linking
         $requirementType = null;
@@ -323,8 +345,12 @@ class TaskController extends Controller
             'title' => $request->title,
             'status' => $request->status,
             'priority' => $request->priority ?? $task->priority,
-            'assigned_to' => $request->has('assigned_to') ? $request->assigned_to : $task->assigned_to,
+            'assigned_to' => $newAssignee,
+            'assigned_at' => $oldAssignee !== $newAssignee && $newAssignee ? now() : $task->assigned_at,
             'due_date' => $request->has('due_date') ? $request->due_date : $task->due_date,
+            'due_at' => $oldAssignee !== $newAssignee && $newAssignee ? app(TaskGenerationService::class)->calculateDueAt($estimate) : $task->due_at,
+            'estimated_hours' => $request->has('estimated_hours') ? $request->estimated_hours : $task->estimated_hours,
+            'time_estimate_hours' => $request->has('estimated_hours') ? $request->estimated_hours : $task->time_estimate_hours,
             'requirement_type' => $request->has('requirement_type') ? $requirementType : $task->requirement_type,
             'requirement_id' => $request->has('requirement_id') ? $requirementId : $task->requirement_id,
             'sort_order' => $request->has('sort_order') ? $request->sort_order : $task->sort_order,

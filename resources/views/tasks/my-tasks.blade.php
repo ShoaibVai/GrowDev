@@ -47,6 +47,15 @@
                                                         ⏳ Pending Approval
                                                     </span>
                                                 @endif
+                                                @if($task->is_scaffold)
+                                                    <span class="px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-800 rounded-full">
+                                                        Scaffold
+                                                    </span>
+                                                @elseif($task->scaffold_task_id)
+                                                    <span class="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">
+                                                        Scaffold #{{ $task->scaffold_task_id }}
+                                                    </span>
+                                                @endif
                                             </div>
                                             <p class="text-sm text-gray-500 mt-1">
                                                 Project: {{ $task->project->name }}
@@ -89,6 +98,12 @@
                                                 @endif
                                             </span>
                                         @endif
+                                        @if($task->due_at)
+                                            <span class="{{ $task->isOverdue() ? 'text-red-600 font-medium' : '' }}">
+                                                Due {{ $task->due_at->format('M d, g:i A') }}
+                                            </span>
+                                        @endif
+                                        <span>Timer: {{ $task->timer_state ?? 'idle' }}</span>
                                         <span>👤 Owner: {{ $task->project->user->name ?? 'Unknown' }}</span>
                                     </div>
                                 </div>

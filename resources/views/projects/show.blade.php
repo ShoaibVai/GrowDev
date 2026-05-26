@@ -255,7 +255,26 @@
                                 @if($tasks->count())
                                     @foreach($tasks as $task)
                                     <tr class="hover:bg-gray-50 transition">
-                                        <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{{ $task->title }}</td>
+                                        <td class="px-6 py-4 font-medium text-gray-900">
+                                            <div class="flex flex-col gap-1">
+                                                <span>{{ $task->title }}</span>
+                                                <div class="flex flex-wrap gap-1">
+                                                    @if($task->is_scaffold)
+                                                        <span class="px-2 py-0.5 text-xs rounded bg-indigo-100 text-indigo-700">Scaffold</span>
+                                                    @elseif($task->scaffold_task_id)
+                                                        <span class="px-2 py-0.5 text-xs rounded bg-gray-100 text-gray-600">Scaffold #{{ $task->scaffold_task_id }}</span>
+                                                    @endif
+                                                    @if($task->due_at)
+                                                        <span class="px-2 py-0.5 text-xs rounded {{ $task->isOverdue() ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700' }}">
+                                                            Due {{ $task->due_at->format('M d, g:i A') }}
+                                                        </span>
+                                                    @endif
+                                                    @if($task->timer_state && $task->timer_state !== 'idle')
+                                                        <span class="px-2 py-0.5 text-xs rounded bg-blue-100 text-blue-700">{{ ucfirst($task->timer_state) }}</span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             @if($task->requirement)
                                                 <span class="px-2 py-1 text-xs rounded-full {{ $task->requirement_type === \App\Models\SrsFunctionalRequirement::class ? 'bg-indigo-100 text-indigo-700' : 'bg-purple-100 text-purple-700' }}" title="{{ $task->requirement->title }}">

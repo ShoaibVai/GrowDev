@@ -9,6 +9,8 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SprintController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\TaskPromptController;
+use App\Http\Controllers\TaskTimerController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -62,12 +64,21 @@ Route::middleware('auth')->group(function () {
     Route::get('/projects/{project}/ai-tasks', [AITaskController::class, 'preview'])->whereNumber('project')->name('projects.ai-tasks.preview');
     Route::post('/projects/{project}/ai-tasks/generate', [AITaskController::class, 'generate'])->whereNumber('project')->name('projects.ai-tasks.generate');
     Route::post('/projects/{project}/ai-tasks/store', [AITaskController::class, 'store'])->whereNumber('project')->name('projects.ai-tasks.store');
+    Route::post('/projects/{project}/ai-tasks/layered/start', [AITaskController::class, 'startLayeredGeneration'])->whereNumber('project')->name('projects.ai-tasks.layered.start');
+    Route::get('/projects/{project}/ai-tasks/layered/{runId}', [AITaskController::class, 'layeredStatus'])->whereNumber('project')->name('projects.ai-tasks.layered.status');
+    Route::post('/projects/{project}/ai-tasks/layered/{runId}/commit', [AITaskController::class, 'commitLayeredGeneration'])->whereNumber('project')->name('projects.ai-tasks.layered.commit');
 
     // Project task routes
     Route::post('/projects/{project}/tasks', [TaskController::class, 'store'])->name('projects.tasks.store');
     Route::get('/tasks/{task}', [TaskController::class, 'show'])->name('tasks.show');
     Route::put('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
     Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
+    Route::get('/tasks/{task}/prompt', [TaskPromptController::class, 'show'])->name('tasks.prompt.show');
+    Route::get('/tasks/{task}/timer', [TaskTimerController::class, 'show'])->name('tasks.timer.show');
+    Route::post('/tasks/{task}/timer/start', [TaskTimerController::class, 'start'])->name('tasks.timer.start');
+    Route::post('/tasks/{task}/timer/pause', [TaskTimerController::class, 'pause'])->name('tasks.timer.pause');
+    Route::post('/tasks/{task}/timer/resume', [TaskTimerController::class, 'resume'])->name('tasks.timer.resume');
+    Route::post('/tasks/{task}/timer/stop', [TaskTimerController::class, 'stop'])->name('tasks.timer.stop');
     
     // Task status change request routes (for assignee approval workflow)
     Route::post('/tasks/{task}/request-status', [TaskController::class, 'requestStatusChange'])->name('tasks.request-status');

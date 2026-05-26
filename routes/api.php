@@ -2,13 +2,29 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AITaskController;
+use App\Http\Controllers\Api\ScaffoldGateController;
 use App\Http\Controllers\DocumentationController;
 use App\Http\Controllers\DiagramController;
+use App\Http\Controllers\TaskPromptController;
+use App\Http\Controllers\TaskTimerController;
 use App\Http\Controllers\Api\UserSearchController;
+
+Route::post('/ci/scaffold-gate', ScaffoldGateController::class)->middleware('ci.gate');
 
 Route::middleware(['auth:sanctum'])->group(function () {
     // ===== USER SEARCH ROUTES (FR3.2, FR8.1) =====
     Route::get('/users/search', [UserSearchController::class, 'search']);
+
+    Route::post('/projects/{project}/ai-tasks/layered/start', [AITaskController::class, 'startLayeredGeneration']);
+    Route::get('/projects/{project}/ai-tasks/layered/{runId}', [AITaskController::class, 'layeredStatus']);
+    Route::post('/projects/{project}/ai-tasks/layered/{runId}/commit', [AITaskController::class, 'commitLayeredGeneration']);
+    Route::get('/tasks/{task}/prompt', [TaskPromptController::class, 'show']);
+    Route::get('/tasks/{task}/timer', [TaskTimerController::class, 'show']);
+    Route::post('/tasks/{task}/timer/start', [TaskTimerController::class, 'start']);
+    Route::post('/tasks/{task}/timer/pause', [TaskTimerController::class, 'pause']);
+    Route::post('/tasks/{task}/timer/resume', [TaskTimerController::class, 'resume']);
+    Route::post('/tasks/{task}/timer/stop', [TaskTimerController::class, 'stop']);
 
     // ===== DOCUMENTATION ROUTES =====
     

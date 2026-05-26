@@ -10,12 +10,14 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         \App\Console\Commands\SendTaskReminders::class,
         \App\Console\Commands\SendNotificationDigests::class,
+        \App\Console\Commands\TickTaskTimers::class,
     ];
 
     protected function schedule(Schedule $schedule): void
     {
         // send reminders daily; digests processed hourly
         $schedule->command('tasks:send-reminders')->daily();
+        $schedule->command('task:tick-timers')->everyMinute();
         $schedule->command('notifications:send-digests')->hourly();
     }
 

@@ -2,18 +2,26 @@
 
 namespace App\Services\AI;
 
+use App\Jobs\GenerateTaskOutlineJob;
 use App\Models\Project;
 use App\Models\Role;
 use App\Models\SrsDocument;
+use App\Models\SrsFunctionalRequirement;
+use App\Models\SrsNonFunctionalRequirement;
 use App\Models\Task;
 use App\Models\User;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
+use Carbon\CarbonImmutable;
 use Database\Seeders\SystemRolesSeeder;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class TaskGenerationService
 {
+    public const PROMPT_SCHEMA_VERSION = 1;
+
     protected string $apiEndpoint;
     protected ?string $apiKey;
     protected string $model;
@@ -25,61 +33,217 @@ class TaskGenerationService
         $this->model = config('services.openrouter.model', 'openai/gpt-3.5-turbo');
     }
 
-    /**
-     * Generate tasks for a project based on its requirements.
-     *
-     * @param Project $project
-     * @param SrsDocument|null $srsDocument
-     * @return array{success: bool, tasks: array, error?: string}
-     */
     public function generateTasks(Project $project, ?SrsDocument $srsDocument = null): array
     {
-        try {
-            // Build the context payload
-            $payload = $this->buildPayload($project, $srsDocument);
+        $runId = $this->startLayeredGeneration(
+            $project,
+            $srsDocument,
+            auth()->id() ?? $project->user_id,
+            $this->shouldUseMockAi()
+        );
 
-            // Call AI API
-            $response = $this->callAI($payload);
-
-            if (!$response['success']) {
-                return $response;
-            }
-
-            // Parse and validate tasks
-            $tasks = $this->parseTasks($response['content']);
-
-            return [
-                'success' => true,
-                'tasks' => $tasks,
-                'raw_response' => $response['content'],
-            ];
-        } catch (\Exception $e) {
-            Log::error('Task generation failed', [
-                'project_id' => $project->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return [
-                'success' => false,
-                'tasks' => [],
-                'error' => $e->getMessage(),
-            ];
-        }
+        return [
+            'success' => true,
+            'run_id' => $runId,
+            'status' => 'queued',
+        ];
     }
 
-    /**
-     * Build the payload for AI task generation.
-     */
+    public function startLayeredGeneration(Project $project, ?SrsDocument $srsDocument, int $requestedBy, bool $mockAi = false): string
+    {
+        $runId = (string) Str::uuid();
+
+        Cache::put($this->runKey($runId), [
+            'run_id' => $runId,
+            'status' => 'queued',
+            'project_id' => $project->id,
+            'srs_document_id' => $srsDocument?->id,
+            'requested_by' => $requestedBy,
+            'mock_ai' => $mockAi,
+            'layer' => 0,
+        ], $this->cacheTtl());
+
+        GenerateTaskOutlineJob::dispatch($project->id, $srsDocument?->id, $runId, $requestedBy, $mockAi)
+            ->onQueue('ai');
+
+        return $runId;
+    }
+
+    public function generateOutline(Project $project, ?SrsDocument $srsDocument, string $runId, bool $mockAi = false): array
+    {
+        $payload = $this->buildPayload($project, $srsDocument);
+        $payload['team'] = $this->getTeamComposition($project);
+
+        $raw = $mockAi ? $this->mockOutline($payload) : $this->callLayer('outline', $payload);
+        $outline = $this->validateOutline($raw);
+        $outline = $this->detectPredictedFileConflicts($outline);
+        $outline = $this->ensureSingleScaffoldPerComponent($outline, $project);
+        $outline = $this->assignTasksToTeam($project, $outline);
+
+        Cache::put($this->runLayerKey($runId, 'outline'), [
+            'raw' => $this->redactSecrets($raw),
+            'normalized' => $outline,
+        ], $this->cacheTtl());
+
+        $this->putRunStatus($runId, [
+            'status' => 'outline_complete',
+            'layer' => 1,
+        ]);
+
+        return $outline;
+    }
+
+    public function generateScaffolds(Project $project, string $runId, array $outline, bool $mockAi = false): array
+    {
+        $scaffoldTasks = collect($outline)->where('is_scaffold', true)->values();
+        $results = [];
+
+        foreach ($scaffoldTasks as $task) {
+            $payload = [
+                'project' => $project->only(['id', 'name', 'description', 'type']),
+                'scaffold_task' => $task,
+                'component_tasks' => collect($outline)->where('component_key', $task['component_key'])->values()->all(),
+            ];
+
+            $raw = $mockAi ? $this->mockScaffoldPrompt($task) : $this->callLayer('scaffold', $payload);
+            $results[$task['temp_id']] = $this->validateScaffoldPrompt($raw, $task);
+            $results[$task['temp_id']]['raw_response'] = $this->redactSecrets($raw);
+        }
+
+        Cache::put($this->runLayerKey($runId, 'scaffolds'), $results, $this->cacheTtl());
+
+        $this->putRunStatus($runId, [
+            'status' => 'scaffolds_complete',
+            'layer' => 2,
+        ]);
+
+        return $results;
+    }
+
+    public function generateTaskPrompts(Project $project, string $runId, array $outline, array $scaffolds, bool $mockAi = false): array
+    {
+        $results = [];
+
+        foreach (collect($outline)->where('is_scaffold', false) as $task) {
+            $scaffold = $scaffolds[$task['scaffold_temp_id'] ?? ''] ?? null;
+            $payload = [
+                'project' => $project->only(['id', 'name', 'description', 'type']),
+                'task' => $task,
+                'scaffold' => $scaffold,
+            ];
+
+            $raw = $mockAi ? $this->mockTaskPrompt($task, $scaffold) : $this->callLayer('task', $payload);
+            $results[$task['temp_id']] = $this->validateTaskPrompt($raw, $task, $scaffold);
+            $results[$task['temp_id']]['raw_response'] = $this->redactSecrets($raw);
+        }
+
+        Cache::put($this->runLayerKey($runId, 'tasks'), $results, $this->cacheTtl());
+
+        $this->putRunStatus($runId, [
+            'status' => 'ready_to_commit',
+            'layer' => 3,
+        ]);
+
+        return $results;
+    }
+
+    public function commitLayeredGeneration(Project $project, string $runId, int $createdBy): Collection
+    {
+        $outline = Cache::get($this->runLayerKey($runId, 'outline'))['normalized'] ?? null;
+        $scaffolds = Cache::get($this->runLayerKey($runId, 'scaffolds'), []);
+        $taskPrompts = Cache::get($this->runLayerKey($runId, 'tasks'), []);
+
+        if (!$outline) {
+            throw new \RuntimeException('Layered generation outline is missing or expired.');
+        }
+
+        return DB::transaction(function () use ($project, $runId, $createdBy, $outline, $scaffolds, $taskPrompts) {
+            $createdByTempId = [];
+
+            foreach (collect($outline)->where('is_scaffold', true) as $item) {
+                $prompt = $scaffolds[$item['temp_id']] ?? [];
+                $createdByTempId[$item['temp_id']] = $this->persistGeneratedTask(
+                    $project,
+                    $item,
+                    $prompt,
+                    null,
+                    $runId,
+                    $createdBy,
+                    'scaffolds'
+                );
+            }
+
+            foreach (collect($outline)->where('is_scaffold', false) as $item) {
+                $scaffoldTask = $createdByTempId[$item['scaffold_temp_id'] ?? ''] ?? null;
+                $prompt = $taskPrompts[$item['temp_id']] ?? [];
+                $task = $this->persistGeneratedTask(
+                    $project,
+                    $item,
+                    $prompt,
+                    $scaffoldTask,
+                    $runId,
+                    $createdBy,
+                    'tasks'
+                );
+
+                if ($scaffoldTask) {
+                    $task->dependencies()->syncWithoutDetaching([$scaffoldTask->id]);
+                }
+
+                $createdByTempId[$item['temp_id']] = $task;
+            }
+
+            $this->putRunStatus($runId, [
+                'status' => 'committed',
+                'layer' => 3,
+                'created_task_ids' => collect($createdByTempId)->pluck('id')->values()->all(),
+            ]);
+
+            return collect($createdByTempId)->values();
+        });
+    }
+
+    public function getLayeredStatus(string $runId): array
+    {
+        $state = Cache::get($this->runKey($runId));
+
+        if (!$state) {
+            throw new \RuntimeException('Generation run was not found or has expired.');
+        }
+
+        $outline = Cache::get($this->runLayerKey($runId, 'outline'))['normalized'] ?? [];
+        $scaffolds = Cache::get($this->runLayerKey($runId, 'scaffolds'), []);
+        $taskPrompts = Cache::get($this->runLayerKey($runId, 'tasks'), []);
+
+        return array_merge($state, [
+            'preview' => $this->buildPreview($outline, $scaffolds, $taskPrompts),
+        ]);
+    }
+
+    public function putRunStatus(string $runId, array $attributes): void
+    {
+        Cache::put($this->runKey($runId), array_merge(Cache::get($this->runKey($runId), []), $attributes), $this->cacheTtl());
+    }
+
+    public function runKey(string $runId): string
+    {
+        return "ai_task_generation:{$runId}";
+    }
+
+    public function runLayerKey(string $runId, string $layer): string
+    {
+        return "ai_task_generation:{$runId}:{$layer}";
+    }
+
     protected function buildPayload(Project $project, ?SrsDocument $srsDocument): array
     {
-        $teamComposition = $this->getTeamComposition($project);
         $functionalRequirements = [];
         $nonFunctionalRequirements = [];
 
         if ($srsDocument) {
             $srsDocument->load(['functionalRequirements', 'nonFunctionalRequirements']);
-            
-            $functionalRequirements = $srsDocument->functionalRequirements->map(fn($req) => [
+
+            $functionalRequirements = $srsDocument->functionalRequirements->map(fn ($req) => [
                 'id' => $req->id,
                 'section' => $req->section_number,
                 'title' => $req->title,
@@ -88,7 +252,7 @@ class TaskGenerationService
                 'acceptance_criteria' => $req->acceptance_criteria,
             ])->toArray();
 
-            $nonFunctionalRequirements = $srsDocument->nonFunctionalRequirements->map(fn($req) => [
+            $nonFunctionalRequirements = $srsDocument->nonFunctionalRequirements->map(fn ($req) => [
                 'id' => $req->id,
                 'section' => $req->section_number,
                 'title' => $req->title,
@@ -101,346 +265,799 @@ class TaskGenerationService
 
         return [
             'project' => [
+                'id' => $project->id,
                 'name' => $project->name,
                 'description' => $project->description,
                 'type' => $project->type,
                 'status' => $project->status,
             ],
-            'team' => $teamComposition,
+            'team' => $this->getTeamComposition($project),
             'functional_requirements' => $functionalRequirements,
             'non_functional_requirements' => $nonFunctionalRequirements,
-            'available_roles' => SystemRolesSeeder::getSystemRoleNames(),
+            'available_roles' => $this->availableRoleNames($project),
         ];
     }
 
-    /**
-     * Get team composition with role assignments.
-     */
     protected function getTeamComposition(Project $project): array
     {
-        if (!$project->team) {
-            $activeTasksCount = Task::where('project_id', $project->id)
-                ->where('assigned_to', $project->user_id)
-                ->whereIn('status', ['To Do', 'In Progress', 'Review'])
-                ->count();
-                
-            return [
-                [
-                    'user_id' => $project->user_id,
-                    'name' => $project->user->name ?? 'Owner',
-                    'role' => 'Full Stack Developer',
-                    'active_tasks' => $activeTasksCount,
-                ]
-            ];
-        }
-
-        // Get team members with pivot data
-        $members = $project->team->members()
-            ->withPivot(['role', 'role_id'])
-            ->get();
-            
-        // Fetch all roles in one query
-        $roleIds = $members->pluck('pivot.role_id')->filter()->unique();
-        $roles = Role::whereIn('id', $roleIds)->pluck('name', 'id');
-        
-        // Get all active task counts in one query
-        $memberIds = $members->pluck('id');
-        $taskCounts = Task::where('project_id', $project->id)
-            ->whereIn('assigned_to', $memberIds)
-            ->whereIn('status', ['To Do', 'In Progress', 'Review'])
-            ->selectRaw('assigned_to, count(*) as count')
-            ->groupBy('assigned_to')
-            ->pluck('count', 'assigned_to');
-
-        return $members->map(function ($member) use ($roles, $taskCounts) {
-            $role = null;
-            if ($member->pivot->role_id && isset($roles[$member->pivot->role_id])) {
-                $role = $roles[$member->pivot->role_id];
-            }
-            $role = $role ?? $member->pivot->role ?? 'Team Member';
-
-            return [
+        return $this->getTeamMembersWithRolesAndSkills($project)
+            ->map(fn ($member) => [
                 'user_id' => $member->id,
                 'name' => $member->name,
-                'role' => $role,
-                'active_tasks' => $taskCounts[$member->id] ?? 0,
-            ];
-        })->toArray();
+                'role' => $member->role,
+                'skills' => $member->skills,
+                'active_tasks' => $member->active_tasks,
+            ])
+            ->values()
+            ->all();
     }
 
-    /**
-     * Call the AI API to generate tasks.
-     */
-    protected function callAI(array $payload): array
+    protected function getTeamMembersWithRolesAndSkills(Project $project): Collection
     {
-        $systemPrompt = $this->getSystemPrompt();
-        $userPrompt = $this->getUserPrompt($payload);
+        if (!$project->team) {
+            $user = User::with('skills')->find($project->user_id) ?? $project->user;
 
-        // If no API key or dummy key, use mock response
-        if (empty($this->apiKey) || str_starts_with($this->apiKey, 'dummy') || str_starts_with($this->apiKey, 'sk-dummy')) {
-            return $this->getMockResponse($payload);
+            return collect([$this->memberPayload($user, 'Full Stack Developer', $project)]);
         }
 
-        try {
-            $response = Http::withoutVerifying()
-                ->timeout(60)
-                ->withHeaders([
-                    'Authorization' => 'Bearer ' . $this->apiKey,
-                    'Content-Type' => 'application/json',
-                ])
-                ->post($this->apiEndpoint, [
-                    'model' => $this->model,
-                    'messages' => [
-                        ['role' => 'system', 'content' => $systemPrompt],
-                        ['role' => 'user', 'content' => $userPrompt],
-                    ],
-                    'temperature' => 0.7,
-                    'max_tokens' => 4000,
-                ]);
+        $members = $project->team->members()
+            ->with(['skills'])
+            ->withPivot(['role', 'role_id'])
+            ->get();
 
-            if ($response->failed()) {
-                return [
-                    'success' => false,
-                    'error' => 'AI API request failed: ' . $response->body(),
-                ];
-            }
+        $roleIds = $members->pluck('pivot.role_id')->filter()->unique();
+        $roles = Role::whereIn('id', $roleIds)->pluck('name', 'id');
 
-            $content = $response->json('choices.0.message.content');
-            
-            return [
-                'success' => true,
-                'content' => $content,
-            ];
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'error' => 'AI API error: ' . $e->getMessage(),
-            ];
-        }
+        return $members->map(function ($member) use ($roles, $project) {
+            $role = $member->pivot->role_id ? ($roles[$member->pivot->role_id] ?? null) : null;
+
+            return $this->memberPayload($member, $role ?? $member->pivot->role ?? 'Team Member', $project);
+        });
     }
 
-    /**
-     * Get the system prompt for task generation.
-     */
-    protected function getSystemPrompt(): string
+    protected function memberPayload(User $user, string $role, Project $project): object
     {
-        return <<<PROMPT
-You are an expert project manager and software architect. Your task is to analyze project requirements and generate a structured list of development tasks.
-
-For each task, you must specify:
-1. title: Clear, actionable task title (max 100 chars)
-2. description: Detailed description of what needs to be done
-3. priority: Low, Medium, High, or Critical
-4. estimated_hours: Estimated effort in hours (1-40)
-5. required_role: One of the available roles that should handle this task
-6. requirement_type: 'functional' or 'non_functional' if linked to a requirement
-7. requirement_id: The ID of the linked requirement (if applicable)
-8. dependencies: Array of task indices (0-based) this task depends on
-
-Guidelines:
-- Break down complex requirements into smaller, manageable tasks
-- Consider both development and non-development tasks (testing, documentation, review)
-- Balance workload across different roles
-- Set realistic time estimates
-- Create logical task dependencies
-- Prioritize based on requirement priority and dependencies
-
-Output Format:
-Return ONLY a valid JSON array of task objects. No markdown, no explanation, just the JSON array.
-PROMPT;
-    }
-
-    /**
-     * Get the user prompt with project context.
-     */
-    protected function getUserPrompt(array $payload): string
-    {
-        $json = json_encode($payload, JSON_PRETTY_PRINT);
-        
-        return <<<PROMPT
-Generate development tasks for the following project:
-
-{$json}
-
-Return a JSON array of task objects with the structure:
-[
-  {
-    "title": "string",
-    "description": "string",
-    "priority": "Low|Medium|High|Critical",
-    "estimated_hours": number,
-    "required_role": "string (from available_roles)",
-    "requirement_type": "functional|non_functional|null",
-    "requirement_id": number|null,
-    "dependencies": [number] (indices of dependent tasks)
-  }
-]
-PROMPT;
-    }
-
-    /**
-     * Parse tasks from AI response.
-     */
-    protected function parseTasks(string $content): array
-    {
-        // Clean up the response - remove markdown code blocks if present
-        $content = preg_replace('/^```json?\s*/m', '', $content);
-        $content = preg_replace('/```\s*$/m', '', $content);
-        $content = trim($content);
-
-        $tasks = json_decode($content, true);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \RuntimeException('Failed to parse AI response as JSON: ' . json_last_error_msg());
-        }
-
-        if (!is_array($tasks)) {
-            throw new \RuntimeException('AI response is not a valid task array');
-        }
-
-        // Validate and normalize each task
-        return array_map(function ($task, $index) {
-            return [
-                'index' => $index,
-                'title' => $this->validateString($task['title'] ?? '', 'title', 255),
-                'description' => $task['description'] ?? '',
-                'priority' => $this->validatePriority($task['priority'] ?? 'Medium'),
-                'estimated_hours' => $this->validateInt($task['estimated_hours'] ?? 4, 1, 200),
-                'required_role' => $task['required_role'] ?? 'Full Stack Developer',
-                'requirement_type' => $this->validateRequirementType($task['requirement_type'] ?? null),
-                'requirement_id' => $task['requirement_id'] ?? null,
-                'dependencies' => $task['dependencies'] ?? [],
-            ];
-        }, $tasks, array_keys($tasks));
-    }
-
-    /**
-     * Validate string field.
-     */
-    protected function validateString(?string $value, string $field, int $maxLength): string
-    {
-        $value = $value ?? '';
-        return substr(trim($value), 0, $maxLength);
-    }
-
-    /**
-     * Validate priority field.
-     */
-    protected function validatePriority(string $priority): string
-    {
-        $valid = ['Low', 'Medium', 'High', 'Critical'];
-        return in_array($priority, $valid) ? $priority : 'Medium';
-    }
-
-    /**
-     * Validate integer field.
-     */
-    protected function validateInt($value, int $min, int $max): int
-    {
-        $value = (int) $value;
-        return max($min, min($max, $value));
-    }
-
-    /**
-     * Validate requirement type.
-     */
-    protected function validateRequirementType(?string $type): ?string
-    {
-        if ($type === 'functional' || $type === 'non_functional') {
-            return $type;
-        }
-        return null;
-    }
-
-    /**
-     * Generate mock response for development without API key.
-     */
-    protected function getMockResponse(array $payload): array
-    {
-        $tasks = [];
-        $taskIndex = 0;
-
-        // Generate tasks from functional requirements
-        foreach ($payload['functional_requirements'] as $req) {
-            // Main development task
-            $tasks[] = [
-                'title' => 'Implement: ' . substr($req['title'], 0, 80),
-                'description' => "Implement the functionality as described:\n\n" . $req['description'],
-                'priority' => ucfirst($req['priority'] ?? 'Medium'),
-                'estimated_hours' => rand(4, 16),
-                'required_role' => $this->suggestRole($req['title'], $req['description']),
-                'requirement_type' => 'functional',
-                'requirement_id' => $req['id'],
-                'dependencies' => [],
-            ];
-            $devTaskIndex = $taskIndex++;
-
-            // Testing task
-            $tasks[] = [
-                'title' => 'Test: ' . substr($req['title'], 0, 85),
-                'description' => "Write and execute tests for:\n\n" . ($req['acceptance_criteria'] ?? $req['description']),
-                'priority' => ucfirst($req['priority'] ?? 'Medium'),
-                'estimated_hours' => rand(2, 6),
-                'required_role' => 'QA Engineer',
-                'requirement_type' => 'functional',
-                'requirement_id' => $req['id'],
-                'dependencies' => [$devTaskIndex],
-            ];
-            $taskIndex++;
-        }
-
-        // Generate tasks from non-functional requirements
-        foreach ($payload['non_functional_requirements'] as $req) {
-            $role = $this->suggestRoleForNFR($req['category'] ?? 'other');
-            
-            $tasks[] = [
-                'title' => 'NFR: ' . substr($req['title'], 0, 85),
-                'description' => $req['description'] . ($req['target_value'] ? "\n\nTarget: " . $req['target_value'] : ''),
-                'priority' => ucfirst($req['priority'] ?? 'Medium'),
-                'estimated_hours' => rand(4, 12),
-                'required_role' => $role,
-                'requirement_type' => 'non_functional',
-                'requirement_id' => $req['id'],
-                'dependencies' => [],
-            ];
-            $taskIndex++;
-        }
-
-        // Add some general project tasks
-        $tasks[] = [
-            'title' => 'Project setup and environment configuration',
-            'description' => 'Set up development environment, CI/CD pipeline, and project infrastructure.',
-            'priority' => 'High',
-            'estimated_hours' => 8,
-            'required_role' => 'DevOps Engineer',
-            'requirement_type' => null,
-            'requirement_id' => null,
-            'dependencies' => [],
+        return (object) [
+            'id' => $user->id,
+            'name' => $user->name,
+            'role' => $role,
+            'skills' => $user->skills
+                ? $user->skills->map(fn ($skill) => [
+                    'name' => $skill->skill_name,
+                    'proficiency' => $skill->proficiency,
+                ])->values()->all()
+                : [],
+            'active_tasks' => Task::where('project_id', $project->id)
+                ->where('assigned_to', $user->id)
+                ->whereIn('status', ['To Do', 'In Progress', 'Review'])
+                ->count(),
         ];
+    }
 
-        $tasks[] = [
-            'title' => 'Create project documentation',
-            'description' => 'Document project architecture, API endpoints, and developer guides.',
-            'priority' => 'Medium',
-            'estimated_hours' => 6,
-            'required_role' => 'Technical Writer',
-            'requirement_type' => null,
-            'requirement_id' => null,
-            'dependencies' => [],
-        ];
+    protected function validateOutline(array $raw): array
+    {
+        $items = $raw['tasks'] ?? $raw;
+
+        if (!is_array($items)) {
+            throw new \RuntimeException('Layer 1 outline must contain a tasks array.');
+        }
+
+        return collect($items)
+            ->values()
+            ->map(fn ($task, $index) => $this->normalizeOutlineTask(is_array($task) ? $task : [], $index))
+            ->all();
+    }
+
+    protected function normalizeOutlineTask(array $task, int $index): array
+    {
+        $component = trim((string) ($task['component'] ?? 'General'));
+        $predictedFiles = $this->normalizeStringArray($task['predicted_files'] ?? []);
+        $requiredRole = trim((string) ($task['required_role'] ?? 'Full Stack Developer'));
+        $tempId = trim((string) ($task['temp_id'] ?? 'T'.($index + 1)));
 
         return [
-            'success' => true,
-            'content' => json_encode($tasks),
+            'temp_id' => $tempId !== '' ? $tempId : 'T'.($index + 1),
+            'title' => Str::limit(trim((string) ($task['title'] ?? 'Generated task')), 255, ''),
+            'description' => trim((string) ($task['description'] ?? '')),
+            'priority' => $this->validatePriority((string) ($task['priority'] ?? 'Medium')),
+            'component' => $component !== '' ? $component : 'General',
+            'component_key' => $this->componentKey($task['component_key'] ?? $component),
+            'predicted_files' => $predictedFiles,
+            'is_scaffold' => (bool) ($task['is_scaffold'] ?? false),
+            'required_role' => $requiredRole !== '' ? $requiredRole : 'Full Stack Developer',
+            'required_skills' => $this->normalizeStringArray($task['required_skills'] ?? []),
+            'estimated_hours' => max(1, min(200, (int) ($task['estimated_hours'] ?? 4))),
+            'requirement_type' => $this->validateRequirementType($task['requirement_type'] ?? null),
+            'requirement_id' => $task['requirement_id'] ?? null,
+            'dependencies' => $this->normalizeStringArray($task['dependencies'] ?? []),
+            'conflict_group' => null,
+            'overlapping_files' => [],
         ];
     }
 
-    /**
-     * Suggest appropriate role based on task content.
-     */
+    protected function detectPredictedFileConflicts(array $tasks): array
+    {
+        $count = count($tasks);
+
+        if ($count === 0) {
+            return [];
+        }
+
+        $parents = range(0, max(0, $count - 1));
+
+        $find = function (int $index) use (&$parents, &$find): int {
+            if ($parents[$index] !== $index) {
+                $parents[$index] = $find($parents[$index]);
+            }
+
+            return $parents[$index];
+        };
+
+        $union = function (int $a, int $b) use (&$parents, $find): void {
+            $rootA = $find($a);
+            $rootB = $find($b);
+
+            if ($rootA !== $rootB) {
+                $parents[$rootB] = $rootA;
+            }
+        };
+
+        for ($i = 0; $i < $count; $i++) {
+            for ($j = $i + 1; $j < $count; $j++) {
+                $sharedFiles = array_values(array_intersect($tasks[$i]['predicted_files'], $tasks[$j]['predicted_files']));
+                $sameComponent = $tasks[$i]['component_key'] === $tasks[$j]['component_key'];
+
+                if ($sameComponent || $sharedFiles !== []) {
+                    $union($i, $j);
+                    $tasks[$i]['overlapping_files'] = array_values(array_unique(array_merge($tasks[$i]['overlapping_files'], $sharedFiles)));
+                    $tasks[$j]['overlapping_files'] = array_values(array_unique(array_merge($tasks[$j]['overlapping_files'], $sharedFiles)));
+                }
+            }
+        }
+
+        $groups = [];
+        foreach (array_keys($tasks) as $index) {
+            $groups[$find($index)][] = $index;
+        }
+
+        foreach ($groups as $root => $indexes) {
+            $componentKey = $tasks[$indexes[0]]['component_key'];
+            $component = $tasks[$indexes[0]]['component'];
+
+            foreach ($indexes as $index) {
+                $tasks[$index]['component_key'] = $componentKey;
+                $tasks[$index]['component'] = $component;
+                $tasks[$index]['conflict_group'] = 'G'.$root;
+            }
+        }
+
+        return $tasks;
+    }
+
+    protected function ensureSingleScaffoldPerComponent(array $tasks, Project $project): array
+    {
+        $normalized = collect($tasks);
+        $result = collect();
+
+        foreach ($normalized->groupBy('component_key') as $componentKey => $componentTasks) {
+            $componentTasks = $componentTasks->values();
+            $needsScaffold = $componentTasks->count() > 1 || $componentTasks->contains('is_scaffold', true);
+            $scaffolds = $componentTasks->where('is_scaffold', true)->values();
+            $scaffold = null;
+
+            if ($needsScaffold && $scaffolds->isEmpty()) {
+                $scaffold = $this->makeAutoScaffoldTask($componentKey, $componentTasks);
+                $result->push($scaffold);
+            } elseif ($needsScaffold) {
+                $scaffold = $scaffolds->sortByDesc(fn ($task) => ($task['estimated_hours'] ?? 0) + count($task['predicted_files'] ?? []))->first();
+            }
+
+            foreach ($componentTasks as $task) {
+                if ($scaffold && $task['temp_id'] === $scaffold['temp_id']) {
+                    $task['is_scaffold'] = true;
+                    $task['scaffold_temp_id'] = null;
+                } elseif ($scaffold) {
+                    $task['is_scaffold'] = false;
+                    $task['scaffold_temp_id'] = $scaffold['temp_id'];
+                    $task['dependencies'] = array_values(array_unique(array_merge($task['dependencies'], [$scaffold['temp_id']])));
+                } else {
+                    $task['scaffold_temp_id'] = null;
+                }
+
+                $result->push($task);
+            }
+        }
+
+        return $result->unique('temp_id')->values()->all();
+    }
+
+    protected function makeAutoScaffoldTask(string $componentKey, Collection $componentTasks): array
+    {
+        $first = $componentTasks->first();
+        $files = $componentTasks->pluck('predicted_files')->flatten()->unique()->values()->all();
+        $role = $componentTasks->pluck('required_role')->countBy()->sortDesc()->keys()->first() ?? 'Full Stack Developer';
+
+        return [
+            'temp_id' => 'SCF-'.Str::upper(Str::slug($componentKey, '-')),
+            'title' => 'Scaffold: '.$first['component'],
+            'description' => 'Create the baseline scaffold, shared contracts, and file layout for '.$first['component'].'.',
+            'priority' => 'High',
+            'component' => $first['component'],
+            'component_key' => $componentKey,
+            'predicted_files' => $files,
+            'is_scaffold' => true,
+            'required_role' => $role,
+            'required_skills' => $componentTasks->pluck('required_skills')->flatten()->unique()->values()->all(),
+            'estimated_hours' => max(2, min(12, (int) ceil($componentTasks->avg('estimated_hours') ?: 4))),
+            'requirement_type' => null,
+            'requirement_id' => null,
+            'dependencies' => [],
+            'conflict_group' => $first['conflict_group'] ?? null,
+            'overlapping_files' => $files,
+            'scaffold_temp_id' => null,
+        ];
+    }
+
+    public function assignTasksToTeam(Project $project, array $tasks): array
+    {
+        $members = $this->getTeamMembersWithRolesAndSkills($project);
+
+        return collect($tasks)->map(function (array $task) use ($project, $members) {
+            $assignee = !empty($task['is_scaffold'])
+                ? $this->selectScaffoldOwner($project, $task, $members)
+                : $this->findBestAssignee($task, $members);
+
+            $task['assigned_to'] = $assignee?->id;
+            $task['assignee_name'] = $assignee?->name;
+
+            if (!empty($task['is_scaffold'])) {
+                $task['scaffold_owner_id'] = $assignee?->id;
+            }
+
+            return $task;
+        })->all();
+    }
+
+    protected function selectScaffoldOwner(Project $project, array $task, Collection $members): ?object
+    {
+        return $members
+            ->sortByDesc(fn ($member) => $this->scaffoldOwnerScore($project, $task, $member))
+            ->first();
+    }
+
+    protected function scaffoldOwnerScore(Project $project, array $task, object $member): float
+    {
+        $score = $this->assigneeScore($task, $member);
+
+        $priorOwnership = Task::where('project_id', $project->id)
+            ->where('component_key', $task['component_key'] ?? null)
+            ->where('scaffold_owner_id', $member->id)
+            ->count();
+
+        return $score + ($priorOwnership * 8);
+    }
+
+    protected function findBestAssignee(array $task, Collection $members): ?object
+    {
+        return $members
+            ->sortByDesc(fn ($member) => $this->assigneeScore($task, $member))
+            ->first();
+    }
+
+    protected function assigneeScore(array $task, object $member): float
+    {
+        $requiredRole = $task['required_role'] ?? 'Full Stack Developer';
+        $score = 0.0;
+
+        if (strcasecmp($member->role, $requiredRole) === 0) {
+            $score += 50;
+        } elseif (in_array($member->role, $this->getRelatedRoles($requiredRole), true)) {
+            $score += 25;
+        }
+
+        $neededSkills = collect($task['required_skills'] ?? [])
+            ->merge($this->skillsFromFiles($task['predicted_files'] ?? []))
+            ->map(fn ($skill) => Str::lower($skill))
+            ->unique();
+
+        foreach ($member->skills as $skill) {
+            if ($neededSkills->contains(Str::lower($skill['name']))) {
+                $score += match ($skill['proficiency'] ?? 'intermediate') {
+                    'expert' => 12,
+                    'advanced' => 9,
+                    'intermediate' => 6,
+                    default => 3,
+                };
+            }
+        }
+
+        return $score - ((int) $member->active_tasks * 4);
+    }
+
+    protected function persistGeneratedTask(
+        Project $project,
+        array $item,
+        array $prompt,
+        ?Task $scaffoldTask,
+        string $runId,
+        int $createdBy,
+        string $payloadBucket
+    ): Task {
+        $promptSection = $prompt['prompt_section'] ?? $this->fallbackPromptSection($item, $scaffoldTask);
+        $promptSection = (string) $this->redactSecrets($promptSection);
+        $item = $this->redactSecrets($item);
+        $prompt = $this->redactSecrets($prompt);
+        $description = trim(($item['description'] ?? '') . "\n\n" . $promptSection);
+        $requirement = $this->resolveRequirement($item);
+
+        return $project->tasks()->create([
+            'title' => $item['title'],
+            'description' => $description,
+            'ai_generated_description' => $item['description'] ?? null,
+            'prompt_section' => $promptSection,
+            'prompt_payload' => [
+                'outline' => $item,
+                $payloadBucket => [
+                    $item['temp_id'] => $prompt,
+                ],
+                'scaffold' => $scaffoldTask ? [
+                    'id' => $scaffoldTask->id,
+                    'component' => $scaffoldTask->component,
+                    'predicted_files' => $scaffoldTask->predicted_files,
+                    'interface_contracts' => $scaffoldTask->interface_contracts,
+                ] : null,
+            ],
+            'prompt_brief' => Str::limit($prompt['brief'] ?? $item['title'], 240),
+            'component' => $item['component'] ?? null,
+            'component_key' => $item['component_key'] ?? null,
+            'predicted_files' => $item['predicted_files'] ?? [],
+            'interface_contracts' => $prompt['interface_contracts'] ?? [],
+            'required_role' => $item['required_role'] ?? null,
+            'required_role_id' => $this->roleIdForName($item['required_role'] ?? null),
+            'assigned_to' => $item['assigned_to'] ?? null,
+            'assigned_at' => !empty($item['assigned_to']) ? now() : null,
+            'due_at' => !empty($item['assigned_to']) ? $this->calculateDueAt($item['estimated_hours'] ?? null) : null,
+            'estimated_hours' => $item['estimated_hours'] ?? null,
+            'time_estimate_hours' => $item['estimated_hours'] ?? null,
+            'priority' => $item['priority'] ?? 'Medium',
+            'status' => 'To Do',
+            'created_by' => $createdBy,
+            'requirement_type' => $requirement['type'],
+            'requirement_id' => $requirement['id'],
+            'is_ai_generated' => true,
+            'ai_generation_run_uuid' => $runId,
+            'prompt_schema_version' => self::PROMPT_SCHEMA_VERSION,
+            'is_scaffold' => (bool) ($item['is_scaffold'] ?? false),
+            'scaffold_owner_id' => $item['scaffold_owner_id'] ?? $scaffoldTask?->scaffold_owner_id,
+            'scaffold_task_id' => $scaffoldTask?->id,
+        ]);
+    }
+
+    protected function callLayer(string $layer, array $payload): array
+    {
+        if ($this->shouldUseMockAi()) {
+            return match ($layer) {
+                'outline' => $this->mockOutline($payload),
+                'scaffold' => $this->mockScaffoldPrompt($payload['scaffold_task']),
+                'task' => $this->mockTaskPrompt($payload['task'], $payload['scaffold'] ?? null),
+                default => throw new \InvalidArgumentException("Unknown AI layer [{$layer}]."),
+            };
+        }
+
+        $response = Http::withoutVerifying()
+            ->timeout(config('tasks.ai.timeout_seconds', 90))
+            ->retry(2, 500)
+            ->withToken($this->apiKey)
+            ->post($this->apiEndpoint, [
+                'model' => $this->model,
+                'messages' => $this->messagesForLayer($layer, $payload),
+                'temperature' => 0.2,
+                'response_format' => ['type' => 'json_object'],
+            ]);
+
+        if ($response->failed()) {
+            throw new \RuntimeException("AI {$layer} request failed: ".$response->body());
+        }
+
+        return json_decode($response->json('choices.0.message.content'), true, flags: JSON_THROW_ON_ERROR);
+    }
+
+    protected function messagesForLayer(string $layer, array $payload): array
+    {
+        $json = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+
+        return match ($layer) {
+            'outline' => [
+                ['role' => 'system', 'content' => 'You are a senior software delivery planner. Return only valid JSON. Create implementation tasks from SRS requirements and team composition. Include component-aware grouping, predicted files, role/skill needs, workload-sensitive estimates, dependencies, and scaffold suggestions. Prefer one scaffold for each connected component or page touched by multiple tasks.'],
+                ['role' => 'user', 'content' => 'Project/SRS/team JSON: '.$json.'. Return { "tasks": [ { "temp_id": "T1", "title": "", "description": "", "priority": "Low|Medium|High|Critical", "component": "", "predicted_files": [], "is_scaffold": false, "required_role": "", "required_skills": [], "estimated_hours": 1, "requirement_type": "functional|non_functional|null", "requirement_id": null, "dependencies": [] } ] }. Use stable temp ids. If several tasks touch the same component or overlapping files, mark one baseline scaffold candidate.'],
+            ],
+            'scaffold' => [
+                ['role' => 'system', 'content' => 'You are a principal engineer writing a coding-AI scaffold prompt. Return only valid JSON. Define the baseline implementation contract for one component so later tasks can build safely on it. Be specific about file layout, API contracts, interfaces, test hooks, and merge expectations.'],
+                ['role' => 'user', 'content' => 'Project JSON, scaffold task, and all component tasks: '.$json.'. Return { "scaffold_temp_id": "", "component": "", "predicted_files": [], "interface_contracts": { "routes": [], "controllers": [], "models": [], "views": [], "events": [], "tests": [] }, "prompt_section": "", "brief": "", "expected_outputs": [] }. The prompt_section must name the scaffold owner role, component, files, contracts, and completion criteria.'],
+            ],
+            'task' => [
+                ['role' => 'system', 'content' => 'You are a senior coding-AI prompt engineer. Return only valid JSON. Create a task-specific prompt that depends on the scaffold artifacts. The prompt must prevent duplicate scaffolding, reference exact contracts/file paths, request tests, and list expected outputs.'],
+                ['role' => 'user', 'content' => 'Project JSON, task JSON, and scaffold JSON: '.$json.'. Return { "task_temp_id": "", "scaffold_temp_id": "", "prompt_section": "", "brief": "", "uses_scaffold_contracts": true, "referenced_files": [], "test_plan": [], "expected_outputs": [] }. The prompt_section must include component name, predicted_files, interface contracts, scaffold id/temp id, dependency warning, and coding instructions.'],
+            ],
+            default => throw new \InvalidArgumentException("Unknown AI layer [{$layer}]."),
+        };
+    }
+
+    protected function validateScaffoldPrompt(array $raw, array $task): array
+    {
+        foreach (['scaffold_temp_id', 'component', 'prompt_section', 'brief'] as $field) {
+            if (!array_key_exists($field, $raw)) {
+                throw new \RuntimeException("Layer 2 scaffold prompt missing [{$field}].");
+            }
+        }
+
+        return [
+            'scaffold_temp_id' => (string) $raw['scaffold_temp_id'],
+            'component' => (string) $raw['component'],
+            'predicted_files' => $this->normalizeStringArray($raw['predicted_files'] ?? $task['predicted_files'] ?? []),
+            'interface_contracts' => is_array($raw['interface_contracts'] ?? null) ? $raw['interface_contracts'] : [],
+            'prompt_section' => (string) $raw['prompt_section'],
+            'brief' => (string) $raw['brief'],
+            'expected_outputs' => $this->normalizeStringArray($raw['expected_outputs'] ?? []),
+        ];
+    }
+
+    protected function validateTaskPrompt(array $raw, array $task, ?array $scaffold): array
+    {
+        foreach (['task_temp_id', 'prompt_section', 'brief'] as $field) {
+            if (!array_key_exists($field, $raw)) {
+                throw new \RuntimeException("Layer 3 task prompt missing [{$field}].");
+            }
+        }
+
+        if (($raw['uses_scaffold_contracts'] ?? false) !== true && $scaffold !== null) {
+            throw new \RuntimeException('Layer 3 task prompt must reference scaffold contracts.');
+        }
+
+        return [
+            'task_temp_id' => (string) $raw['task_temp_id'],
+            'scaffold_temp_id' => (string) ($raw['scaffold_temp_id'] ?? $task['scaffold_temp_id'] ?? ''),
+            'prompt_section' => (string) $raw['prompt_section'],
+            'brief' => (string) $raw['brief'],
+            'uses_scaffold_contracts' => (bool) ($raw['uses_scaffold_contracts'] ?? false),
+            'referenced_files' => $this->normalizeStringArray($raw['referenced_files'] ?? $task['predicted_files'] ?? []),
+            'test_plan' => $this->normalizeStringArray($raw['test_plan'] ?? []),
+            'expected_outputs' => $this->normalizeStringArray($raw['expected_outputs'] ?? []),
+            'interface_contracts' => $scaffold['interface_contracts'] ?? [],
+        ];
+    }
+
+    public function redactSecrets(mixed $value): mixed
+    {
+        if (is_array($value)) {
+            $redacted = [];
+
+            foreach ($value as $key => $item) {
+                if (preg_match('/(api[_-]?key|token|secret|password|bearer)/i', (string) $key)) {
+                    $redacted[$key] = '[REDACTED]';
+                    continue;
+                }
+
+                $redacted[$key] = $this->redactSecrets($item);
+            }
+
+            return $redacted;
+        }
+
+        if (is_string($value)) {
+            $patterns = [
+                '/Bearer\s+[A-Za-z0-9._~+\-\/]+=*/i',
+                '/sk-[A-Za-z0-9_\-]{8,}/',
+                '/ghp_[A-Za-z0-9_]{8,}/',
+                '/xox[baprs]-[A-Za-z0-9\-]{8,}/',
+            ];
+
+            return preg_replace($patterns, '[REDACTED]', $value);
+        }
+
+        return $value;
+    }
+
+    public function calculateDueAt(?float $hours): ?\Carbon\CarbonInterface
+    {
+        $hours = $hours ?: (float) config('tasks.timers.default_estimate_hours', 4);
+        $remainingMinutes = max(1, (int) ceil($hours * 60));
+        $cursor = CarbonImmutable::now();
+        [$startHour, $startMinute] = array_map('intval', explode(':', config('tasks.timers.workday_start', '09:00')));
+        [$endHour, $endMinute] = array_map('intval', explode(':', config('tasks.timers.workday_end', '17:00')));
+
+        while ($remainingMinutes > 0) {
+            if (config('tasks.timers.skip_weekends', true) && $cursor->isWeekend()) {
+                $cursor = $cursor->addDay()->setTime($startHour, $startMinute);
+                continue;
+            }
+
+            $workStart = $cursor->setTime($startHour, $startMinute);
+            $workEnd = $cursor->setTime($endHour, $endMinute);
+
+            if ($cursor->lessThan($workStart)) {
+                $cursor = $workStart;
+            }
+
+            if ($cursor->greaterThanOrEqualTo($workEnd)) {
+                $cursor = $cursor->addDay()->setTime($startHour, $startMinute);
+                continue;
+            }
+
+            $availableMinutes = $cursor->diffInMinutes($workEnd);
+            $consume = min($remainingMinutes, $availableMinutes);
+            $cursor = $cursor->addMinutes($consume);
+            $remainingMinutes -= $consume;
+        }
+
+        return $cursor;
+    }
+
+    protected function mockOutline(array $payload): array
+    {
+        $tasks = [];
+        $taskIndex = 1;
+        $requirements = collect($payload['functional_requirements'] ?? [])
+            ->merge($payload['non_functional_requirements'] ?? []);
+
+        if ($requirements->isEmpty()) {
+            $requirements = collect([
+                [
+                    'id' => null,
+                    'title' => $payload['project']['name'].' baseline',
+                    'description' => $payload['project']['description'] ?: 'Project baseline implementation.',
+                    'priority' => 'High',
+                ],
+            ]);
+        }
+
+        foreach ($requirements->take(3) as $req) {
+            $component = Str::headline(Str::limit($req['title'] ?? 'Application', 40, ''));
+            $componentKey = $this->componentKey($component);
+            $files = $this->guessFilesForRequirement($req);
+
+            $tasks[] = [
+                'temp_id' => 'T'.$taskIndex++,
+                'title' => 'Scaffold: '.$component,
+                'description' => 'Create the baseline scaffold and contracts for '.$component.'.',
+                'priority' => $this->validatePriority(ucfirst($req['priority'] ?? 'High')),
+                'component' => $component,
+                'component_key' => $componentKey,
+                'predicted_files' => $files,
+                'is_scaffold' => true,
+                'required_role' => $this->suggestRole($req['title'] ?? '', $req['description'] ?? ''),
+                'required_skills' => $this->skillsFromFiles($files),
+                'estimated_hours' => 4,
+                'requirement_type' => isset($req['category']) ? 'non_functional' : 'functional',
+                'requirement_id' => $req['id'] ?? null,
+                'dependencies' => [],
+            ];
+
+            $tasks[] = [
+                'temp_id' => 'T'.$taskIndex++,
+                'title' => 'Implement: '.Str::limit($req['title'] ?? 'Requirement', 90, ''),
+                'description' => $req['description'] ?? 'Implement requirement.',
+                'priority' => $this->validatePriority(ucfirst($req['priority'] ?? 'Medium')),
+                'component' => $component,
+                'component_key' => $componentKey,
+                'predicted_files' => $files,
+                'is_scaffold' => false,
+                'required_role' => $this->suggestRole($req['title'] ?? '', $req['description'] ?? ''),
+                'required_skills' => $this->skillsFromFiles($files),
+                'estimated_hours' => 6,
+                'requirement_type' => isset($req['category']) ? 'non_functional' : 'functional',
+                'requirement_id' => $req['id'] ?? null,
+                'dependencies' => [],
+            ];
+        }
+
+        return ['tasks' => $tasks];
+    }
+
+    protected function mockScaffoldPrompt(array $task): array
+    {
+        $files = $task['predicted_files'] ?? [];
+
+        return [
+            'scaffold_temp_id' => $task['temp_id'],
+            'component' => $task['component'],
+            'predicted_files' => $files,
+            'interface_contracts' => [
+                'routes' => [],
+                'controllers' => array_values(array_filter($files, fn ($file) => str_contains($file, 'Controller.php'))),
+                'models' => array_values(array_filter($files, fn ($file) => str_contains($file, 'Models/'))),
+                'views' => array_values(array_filter($files, fn ($file) => str_ends_with($file, '.blade.php'))),
+                'events' => [],
+                'tests' => ['tests/Feature/'.Str::studly($task['component']).'Test.php'],
+            ],
+            'prompt_section' => "### Coding AI Prompt\nComponent: {$task['component']}\nScaffold Temp ID: {$task['temp_id']}\nCreate the baseline file layout, route/API contracts, interfaces, and tests before dependent tasks merge.\nPredicted files: ".implode(', ', $files),
+            'brief' => 'Create the baseline scaffold for '.$task['component'].'.',
+            'expected_outputs' => ['Baseline files exist', 'Contracts are documented', 'Scaffold tests pass'],
+        ];
+    }
+
+    protected function mockTaskPrompt(array $task, ?array $scaffold): array
+    {
+        $scaffoldId = $task['scaffold_temp_id'] ?? ($scaffold['scaffold_temp_id'] ?? 'none');
+        $files = $task['predicted_files'] ?? [];
+
+        return [
+            'task_temp_id' => $task['temp_id'],
+            'scaffold_temp_id' => $scaffoldId,
+            'prompt_section' => "### Coding AI Prompt\nComponent: {$task['component']}\nTask Temp ID: {$task['temp_id']}\nScaffold: {$scaffoldId}\nUse the scaffold contracts and do not duplicate baseline structure. Update predicted files: ".implode(', ', $files)."\nAdd or update tests and report expected outputs.",
+            'brief' => 'Implement '.$task['title'].' using scaffold '.$scaffoldId.'.',
+            'uses_scaffold_contracts' => true,
+            'referenced_files' => $files,
+            'test_plan' => ['Add feature coverage for '.$task['component']],
+            'expected_outputs' => ['Task behavior works', 'Tests pass'],
+        ];
+    }
+
+    protected function buildPreview(array $outline, array $scaffolds, array $taskPrompts): array
+    {
+        return [
+            'scaffolds' => collect($outline)->where('is_scaffold', true)->map(fn ($task) => [
+                'temp_id' => $task['temp_id'],
+                'component' => $task['component'],
+                'component_key' => $task['component_key'],
+                'scaffold_owner_id' => $task['scaffold_owner_id'] ?? null,
+                'assigned_to' => $task['assigned_to'] ?? null,
+                'predicted_files' => $task['predicted_files'] ?? [],
+                'prompt_brief' => $scaffolds[$task['temp_id']]['brief'] ?? $task['title'],
+            ])->values()->all(),
+            'tasks' => collect($outline)->where('is_scaffold', false)->map(fn ($task) => [
+                'temp_id' => $task['temp_id'],
+                'title' => $task['title'],
+                'component' => $task['component'],
+                'assigned_to' => $task['assigned_to'] ?? null,
+                'scaffold_temp_id' => $task['scaffold_temp_id'] ?? null,
+                'depends_on' => $task['dependencies'] ?? [],
+                'predicted_files' => $task['predicted_files'] ?? [],
+                'prompt_brief' => $taskPrompts[$task['temp_id']]['brief'] ?? $task['title'],
+            ])->values()->all(),
+            'conflicts' => collect($outline)
+                ->filter(fn ($task) => !empty($task['overlapping_files']))
+                ->groupBy('component_key')
+                ->map(fn ($items) => [
+                    'component' => $items->first()['component'],
+                    'overlapping_files' => $items->pluck('overlapping_files')->flatten()->unique()->values()->all(),
+                    'scaffold_temp_id' => $items->firstWhere('is_scaffold', true)['temp_id'] ?? $items->first()['scaffold_temp_id'] ?? null,
+                ])
+                ->values()
+                ->all(),
+        ];
+    }
+
+    protected function fallbackPromptSection(array $item, ?Task $scaffoldTask): string
+    {
+        $scaffold = $scaffoldTask ? '#'.$scaffoldTask->id : ($item['scaffold_temp_id'] ?? 'self');
+
+        return "### Coding AI Prompt\nComponent: {$item['component']}\nScaffold: {$scaffold}\nPredicted files: ".implode(', ', $item['predicted_files'] ?? [])."\nUse the scaffold contracts, add tests, and keep changes inside this task scope.";
+    }
+
+    protected function resolveRequirement(array $item): array
+    {
+        $type = null;
+        $id = null;
+
+        if (!empty($item['requirement_id']) && !empty($item['requirement_type'])) {
+            if ($item['requirement_type'] === 'functional' && SrsFunctionalRequirement::find($item['requirement_id'])) {
+                $type = SrsFunctionalRequirement::class;
+                $id = $item['requirement_id'];
+            }
+
+            if ($item['requirement_type'] === 'non_functional' && SrsNonFunctionalRequirement::find($item['requirement_id'])) {
+                $type = SrsNonFunctionalRequirement::class;
+                $id = $item['requirement_id'];
+            }
+        }
+
+        return ['type' => $type, 'id' => $id];
+    }
+
+    protected function roleIdForName(?string $name): ?int
+    {
+        if (!$name) {
+            return null;
+        }
+
+        return Role::where('name', $name)->value('id');
+    }
+
+    protected function availableRoleNames(Project $project): array
+    {
+        $roles = collect(SystemRolesSeeder::getSystemRoleNames());
+
+        if ($project->team_id) {
+            $roles = $roles->merge(Role::where('team_id', $project->team_id)->pluck('name'));
+        }
+
+        return $roles->unique()->values()->all();
+    }
+
+    protected function normalizeStringArray(mixed $values): array
+    {
+        if (!is_array($values)) {
+            return [];
+        }
+
+        return collect($values)
+            ->map(fn ($value) => trim((string) $value))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    protected function validatePriority(string $priority): string
+    {
+        $priority = ucfirst(Str::lower(trim($priority)));
+
+        return in_array($priority, ['Low', 'Medium', 'High', 'Critical'], true) ? $priority : 'Medium';
+    }
+
+    protected function validateRequirementType(?string $type): ?string
+    {
+        return in_array($type, ['functional', 'non_functional'], true) ? $type : null;
+    }
+
+    protected function componentKey(mixed $value): string
+    {
+        $key = Str::slug((string) $value);
+
+        return $key !== '' ? $key : 'general';
+    }
+
+    protected function shouldUseMockAi(): bool
+    {
+        return empty($this->apiKey)
+            || str_starts_with($this->apiKey, 'dummy')
+            || str_starts_with($this->apiKey, 'sk-dummy');
+    }
+
+    protected function cacheTtl(): \DateTimeInterface
+    {
+        return now()->addHours((int) config('tasks.ai.cache_ttl_hours', 24));
+    }
+
+    protected function guessFilesForRequirement(array $requirement): array
+    {
+        $title = Str::slug($requirement['title'] ?? 'feature', '-');
+
+        return [
+            'app/Http/Controllers/'.Str::studly($title).'Controller.php',
+            'resources/views/'.str_replace('-', '/', $title).'.blade.php',
+            'tests/Feature/'.Str::studly($title).'Test.php',
+        ];
+    }
+
+    protected function skillsFromFiles(array $files): array
+    {
+        $skills = [];
+
+        foreach ($files as $file) {
+            if (str_ends_with($file, '.php')) {
+                $skills[] = 'PHP';
+                $skills[] = 'Laravel';
+            }
+            if (str_ends_with($file, '.js')) {
+                $skills[] = 'JavaScript';
+            }
+            if (str_ends_with($file, '.blade.php')) {
+                $skills[] = 'Blade';
+                $skills[] = 'Laravel';
+            }
+            if (str_contains($file, 'database/migrations')) {
+                $skills[] = 'Database';
+            }
+        }
+
+        return array_values(array_unique($skills));
+    }
+
     protected function suggestRole(string $title, string $description): string
     {
-        $content = strtolower($title . ' ' . $description);
+        $content = Str::lower($title.' '.$description);
 
         if (preg_match('/\b(ui|ux|design|interface|wireframe|mockup|prototype)\b/', $content)) {
             return 'UX/UI Designer';
@@ -467,125 +1084,6 @@ PROMPT;
         return 'Full Stack Developer';
     }
 
-    /**
-     * Suggest role for non-functional requirement.
-     */
-    protected function suggestRoleForNFR(string $category): string
-    {
-        return match ($category) {
-            'performance' => 'Backend Developer',
-            'security' => 'Security Specialist',
-            'reliability', 'availability' => 'DevOps Engineer',
-            'maintainability' => 'Full Stack Developer',
-            'scalability' => 'Backend Developer',
-            'usability' => 'UX/UI Designer',
-            'compatibility' => 'QA Engineer',
-            'compliance' => 'Security Specialist',
-            default => 'Full Stack Developer',
-        };
-    }
-
-    /**
-     * Assign tasks to team members based on roles and workload.
-     *
-     * @param Project $project
-     * @param array $tasks Generated tasks
-     * @return array Tasks with assigned users
-     */
-    public function assignTasksToTeam(Project $project, array $tasks): array
-    {
-        $teamMembers = $this->getTeamMembersWithRoles($project);
-        
-        return array_map(function ($task) use ($teamMembers, $project) {
-            $assignee = $this->findBestAssignee($task['required_role'], $teamMembers, $project);
-            $task['assigned_to'] = $assignee?->id;
-            $task['assignee_name'] = $assignee?->name;
-            return $task;
-        }, $tasks);
-    }
-
-    /**
-     * Get team members with their roles.
-     */
-    protected function getTeamMembersWithRoles(Project $project): Collection
-    {
-        if (!$project->team) {
-            return collect([
-                (object)[
-                    'id' => $project->user_id,
-                    'name' => $project->user->name ?? 'Owner',
-                    'role' => 'Full Stack Developer',
-                    'role_id' => null,
-                    'active_tasks' => 0,
-                ]
-            ]);
-        }
-
-        return $project->team->members()
-            ->withPivot(['role', 'role_id'])
-            ->get()
-            ->map(function ($member) use ($project) {
-                $role = null;
-                if ($member->pivot->role_id) {
-                    $role = Role::find($member->pivot->role_id)?->name;
-                }
-                
-                return (object)[
-                    'id' => $member->id,
-                    'name' => $member->name,
-                    'role' => $role ?? $member->pivot->role ?? 'Team Member',
-                    'role_id' => $member->pivot->role_id,
-                    'active_tasks' => Task::where('project_id', $project->id)
-                        ->where('assigned_to', $member->id)
-                        ->whereIn('status', ['To Do', 'In Progress', 'Review'])
-                        ->count(),
-                ];
-            });
-    }
-
-    /**
-     * Find the best assignee for a task based on role match and workload.
-     */
-    protected function findBestAssignee(string $requiredRole, Collection $teamMembers, Project $project): ?object
-    {
-        // First, try exact role match with lowest workload
-        $exactMatch = $teamMembers
-            ->filter(fn($m) => strcasecmp($m->role, $requiredRole) === 0)
-            ->sortBy('active_tasks')
-            ->first();
-
-        if ($exactMatch) {
-            return $exactMatch;
-        }
-
-        // Second, try related roles
-        $relatedRoles = $this->getRelatedRoles($requiredRole);
-        $relatedMatch = $teamMembers
-            ->filter(fn($m) => in_array($m->role, $relatedRoles, true))
-            ->sortBy('active_tasks')
-            ->first();
-
-        if ($relatedMatch) {
-            return $relatedMatch;
-        }
-
-        // Third, try Full Stack Developer as fallback
-        $fullStack = $teamMembers
-            ->filter(fn($m) => $m->role === 'Full Stack Developer')
-            ->sortBy('active_tasks')
-            ->first();
-
-        if ($fullStack) {
-            return $fullStack;
-        }
-
-        // Finally, assign to team member with lowest workload
-        return $teamMembers->sortBy('active_tasks')->first();
-    }
-
-    /**
-     * Get roles that are related/compatible with the required role.
-     */
     protected function getRelatedRoles(string $role): array
     {
         return match ($role) {

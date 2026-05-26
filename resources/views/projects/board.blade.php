@@ -59,6 +59,16 @@
                                             <p class="task-assignee text-xs text-gray-500 mt-1">
                                                 {{ $task->assignee ? $task->assignee->name : 'Unassigned' }}
                                             </p>
+                                            <div class="mt-2 flex flex-wrap gap-1">
+                                                @if($task->is_scaffold)
+                                                    <span class="px-1.5 py-0.5 text-[11px] rounded bg-indigo-100 text-indigo-700">Scaffold</span>
+                                                @elseif($task->scaffold_task_id)
+                                                    <span class="px-1.5 py-0.5 text-[11px] rounded bg-gray-100 text-gray-600">Scaffold #{{ $task->scaffold_task_id }}</span>
+                                                @endif
+                                                @if($task->timer_state && $task->timer_state !== 'idle')
+                                                    <span class="px-1.5 py-0.5 text-[11px] rounded bg-blue-100 text-blue-700">{{ ucfirst($task->timer_state) }}</span>
+                                                @endif
+                                            </div>
                                         </div>
                                         <div class="flex items-center space-x-1 ml-2">
                                             @if($task->priority === 'Critical')
@@ -78,6 +88,11 @@
                                     @if($task->due_date)
                                         <p class="text-xs mt-2 {{ $task->isOverdue() ? 'text-red-500' : 'text-gray-400' }}">
                                             {{ $task->due_date->format('M d') }}
+                                        </p>
+                                    @endif
+                                    @if($task->due_at)
+                                        <p class="text-xs mt-1 {{ $task->isOverdue() ? 'text-red-500' : 'text-gray-400' }}">
+                                            Due {{ $task->due_at->format('M d, g:i A') }}
                                         </p>
                                     @endif
                                 </div>
