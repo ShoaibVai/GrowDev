@@ -136,15 +136,26 @@ class ProjectController extends Controller
         ));
     }
 
-    public function board(Project $project)
+    public function board(Request $request, Project $project)
     {
         $this->authorize('view', $project);
-        $tasks = $project->tasks()
-            ->with(['assignee:id,name', 'requirement'])
-            ->orderBy('created_at')
-            ->get()
-            ->groupBy('status');
-        return view('projects.board', compact('project', 'tasks'));
+
+        $tasksQuery = $project->tasks()->with(['assignee:id,name', 'requirement']);
+
+        // Filter by sprint
+        if ($request->filled('sprint')) {
+            if ($request->sprint === 'backlog') {
+                $tasksQuery->whereNull('sprint_id');
+            } else {
+                $tasksQuery->where('sprint_id', $request->sprint);
+            }
+        }
+
+        $tasks = $tasksQuery->orderBy('sort_order')->orderBy('created_at')->get()->groupBy('status');
+
+        $sprints = $project->sprints()->whereIn('status', ['planned', 'active'])->get();
+
+        return view('projects.board', compact('project', 'tasks', 'sprints'));
     }
 
     public function membersSummary(Project $project)

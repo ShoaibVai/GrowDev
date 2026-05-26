@@ -19,7 +19,7 @@
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
         <!-- Total Projects -->
-        <div class="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-300">
+        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-300">
             <div class="p-5">
                 <div class="flex items-center">
                     <div class="flex-shrink-0 bg-indigo-500 rounded-md p-3">
@@ -27,23 +27,23 @@
                     </div>
                     <div class="ml-5 w-0 flex-1">
                         <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Total Projects</dt>
+                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Projects</dt>
                             <dd>
-                                <div class="text-lg font-medium text-gray-900">{{ $totalProjects }}</div>
+                                <div class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ $totalProjects }}</div>
                             </dd>
                         </dl>
                     </div>
                 </div>
             </div>
-            <div class="bg-gray-50 px-5 py-3">
+            <div class="bg-gray-50 dark:bg-gray-700 px-5 py-3">
                 <div class="text-sm">
-                    <a href="{{ route('projects.index') }}" class="font-medium text-indigo-600 hover:text-indigo-900">View all</a>
+                    <a href="{{ route('projects.index') }}" class="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-900">View all</a>
                 </div>
             </div>
         </div>
 
         <!-- Active Projects -->
-        <div class="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-300">
+        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-300">
             <div class="p-5">
                 <div class="flex items-center">
                     <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
@@ -51,23 +51,23 @@
                     </div>
                     <div class="ml-5 w-0 flex-1">
                         <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Active Projects</dt>
+                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Active Projects</dt>
                             <dd>
-                                <div class="text-lg font-medium text-gray-900">{{ $activeProjects }}</div>
+                                <div class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ $activeProjects }}</div>
                             </dd>
                         </dl>
                     </div>
                 </div>
             </div>
-            <div class="bg-gray-50 px-5 py-3">
+            <div class="bg-gray-50 dark:bg-gray-700 px-5 py-3">
                 <div class="text-sm">
-                    <a href="{{ route('projects.index') }}" class="font-medium text-green-600 hover:text-green-900">View active</a>
+                    <a href="{{ route('projects.index') }}" class="font-medium text-green-600 dark:text-green-400 hover:text-green-900">View active</a>
                 </div>
             </div>
         </div>
 
         <!-- Open Tasks -->
-        <div class="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-300">
+        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-300">
             <div class="p-5">
                 <div class="flex items-center">
                     <div class="flex-shrink-0 bg-yellow-500 rounded-md p-3">
@@ -75,23 +75,23 @@
                     </div>
                     <div class="ml-5 w-0 flex-1">
                         <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Open Tasks</dt>
+                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Open Tasks</dt>
                             <dd>
-                                <div class="text-lg font-medium text-gray-900">{{ $openTasksCount }}</div>
+                                <div class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ $openTasksCount }}</div>
                             </dd>
                         </dl>
                     </div>
                 </div>
             </div>
-            <div class="bg-gray-50 px-5 py-3">
+            <div class="bg-gray-50 dark:bg-gray-700 px-5 py-3">
                 <div class="text-sm">
-                    <a href="#" class="font-medium text-yellow-600 hover:text-yellow-900">View tasks</a>
+                    <a href="{{ route('tasks.my-tasks') }}" class="font-medium text-yellow-600 dark:text-yellow-400 hover:text-yellow-900">View tasks</a>
                 </div>
             </div>
         </div>
 
         <!-- Teams -->
-        <div class="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-300">
+        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-300">
             <div class="p-5">
                 <div class="flex items-center">
                     <div class="flex-shrink-0 bg-purple-500 rounded-md p-3">
@@ -99,21 +99,54 @@
                     </div>
                     <div class="ml-5 w-0 flex-1">
                         <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Teams</dt>
+                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Teams</dt>
                             <dd>
-                                <div class="text-lg font-medium text-gray-900">{{ $teamsCount }}</div>
+                                <div class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ $teamsCount }}</div>
                             </dd>
                         </dl>
                     </div>
                 </div>
             </div>
-            <div class="bg-gray-50 px-5 py-3">
+            <div class="bg-gray-50 dark:bg-gray-700 px-5 py-3">
                 <div class="text-sm">
-                    <a href="{{ route('teams.index') }}" class="font-medium text-purple-600 hover:text-purple-900">View teams</a>
+                    <a href="{{ route('teams.index') }}" class="font-medium text-purple-600 dark:text-purple-400 hover:text-purple-900">View teams</a>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Active Sprints -->
+    @if($activeSprints->count() > 0)
+    <div class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Active Sprints</h3>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            @foreach($activeSprints as $sprint)
+                <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between mb-2">
+                        <a href="{{ route('sprints.show', [$sprint->project, $sprint]) }}" class="font-medium text-gray-900 dark:text-gray-100 hover:text-indigo-600">{{ $sprint->name }}</a>
+                        <span class="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 px-2 py-0.5 rounded-full">Active</span>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">{{ $sprint->project->name }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ $sprint->start_date->format('M d') }} — {{ $sprint->end_date->format('M d') }}</p>
+                    @php $p = $sprint->progress(); @endphp
+                    @if($p['total'] > 0)
+                        <div class="mt-2">
+                            <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                <span>{{ $p['done'] }}/{{ $p['total'] }} done</span>
+                                <span>{{ $p['percentage'] }}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                <div class="bg-indigo-600 h-2 rounded-full" style="width: {{ $p['percentage'] }}%"></div>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
@@ -121,80 +154,79 @@
         <div class="lg:col-span-2 space-y-8">
             
             <!-- Recent Projects -->
-            <div class="bg-white shadow rounded-lg overflow-hidden">
-                <div class="px-6 py-5 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">Recent Projects</h3>
-                    <a href="{{ route('projects.index') }}" class="text-sm text-indigo-600 hover:text-indigo-900 font-medium">View all</a>
+            <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+                <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">Recent Projects</h3>
+                    <a href="{{ route('projects.index') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 font-medium">View all</a>
                 </div>
                 <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                     @forelse($projects as $project)
-                        <div class="group relative bg-white border border-gray-200 rounded-lg p-5 hover:border-indigo-300 hover:shadow-md transition-all duration-200 cursor-pointer" onclick="window.location='{{ route('projects.show', $project) }}'">
+                        <div class="group relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:border-indigo-300 dark:hover:border-indigo-500 hover:shadow-md transition-all duration-200 cursor-pointer" onclick="window.location='{{ route('projects.show', $project) }}'">
                             <div class="flex justify-between items-start">
                                 <div>
-                                    <h4 class="text-base font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">{{ $project->name }}</h4>
-                                    <p class="text-sm text-gray-500 mt-1 line-clamp-2">{{ $project->description }}</p>
+                                    <h4 class="text-base font-semibold text-gray-900 dark:text-gray-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{{ $project->name }}</h4>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{{ $project->description }}</p>
                                 </div>
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $project->status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $project->status === 'active' ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300' }}">
                                     {{ ucfirst($project->status) }}
                                 </span>
                             </div>
                             <div class="mt-4">
-                                <div class="flex justify-between text-xs text-gray-500 mb-1">
+                                <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
                                     <span>Progress</span>
                                     <span>{{ $project->progress ?? 0 }}%</span>
                                 </div>
-                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                                     <div class="bg-indigo-600 h-2 rounded-full transition-all duration-500" style="width: {{ $project->progress ?? 0 }}%"></div>
                                 </div>
                             </div>
                             <div class="mt-4 flex items-center justify-between">
                                 <div class="flex -space-x-2 overflow-hidden">
-                                    <!-- Mock avatars for now, replace with real team members if available -->
-                                    <div class="inline-block h-6 w-6 rounded-full ring-2 ring-white bg-gray-300 flex items-center justify-center text-xs text-white">A</div>
-                                    <div class="inline-block h-6 w-6 rounded-full ring-2 ring-white bg-gray-400 flex items-center justify-center text-xs text-white">B</div>
+                                    <div class="inline-block h-6 w-6 rounded-full ring-2 ring-white dark:ring-gray-800 bg-gray-300 flex items-center justify-center text-xs text-white">A</div>
+                                    <div class="inline-block h-6 w-6 rounded-full ring-2 ring-white dark:ring-gray-800 bg-gray-400 flex items-center justify-center text-xs text-white">B</div>
                                 </div>
-                                <div class="text-xs text-gray-400">
+                                <div class="text-xs text-gray-400 dark:text-gray-500">
                                     Updated {{ $project->updated_at->diffForHumans() }}
                                 </div>
                             </div>
                         </div>
                     @empty
-                        <div class="col-span-2 text-center py-8 text-gray-500">
-                            No projects found. <a href="{{ route('projects.create') }}" class="text-indigo-600 hover:underline">Create one?</a>
+                        <div class="col-span-2 text-center py-8 text-gray-500 dark:text-gray-400">
+                            No projects found. <a href="{{ route('projects.create') }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">Create one?</a>
                         </div>
                     @endforelse
                 </div>
             </div>
 
             <!-- My Tasks -->
-            <div class="bg-white shadow rounded-lg overflow-hidden">
-                <div class="px-6 py-5 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">My Tasks</h3>
-                    <a href="#" class="text-sm text-indigo-600 hover:text-indigo-900 font-medium">View all</a>
+            <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+                <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">My Tasks</h3>
+                    <a href="{{ route('tasks.my-tasks') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 font-medium">View all</a>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Task</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Project</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Due</th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
+                        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                             @forelse($tasksAssigned as $task)
-                                <tr class="hover:bg-gray-50 transition-colors cursor-pointer" onclick="window.location='{{ route('tasks.show', $task) }}'">
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer" onclick="window.location='{{ route('tasks.show', $task) }}'">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center">
                                             <div class="ml-0">
-                                                <div class="text-sm font-medium text-gray-900">{{ Str::limit($task->title, 40) }}</div>
-                                                <div class="text-xs text-gray-500">{{ $task->priority }} Priority</div>
+                                                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ Str::limit($task->title, 40) }}</div>
+                                                <div class="text-xs text-gray-500 dark:text-gray-400">{{ $task->priority }} Priority</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ Str::limit($task->project->name ?? 'N/A', 20) }}</div>
+                                        <div class="text-sm text-gray-900 dark:text-gray-100">{{ Str::limit($task->project->name ?? 'N/A', 20) }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @php

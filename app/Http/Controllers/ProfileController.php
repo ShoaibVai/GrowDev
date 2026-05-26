@@ -408,6 +408,20 @@ class ProfileController extends Controller
     }
 
     /**
+     * Update the user's theme preference.
+     */
+    public function updateTheme(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $request->validate([
+            'theme' => 'required|in:light,dark,system',
+        ]);
+
+        Auth::user()->update(['theme' => $request->theme]);
+
+        return response()->json(['success' => true, 'theme' => $request->theme]);
+    }
+
+    /**
      * Remove the authenticated user's account after password confirmation.
      */
     public function destroy(Request $request): RedirectResponse

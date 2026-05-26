@@ -63,4 +63,14 @@ class Project extends Model
         return $this->hasMany(SrsDocument::class);
     }
 
+    public function sprints(): HasMany
+    {
+        return $this->hasMany(Sprint::class)->orderBy('start_date');
+    }
+
+    public function activeSprint()
+    {
+        return $this->hasOne(Sprint::class)->where('status', 'active');
+    }
+
 }

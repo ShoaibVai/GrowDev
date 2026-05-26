@@ -51,6 +51,7 @@ class User extends Authenticatable
         'website',
         'linkedin_url',
         'github_url',
+        'theme',
     ];
 
     /**
@@ -163,6 +164,16 @@ class User extends Authenticatable
     public function srsDocuments(): HasMany
     {
         return $this->hasMany(SrsDocument::class);
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    public function timeLogs(): HasMany
+    {
+        return $this->hasMany(TimeLog::class);
     }
 
 }

@@ -238,15 +238,15 @@
 
 /* Skeleton Loader */
 .skeleton {
-    @apply bg-gray-200 rounded animate-pulse;
+    @apply bg-gray-200 dark:bg-gray-700 rounded animate-pulse;
 }
 
 .skeleton-text {
-    @apply h-4 bg-gray-200 rounded animate-pulse;
+    @apply h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse;
 }
 
 .skeleton-circle {
-    @apply w-12 h-12 bg-gray-200 rounded-full animate-pulse;
+    @apply w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse;
 }
 
 /* Floating Labels */
@@ -264,12 +264,21 @@
     color: #6b7280;
 }
 
+.dark .floating-label label {
+    color: #9ca3af;
+}
+
 .floating-label label.active {
     top: -8px;
     font-size: 0.75rem;
     background: white;
     padding: 0 4px;
     color: #6366f1;
+}
+
+.dark .floating-label label.active {
+    background: #1f2937;
+    color: #818cf8;
 }
 
 /* Progress Bar */
@@ -319,6 +328,11 @@
     transition: opacity 0.3s, transform 0.3s;
 }
 
+.dark .tooltip::before {
+    background: #374151;
+    color: #f3f4f6;
+}
+
 .tooltip::after {
     content: '';
     position: absolute;
@@ -329,6 +343,10 @@
     border-top-color: #1f2937;
     opacity: 0;
     transition: opacity 0.3s;
+}
+
+.dark .tooltip::after {
+    border-top-color: #374151;
 }
 
 .tooltip:hover::before,

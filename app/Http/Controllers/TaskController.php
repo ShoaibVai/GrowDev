@@ -10,6 +10,7 @@ use App\Models\SrsNonFunctionalRequirement;
 use App\Models\Task;
 use App\Models\TaskActivity;
 use App\Models\TaskStatusRequest;
+use App\Models\TimeLog;
 use App\Models\User;
 use App\Notifications\TaskAssigned;
 use App\Notifications\TaskStatusChanged;
@@ -296,6 +297,7 @@ class TaskController extends Controller
             'due_date' => 'nullable|date',
             'requirement_type' => 'nullable|in:functional,non_functional',
             'requirement_id' => 'nullable|integer',
+            'sort_order' => 'nullable|integer|min:0',
         ]);
 
         $oldStatus = $task->status;
@@ -325,6 +327,7 @@ class TaskController extends Controller
             'due_date' => $request->has('due_date') ? $request->due_date : $task->due_date,
             'requirement_type' => $request->has('requirement_type') ? $requirementType : $task->requirement_type,
             'requirement_id' => $request->has('requirement_id') ? $requirementId : $task->requirement_id,
+            'sort_order' => $request->has('sort_order') ? $request->sort_order : $task->sort_order,
         ]);
 
         // Notify assignee if task status changed (respects notification preferences)
@@ -397,6 +400,47 @@ class TaskController extends Controller
         $this->authorize('update', $task->project);
         $task->delete();
         return back()->with('success', 'Task deleted successfully.');
+    }
+
+    public function logTime(Request $request, Task $task)
+    {
+        $user = Auth::user();
+        $task->loadMissing('project.team.members');
+        $isTeamMember = $task->project->team && $task->project->team->members->contains('id', $user->id);
+        if (!$task->isOwnedBy($user) && !$task->isAssignedTo($user) && !$isTeamMember) {
+            abort(403);
+        }
+
+        $request->validate([
+            'hours' => 'required|numeric|min:0.25|max:24',
+            'logged_at' => 'required|date',
+            'description' => 'nullable|string|max:500',
+        ]);
+
+        $timeLog = TimeLog::create([
+            'task_id' => $task->id,
+            'user_id' => $user->id,
+            'hours' => $request->hours,
+            'logged_at' => $request->logged_at,
+            'description' => $request->description,
+        ]);
+
+        return response()->json($timeLog->load('user:id,name'), 201);
+    }
+
+    public function timeLogs(Task $task)
+    {
+        $task->loadMissing('project.team.members');
+        $user = Auth::user();
+        $isTeamMember = $task->project->team && $task->project->team->members->contains('id', $user->id);
+        if (!$task->isOwnedBy($user) && !$task->isAssignedTo($user) && !$isTeamMember) {
+            abort(403);
+        }
+
+        $logs = $task->timeLogs()->with('user:id,name')->latest()->get();
+        $totalHours = $logs->sum('hours');
+
+        return response()->json(['logs' => $logs, 'total_hours' => $totalHours]);
     }
 
     /**

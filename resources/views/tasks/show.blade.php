@@ -198,6 +198,20 @@
                             </div>
                         </div>
                     @endif
+
+                    <!-- Comments -->
+                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                        <div class="p-6">
+                            <x-task.comments :task="$task" />
+                        </div>
+                    </div>
+
+                    <!-- Time Tracking -->
+                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                        <div class="p-6">
+                            <x-task.time-logger :task="$task" />
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Sidebar -->

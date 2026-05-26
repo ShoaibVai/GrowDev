@@ -50,6 +50,12 @@ class DashboardController extends Controller
             ->take(6)
             ->get();
 
+        // Active sprints across all projects
+        $activeSprints = \App\Models\Sprint::whereHas('project', function($q) use ($user) {
+            $q->where('user_id', $user->id)
+              ->orWhereHas('team.members', fn($q2) => $q2->where('user_id', $user->id));
+        })->where('status', 'active')->with('project:id,name')->get();
+
         // Recent SRS documents only
         $recentSrs = $user->srsDocuments()->latest()->take(6)->get();
 
@@ -67,7 +73,7 @@ class DashboardController extends Controller
         return view('dashboard-modern', compact(
             'projects', 'totalProjects', 'activeProjects', 'completedProjects',
             'teams', 'teamsCount', 'tasksAssigned', 'openTasksCount', 'upcomingTasks',
-            'recentSrs', 'pendingInvitations'
+            'recentSrs', 'pendingInvitations', 'activeSprints'
         ));
     }
 }

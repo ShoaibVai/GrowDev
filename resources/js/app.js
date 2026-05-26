@@ -7,8 +7,10 @@ import GSAPAnimations from './modules/gsap-animations';
 import TypedAnimations from './modules/typed-animations';
 import FormAnimations from './modules/form-animations';
 import ToastNotification from './modules/toast';
+import KanbanBoard from './modules/kanban';
 
 window.Alpine = Alpine;
+window.KanbanBoard = KanbanBoard;
 
 // Make animation utilities globally available
 window.Animations = Animations;

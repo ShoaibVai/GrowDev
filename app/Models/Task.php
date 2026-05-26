@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 /**
@@ -54,6 +55,8 @@ class Task extends Model
         'requirement_type',
         'requirement_id',
         'required_role_id',
+        'sprint_id',
+        'sort_order',
     ];
 
     protected $casts = [
@@ -106,6 +109,21 @@ class Task extends Model
     public function requiredRole(): BelongsTo
     {
         return $this->belongsTo(Role::class, 'required_role_id');
+    }
+
+    public function sprint(): BelongsTo
+    {
+        return $this->belongsTo(Sprint::class);
+    }
+
+    public function comments(): MorphMany
+    {
+        return $this->morphMany(Comment::class, 'commentable');
+    }
+
+    public function timeLogs(): HasMany
+    {
+        return $this->hasMany(TimeLog::class);
     }
 
     /**

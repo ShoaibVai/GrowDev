@@ -1,10 +1,13 @@
 <?php
 
 use App\Http\Controllers\AITaskController;
+use App\Http\Controllers\CommentController;
 use App\Http\Controllers\DocumentationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\SearchController;
+use App\Http\Controllers\SprintController;
 use App\Http\Controllers\TaskController;
 use Illuminate\Support\Facades\Route;
 
@@ -33,6 +36,13 @@ Route::middleware('auth')->group(function () {
     Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
     Route::delete('/notifications', [NotificationController::class, 'destroyAll'])->name('notifications.destroy-all');
     
+    // Global Search
+    Route::get('/search', [SearchController::class, 'search'])->name('search');
+    Route::get('/api/search', [SearchController::class, 'search'])->name('api.search');
+
+    // Theme preference
+    Route::patch('/profile/theme', [ProfileController::class, 'updateTheme'])->name('profile.theme');
+
     // User search API (for AJAX calls from web views - uses session auth)
     Route::get('/web-api/users/search', [\App\Http\Controllers\Api\UserSearchController::class, 'search'])->name('web.users.search');
     
@@ -41,6 +51,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/projects/{project}/board', [ProjectController::class, 'board'])->whereNumber('project')->name('projects.board');
     Route::get('/projects/{project}/members/summary', [ProjectController::class, 'membersSummary'])->whereNumber('project')->name('projects.members.summary');
     Route::patch('/projects/{project}/requirements/{type}/{requirement}', [ProjectController::class, 'updateRequirementStatus'])->whereNumber('project')->name('projects.requirements.update');
+
+    // Sprint routes (nested under projects)
+    Route::resource('projects.sprints', SprintController::class)->shallow()->whereNumber('project', 'sprint');
+    Route::post('/projects/{project}/sprints/{sprint}/start', [SprintController::class, 'start'])->whereNumber('project')->name('sprints.start');
+    Route::post('/projects/{project}/sprints/{sprint}/complete', [SprintController::class, 'complete'])->whereNumber('project')->name('sprints.complete');
+    Route::post('/projects/{project}/sprints/{sprint}/cancel', [SprintController::class, 'cancel'])->whereNumber('project')->name('sprints.cancel');
 
     // AI Task Generation routes
     Route::get('/projects/{project}/ai-tasks', [AITaskController::class, 'preview'])->whereNumber('project')->name('projects.ai-tasks.preview');
@@ -56,6 +72,15 @@ Route::middleware('auth')->group(function () {
     // Task status change request routes (for assignee approval workflow)
     Route::post('/tasks/{task}/request-status', [TaskController::class, 'requestStatusChange'])->name('tasks.request-status');
     Route::post('/task-status-requests/{statusRequest}/review', [TaskController::class, 'reviewStatusRequest'])->name('tasks.review-status-request');
+
+    // Task comments
+    Route::get('/tasks/{task}/comments', [CommentController::class, 'index'])->name('tasks.comments.index');
+    Route::post('/tasks/{task}/comments', [CommentController::class, 'store'])->name('tasks.comments.store');
+    Route::delete('/tasks/{task}/comments/{comment}', [CommentController::class, 'destroy'])->name('tasks.comments.destroy');
+
+    // Task time logging
+    Route::post('/tasks/{task}/time-logs', [TaskController::class, 'logTime'])->name('tasks.time-logs.store');
+    Route::get('/tasks/{task}/time-logs', [TaskController::class, 'timeLogs'])->name('tasks.time-logs.index');
 
     // My Tasks page (all tasks assigned to user)
     Route::get('/my-tasks', [TaskController::class, 'myTasks'])->name('tasks.my-tasks');
