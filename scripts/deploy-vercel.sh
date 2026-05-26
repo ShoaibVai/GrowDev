@@ -25,7 +25,11 @@ NC='\033[0m' # No Color
 # Configuration - UPDATE THESE VALUES
 VERCEL_PROJECT_NAME="growdev"
 BACKEND_API_URL="${VITE_API_URL:-https://api.yourdomain.com}"
-OPENROUTER_API_KEY="${VITE_OPENROUTER_API_KEY:-your-openrouter-api-key}"
+if [ -z "${VITE_OPENROUTER_API_KEY:-}" ]; then
+    echo "✗ ERROR: VITE_OPENROUTER_API_KEY not set. Set it as an environment variable."
+    exit 1
+fi
+OPENROUTER_API_KEY="$VITE_OPENROUTER_API_KEY"
 OPENROUTER_MODEL="${VITE_OPENROUTER_MODEL:-openai/gpt-3.5-turbo}"
 VERCEL_ENV=${1:-production}
 

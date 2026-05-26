@@ -66,9 +66,9 @@ return [
     */
     'gemini' => [
         'api_key' => env('GEMINI_API_KEY'),
-        'project' => env('GEMINI_PROJECT', 'growdev'),
-        'project_name' => env('GEMINI_PROJECT_NAME', 'projects/788207188016'),
-        'project_number' => env('GEMINI_PROJECT_NUMBER', '788207188016'),
+        'project' => env('GEMINI_PROJECT'),
+        'project_name' => env('GEMINI_PROJECT_NAME'),
+        'project_number' => env('GEMINI_PROJECT_NUMBER'),
         'model' => env('GEMINI_MODEL', 'gemini-flash-latest'),
     ],
 

@@ -20,7 +20,10 @@ set VERCEL_PROJECT_NAME=growdev
 set BACKEND_API_URL=%VITE_API_URL%
 if "!BACKEND_API_URL!"=="" set BACKEND_API_URL=https://api.yourdomain.com
 set OPENROUTER_API_KEY=%VITE_OPENROUTER_API_KEY%
-if "!OPENROUTER_API_KEY!"=="" set OPENROUTER_API_KEY=your-openrouter-api-key
+if "!OPENROUTER_API_KEY!"=="" (
+    echo ✗ ERROR: VITE_OPENROUTER_API_KEY not set. Set it as an environment variable.
+    exit /b 1
+)
 set OPENROUTER_MODEL=%VITE_OPENROUTER_MODEL%
 if "!OPENROUTER_MODEL!"=="" set OPENROUTER_MODEL=openai/gpt-3.5-turbo
 set VERCEL_ENV=%1

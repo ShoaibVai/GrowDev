@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use App\Models\User;
 use App\Models\Team;
 use App\Models\Project;
@@ -64,7 +65,7 @@ class ProductionDataSeeder extends Seeder
                 'name' => 'ss',
                 'email' => 'ss@gmail.com',
                 'password' => '$2y$12$dhaxyLUYrglaLDAXCGu7butDyP5oh5Hfj8E/pfJHPX0v.DePoR3EG',
-                'totp_secret' => 'XZ23TJFSRLM3EQUV',
+                'totp_secret' => null, // Regenerate via 2FA setup
                 'email_verified_at' => now(),
                 'created_at' => '2025-12-05 05:43:15',
                 'updated_at' => now(),
@@ -74,7 +75,7 @@ class ProductionDataSeeder extends Seeder
                 'name' => 'dd',
                 'email' => 'dd@gmail.com',
                 'password' => '$2y$12$LrReJyASf/OBFqS4NeW6zOTKITIWpiOq2FY4B8kzTty/h1F/8D4ku',
-                'totp_secret' => 'OZ5V5LCILPOQVYOH',
+                'totp_secret' => null, // Regenerate via 2FA setup
                 'email_verified_at' => now(),
                 'created_at' => '2025-12-05 05:43:23',
                 'updated_at' => now(),
@@ -151,7 +152,7 @@ class ProductionDataSeeder extends Seeder
                 'id' => 3,
                 'team_id' => 2,
                 'email' => 'dd@gmail.com',
-                'token' => 'HLMQtm4eqOHZcoWUUM7MQO4tYJEeScBt5JFHQ37C',
+                'token' => Str::random(40),
                 'status' => 'accepted',
                 'created_at' => now(),
                 'updated_at' => now(),

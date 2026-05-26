@@ -24,3 +24,7 @@ Homestead.yaml
 Thumbs.db
 
 .vercel
+
+# Environment files with real credentials
+.env.production.local
+.env.local
