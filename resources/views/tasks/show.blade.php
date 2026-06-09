@@ -98,8 +98,8 @@
                             @if($task->description)
                                 <div class="mb-6">
                                     <label class="block text-sm font-medium text-gray-500 mb-2">Description</label>
-                                    <div class="prose prose-sm max-w-none text-gray-700 bg-gray-50 p-4 rounded-lg">
-                                        {!! nl2br(e($task->description)) !!}
+                                    <div class="prose prose-sm max-w-none text-gray-700 bg-gray-50 p-4 rounded-lg whitespace-pre-line">
+                                        {{ $task->description }}
                                     </div>
                                 </div>
                             @endif

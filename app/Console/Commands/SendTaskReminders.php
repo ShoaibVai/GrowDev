@@ -19,29 +19,28 @@ class SendTaskReminders extends Command
         $now = Carbon::now()->startOfDay();
         $soon = $now->copy()->addDay()->endOfDay();
 
-        $tasks = Task::whereNotNull('due_date')
+        Task::whereNotNull('due_date')
             ->whereDate('due_date', '>=', $now->toDateString())
             ->whereDate('due_date', '<=', $soon->toDateString())
             ->whereIn('status', ['To Do', 'In Progress'])
-            ->get();
-
-        foreach ($tasks as $task) {
-            if ($task->assignee) {
-                $pref = $task->assignee->notificationPreference;
-                $allowEmail = $pref ? (bool) $pref->email_reminders : true;
-                if ($allowEmail) {
-                    $task->assignee->notify(new TaskReminder($task));
-                } else {
-                    // Store for digest even if digest_frequency is not set (will be included in next digest)
-                    NotificationEvent::create([
-                        'user_id' => $task->assignee->id,
-                        'event_type' => 'task_reminder',
-                        'payload' => ['task_id' => $task->id, 'due_date' => $task->due_date],
-                        'sent' => false,
-                    ]);
+            ->chunkById(100, function ($tasks) use ($now) {
+                foreach ($tasks as $task) {
+                    if ($task->assignee) {
+                        $pref = $task->assignee->notificationPreference;
+                        $allowEmail = $pref ? (bool) $pref->email_reminders : true;
+                        if ($allowEmail) {
+                            $task->assignee->notify(new TaskReminder($task));
+                        } else {
+                            NotificationEvent::create([
+                                'user_id' => $task->assignee->id,
+                                'event_type' => 'task_reminder',
+                                'payload' => ['task_id' => $task->id, 'due_date' => $task->due_date],
+                                'sent' => false,
+                            ]);
+                        }
+                    }
                 }
-            }
-        }
+            });
 
         $this->info('Reminders sent.');
         return 0;

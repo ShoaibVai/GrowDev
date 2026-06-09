@@ -235,8 +235,8 @@ class ProfileController extends Controller
         // Create or update
         foreach ($workExperiences as $index => $item) {
             if (isset($item['id']) && $item['id']) {
-                // Update existing
-                WorkExperience::find($item['id'])->update([
+                // Update existing (scoped to user to prevent IDOR)
+                $user->workExperiences()->findOrFail($item['id'])->update([
                     'job_title' => $item['job_title'],
                     'company_name' => $item['company_name'],
                     'description' => $item['description'] ?? null,
@@ -276,7 +276,7 @@ class ProfileController extends Controller
 
         foreach ($educations as $index => $item) {
             if (isset($item['id']) && $item['id']) {
-                Education::find($item['id'])->update([
+                $user->educations()->findOrFail($item['id'])->update([
                     'school_name' => $item['school_name'],
                     'degree' => $item['degree'],
                     'field_of_study' => $item['field_of_study'],
@@ -315,7 +315,7 @@ class ProfileController extends Controller
 
         foreach ($skills as $index => $item) {
             if (isset($item['id']) && $item['id']) {
-                Skill::find($item['id'])->update([
+                $user->skills()->findOrFail($item['id'])->update([
                     'skill_name' => $item['skill_name'],
                     'proficiency' => $item['proficiency'],
                     'order' => $index,
@@ -346,7 +346,7 @@ class ProfileController extends Controller
 
         foreach ($certifications as $index => $item) {
             if (isset($item['id']) && $item['id']) {
-                Certification::find($item['id'])->update([
+                $user->certifications()->findOrFail($item['id'])->update([
                     'certification_name' => $item['certification_name'],
                     'issuer' => $item['issuer'],
                     'description' => $item['description'] ?? null,

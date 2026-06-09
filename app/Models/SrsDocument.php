@@ -79,6 +79,11 @@ class SrsDocument extends Model
         'status',
     ];
 
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
     /**
      * Get the user who owns this document.
      */

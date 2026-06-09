@@ -23,7 +23,6 @@ class Invitation extends Model
         'team_id',
         'user_id',
         'email',
-        'token',
         'status',
         'expires_at',
         'created_by',

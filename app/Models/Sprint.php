@@ -54,11 +54,17 @@ class Sprint extends Model
 
     public function progress(): array
     {
-        $total = $this->tasks()->count();
+        $counts = $this->tasks()
+            ->selectRaw('COUNT(*) as total, SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as done', ['Done'])
+            ->first();
+
+        $total = (int) ($counts->total ?? 0);
+        $done = (int) ($counts->done ?? 0);
+
         if ($total === 0) {
             return ['total' => 0, 'done' => 0, 'percentage' => 0];
         }
-        $done = $this->tasks()->where('status', 'Done')->count();
+
         return [
             'total' => $total,
             'done' => $done,

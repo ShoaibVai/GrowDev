@@ -57,7 +57,7 @@
     },
     {
       "source": "/(.*)",
-      "destination": "https://growdev-backend-6399468b862c.herokuapp.com/$1"
+      "destination": "/index.php"
     }
   ]
 }

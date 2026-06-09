@@ -25,9 +25,9 @@ class SendNotificationDigests extends Command
 
     public function handle(): int
     {
-        // Group all unsent notification events by user
-        $events = NotificationEvent::where('sent', false)->get()->groupBy('user_id');
         $now = Carbon::now();
+
+        $events = NotificationEvent::where('sent', false)->lazyById(100)->groupBy('user_id');
 
         foreach ($events as $userId => $userEvents) {
             $user = User::find($userId);

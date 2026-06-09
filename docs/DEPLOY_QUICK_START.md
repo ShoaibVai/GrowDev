@@ -175,23 +175,22 @@ Replace these with your actual values:
 
 | Value | Where to Get | Example |
 |-------|--------------|---------|
-| `VITE_API_URL` | Your backend server | `https://growdev-backend.herokuapp.com` |
-| `VITE_GEMINI_API_KEY` | Google AI Studio | `AIza...` (NEW key, NOT old one) |
+| `VITE_API_URL` | Your backend server (if separate) or leave blank for integrated | (optional) |
+| `VITE_GEMINI_API_KEY` | OpenRouter.ai (not Google AI Studio) | `sk-or-v1-...` |
 
-### Get Backend URL (if using Heroku)
+### Get Backend URL (if using separate backend)
+
+With the integrated Laravel/Vercel setup, your backend is served directly by Vercel, so `VITE_API_URL` is typically not needed. If you have a separate backend:
 
 ```bash
-# If backend is on Heroku
-heroku apps
-
-# Get app URL
-heroku apps:info -a growdev-backend
-# Look for: Web URL: https://growdev-backend.herokuapp.com
+# Get your Vercel backend URL from dashboard after deployment
+# Example: https://your-project.vercel.app
 ```
 
-### Get New Gemini API Key
+### Get OpenRouter API Key (replaces Gemini)
 
-1. Go to https://aistudio.google.com/
+1. Go to https://openrouter.ai/
+2. Sign up and create an API key
 2. Click "Get API Key"
 3. Click "Create API key in new project"
 4. Copy the key
@@ -324,7 +323,7 @@ vercel project
                │
     ┌──────────▼──────────────────────┐
     │    Your Backend Server          │
-    │  (Heroku/Fly.io/Railway)        │
+    │  (Heroku/Railway)        │
     │                                 │
     │ - Laravel Application           │
     │ - Database                      │
@@ -344,7 +343,7 @@ Frontend and backend are separate but work together!
 
 1. **Run deployment script** (5 minutes)
 2. **Test in browser** (2 minutes)
-3. **Deploy backend** to Heroku/Fly.io (see VERCEL_DEPLOYMENT.md)
+3. **Deploy backend** to Heroku (see VERCEL_DEPLOYMENT.md)
 4. **Connect frontend to backend** (already configured!)
 5. **Monitor and optimize**
 

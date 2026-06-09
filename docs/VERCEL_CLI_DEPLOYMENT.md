@@ -66,7 +66,7 @@ Before deploying, you need to set these environment variables in Vercel.
 2. Select your project (or create new)
 3. Go to Settings → Environment Variables
 4. Add these variables for `Production`:
-   - `VITE_API_URL` = `https://your-backend-url.com` (or `https://growdev-backend.herokuapp.com`)
+   - `VITE_API_URL` = `https://your-backend-url.com` (your Vercel backend URL)
    - `VITE_GEMINI_API_KEY` = `your-new-gemini-key`
 
 **Option B: Set via CLI**
@@ -164,7 +164,7 @@ The `vercel.json` file in the project root configures:
 Files excluded from Vercel deployment:
 - All PHP/Laravel files
 - Composer files
-- Docker configs
+
 - Development scripts
 - IDE configurations
 
@@ -184,7 +184,7 @@ Before running deployment:
 - [ ] Node.js 18+ installed (`node -v`)
 - [ ] Vercel CLI installed (`vercel --version`)
 - [ ] Logged into Vercel (`vercel whoami`)
-- [ ] Backend URL ready (Heroku/Railway/Fly.io)
+- [ ] Backend URL ready (Heroku/Railway)
 - [ ] New Gemini API key generated (old one revoked)
 - [ ] All code changes committed to git
 - [ ] `npm run build` works locally
@@ -376,4 +376,4 @@ vercel promote https://previous-deployment-url.vercel.app
 
 **Next: Deploy Backend**
 
-After the frontend is deployed to Vercel, deploy the backend to Heroku, Fly.io, or Railway. See `docs/VERCEL_DEPLOYMENT.md` for backend-specific instructions.
+After the frontend is deployed to Vercel, deploy the backend to Heroku or Railway. See `docs/VERCEL_DEPLOYMENT.md` for backend-specific instructions.

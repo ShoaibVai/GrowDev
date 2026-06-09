@@ -15,6 +15,11 @@ class Comment extends Model
         'body',
     ];
 
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
     public function commentable(): MorphTo
     {
         return $this->morphTo();

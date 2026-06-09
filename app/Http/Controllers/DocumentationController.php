@@ -577,7 +577,10 @@ class DocumentationController extends Controller
             'template_id' => 'nullable|exists:documentation_templates,id',
         ]);
 
-        $query = \App\Models\Documentation::where('project_id', $validated['project_id'])
+        $project = \App\Models\Project::findOrFail($validated['project_id']);
+        $this->authorize('view', $project);
+
+        $query = \App\Models\Documentation::where('project_id', $project->id)
             ->with(['template', 'creator', 'diagrams']);
 
         if (isset($validated['status'])) {
@@ -608,8 +611,11 @@ class DocumentationController extends Controller
             'content' => 'required|array',
         ]);
 
+        $project = \App\Models\Project::findOrFail($validated['project_id']);
+        $this->authorize('update', $project);
+
         $documentation = \App\Models\Documentation::create([
-            'project_id' => $validated['project_id'],
+            'project_id' => $project->id,
             'template_id' => $validated['template_id'],
             'title' => $validated['title'],
             'content' => $validated['content'],
@@ -630,6 +636,7 @@ class DocumentationController extends Controller
      */
     public function showDocumentation(\App\Models\Documentation $documentation)
     {
+        $this->authorize('view', $documentation);
         $documentation->load(['template', 'creator', 'diagrams.creator']);
 
         return response()->json([
@@ -684,6 +691,8 @@ class DocumentationController extends Controller
      */
     public function cloneDocumentation(\App\Models\Documentation $documentation, Request $request)
     {
+        $this->authorize('view', $documentation);
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'increment_version' => 'boolean',

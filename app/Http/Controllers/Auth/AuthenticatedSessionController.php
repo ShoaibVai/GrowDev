@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -25,6 +26,20 @@ class AuthenticatedSessionController extends Controller
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
+
+        $user = Auth::user();
+
+        // If user has TOTP enabled, redirect to TOTP verification
+        if ($user && $user->totp_secret) {
+            $userId = $user->id;
+            $remember = $request->boolean('remember');
+            Auth::logout();
+
+            $request->session()->put('totp_login_user_id', $userId);
+            $request->session()->put('totp_login_remember', $remember);
+
+            return redirect()->route('totp.verify');
+        }
 
         $request->session()->regenerate();
 

@@ -10,6 +10,11 @@ class RoleRequirementMapping extends Model
 {
     protected $fillable = ['role_id', 'requirement_id', 'requirement_type'];
 
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);

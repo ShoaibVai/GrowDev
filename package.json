@@ -2,11 +2,11 @@
     "$schema": "https://json.schemastore.org/package.json",
     "private": true,
     "type": "module",
-    "scripts": {
-        "build": "vite build",
-        "dev": "vite",
-        "heroku-postbuild": "npm run build"
-    },
+"scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "vercel-postbuild": "npm run build"
+  },
     "engines": {
         "node": ">=18.x"
     },

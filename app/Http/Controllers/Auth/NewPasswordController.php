@@ -60,6 +60,14 @@ class NewPasswordController extends Controller
                 ->withErrors(['email' => 'Please authenticate with your email and authenticator code first.']);
         }
 
+        // Re-check session timeout (must be within 5 minutes of TOTP verification)
+        $verifiedAt = session('password_reset_verified_at');
+        if ($verifiedAt && now()->diffInMinutes($verifiedAt) > 5) {
+            session()->forget(['password_reset_verified_user', 'password_reset_verified_at']);
+            return redirect()->route('password.request')
+                ->withErrors(['email' => 'Your session has expired. Please authenticate again.']);
+        }
+
         $request->validate([
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
@@ -68,6 +76,7 @@ class NewPasswordController extends Controller
         $user = User::find($userId);
 
         if (!$user) {
+            session()->forget(['password_reset_verified_user', 'password_reset_verified_at']);
             return redirect()->route('password.request')
                 ->withErrors(['email' => 'User not found. Please try again.']);
         }
@@ -78,7 +87,8 @@ class NewPasswordController extends Controller
             'remember_token' => Str::random(60),
         ])->save();
 
-        // Clear the session
+        // Regenerate session to prevent fixation, then clear reset keys
+        $request->session()->regenerate();
         session()->forget(['password_reset_verified_user', 'password_reset_verified_at']);
 
         event(new PasswordReset($user));

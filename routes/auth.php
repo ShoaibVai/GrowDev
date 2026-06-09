@@ -27,6 +27,12 @@ Route::middleware('guest')->group(function () {
     Route::post('login', [AuthenticatedSessionController::class, 'store'])
         ->middleware('throttle:5,1'); // Rate limit: 5 attempts per minute
 
+    // TOTP 2FA verification (after password auth)
+    Route::get('totp/verify', [\App\Http\Controllers\Auth\TotpVerificationController::class, 'create'])
+        ->name('totp.verify');
+    Route::post('totp/verify', [\App\Http\Controllers\Auth\TotpVerificationController::class, 'store'])
+        ->middleware('throttle:5,1');
+
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');
 
@@ -38,6 +44,7 @@ Route::middleware('guest')->group(function () {
         ->name('password.reset.form');
 
     Route::post('reset-password', [NewPasswordController::class, 'store'])
+        ->middleware('throttle:5,1')
         ->name('password.store');
 });
 

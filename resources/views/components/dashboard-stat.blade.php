@@ -28,7 +28,7 @@
      data-animate-card>
     <div class="flex-shrink-0">
         <div class="h-12 w-12 rounded-full {{ $bgClass }} {{ $textClass }} flex items-center justify-center text-lg transform transition-transform duration-300 hover:scale-110 hover:rotate-12">
-            {!! $icon ?? '' !!}
+            {{ $icon ?? '' }}
         </div>
     </div>
     <div>

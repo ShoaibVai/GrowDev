@@ -15,7 +15,7 @@ This document provides comprehensive instructions for deploying GrowDev with the
                            │ HTTPS API calls
                            │
         ┌──────────────────▼──────────────────────┐
-        │   Backend Platform (Heroku/Railway/Fly.io)  │
+        │   Backend Platform (Heroku/Railway)  │
         │  - Laravel 12 application                   │
         │  - PostgreSQL/MySQL database               │
         │  - Redis queue (optional)                  │
@@ -197,73 +197,7 @@ scheduler: php artisan schedule:work
 
 The `Procfile` in this project is already configured for Heroku.
 
-### 2.3 Deploy to Fly.io
-
-**Prerequisites:**
-- Fly.io account (https://fly.io)
-- `flyctl` CLI installed: https://fly.io/docs/hands-on/install-flyctl/
-
-**Setup:**
-
-```bash
-# Login to Fly.io
-flyctl auth login
-
-# Create PostgreSQL database
-flyctl postgres create --name growdev-db
-
-# Attach database to app (will be configured in fly.toml)
-flyctl postgres attach growdev-db --app growdev-backend
-
-# Set environment variables
-flyctl secrets set APP_ENV=production --app growdev-backend
-flyctl secrets set APP_DEBUG=false --app growdev-backend
-flyctl secrets set GEMINI_API_KEY=your-new-key --app growdev-backend
-flyctl secrets set CORS_ALLOWED_ORIGINS=https://yourdomain.vercel.app,https://yourdomain.com --app growdev-backend
-
-# Deploy
-flyctl deploy --app growdev-backend
-
-# Run migrations
-flyctl ssh console --app growdev-backend
-# In console: php artisan migrate:fresh --seed
-
-# View logs
-flyctl logs --app growdev-backend
-```
-
-The `fly.toml` in this project is configured for Fly.io deployment.
-
-### 2.4 Deploy with Docker
-
-**Build locally:**
-```bash
-docker build -t growdev:latest .
-
-docker run -p 8000:8000 \
-  -e APP_ENV=production \
-  -e APP_DEBUG=false \
-  -e DB_CONNECTION=pgsql \
-  -e DB_HOST=your-db-host \
-  -e DB_DATABASE=growdev \
-  -e DB_USERNAME=user \
-  -e DB_PASSWORD=password \
-  growdev:latest
-```
-
-**Deploy to Docker Hub:**
-```bash
-# Tag image
-docker tag growdev:latest yourusername/growdev:latest
-
-# Push to Docker Hub
-docker push yourusername/growdev:latest
-
-# Deploy to your container platform
-# (Google Cloud Run, AWS ECS, DigitalOcean, etc.)
-```
-
-### 2.5 Environment Variables Reference
+### 2.3 Environment Variables Reference
 
 | Variable | Required | Default | Notes |
 |----------|----------|---------|-------|
@@ -307,12 +241,7 @@ After first deployment, initialize the database:
 # Heroku
 heroku run php artisan migrate:fresh --seed --app=growdev-backend
 
-# Fly.io
-flyctl ssh console --app growdev-backend
-php artisan migrate:fresh --seed
 
-# Docker
-docker exec container-name php artisan migrate:fresh --seed
 ```
 
 This creates:
@@ -329,11 +258,7 @@ For background jobs (notifications, task processing):
 # Heroku - scale queue process
 heroku ps:scale queue=1
 
-# Fly.io - enable queue process
-flyctl machines create --from-image growdev --name growdev-queue --process-group queue
 
-# Docker - run in separate container
-docker run -d --name growdev-queue growdev php artisan queue:work
 ```
 
 ### 3.4 Scheduled Tasks
@@ -344,11 +269,7 @@ For cron jobs (cleanup, reporting):
 # Heroku
 heroku ps:scale scheduler=1
 
-# Fly.io
-flyctl machines create --from-image growdev --name growdev-scheduler --process-group scheduler
 
-# Docker
-docker run -d --name growdev-scheduler growdev php artisan schedule:work
 ```
 
 ---
@@ -405,12 +326,6 @@ fetch('https://api.yourdomain.com/api/health')
 ```bash
 # Heroku
 heroku logs --tail
-
-# Fly.io
-flyctl logs --follow
-
-# Docker
-docker logs -f container-name
 ```
 
 ### 5.2 Performance Monitoring
@@ -423,12 +338,10 @@ docker logs -f container-name
 ### 5.3 Database Backups
 
 - Heroku: Auto backup enabled on paid plans
-- Fly.io: Enable daily backups in dashboard
 - Cloud SQL: Enable automated backups
 - Manual backup:
   ```bash
   heroku pg:backups:capture
-  flyctl postgres backups create growdev-db
   ```
 
 ### 5.4 Security Updates
@@ -521,15 +434,12 @@ php artisan queue:flush
 ## Support & Resources
 
 - **Vercel Docs:** https://vercel.com/docs
-- **Fly.io Docs:** https://fly.io/docs/
 - **Heroku Docs:** https://devcenter.heroku.com/
 - **Laravel Docs:** https://laravel.com/docs/12.x
-- **Docker Docs:** https://docs.docker.com/
 
 ## Key Contacts
 
 - **Vercel Support:** support@vercel.com
-- **Fly.io Support:** support@fly.io
 - **Heroku Support:** https://help.heroku.com/
 
 ---

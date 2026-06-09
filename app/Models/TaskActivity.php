@@ -16,6 +16,11 @@ class TaskActivity extends Model
         'notes',
     ];
 
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
     public function task(): BelongsTo
     {
         return $this->belongsTo(Task::class);

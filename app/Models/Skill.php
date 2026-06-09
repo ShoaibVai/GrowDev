@@ -19,6 +19,11 @@ class Skill extends Model
         'order',
     ];
 
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
     /**
      * Get the user that owns this skill.
      */

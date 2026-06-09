@@ -25,10 +25,7 @@ composer.lock
 .gitignore
 .gitattributes
 
-# Docker
-Dockerfile
-docker-compose.yml
-.dockerignore
+
 
 # Development
 .editorconfig

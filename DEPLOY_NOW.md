@@ -38,12 +38,6 @@ heroku apps:info -a growdev-backend
 # Example: https://growdev-backend.herokuapp.com
 ```
 
-**If using Fly.io:**
-```bash
-flyctl status -a growdev-backend
-# Example: https://growdev-backend.fly.dev
-```
-
 **If using Railway:**
 Your backend URL from Railway dashboard
 
@@ -255,7 +249,7 @@ heroku ps:scale queue=1
 heroku logs --tail
 ```
 
-See `docs/VERCEL_DEPLOYMENT.md` for Fly.io or Railway instructions.
+See `docs/VERCEL_DEPLOYMENT.md` for Railway instructions.
 
 ---
 

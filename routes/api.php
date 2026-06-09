@@ -16,6 +16,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // ===== USER SEARCH ROUTES (FR3.2, FR8.1) =====
     Route::get('/users/search', [UserSearchController::class, 'search']);
 
+    // AI proxy (server-side API key only)
+    Route::post('/ai/generate-tasks', [\App\Http\Controllers\Api\AigenerateController::class, '__invoke']);
+
     Route::post('/projects/{project}/ai-tasks/layered/start', [AITaskController::class, 'startLayeredGeneration']);
     Route::get('/projects/{project}/ai-tasks/layered/{runId}', [AITaskController::class, 'layeredStatus']);
     Route::post('/projects/{project}/ai-tasks/layered/{runId}/commit', [AITaskController::class, 'commitLayeredGeneration']);

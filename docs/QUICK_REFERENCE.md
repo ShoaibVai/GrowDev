@@ -257,21 +257,7 @@ php artisan queue:work --daemon
 php artisan l5-swagger:generate
 ```
 
-## 🐳 Docker (if using)
 
-```bash
-# Start containers
-docker-compose up -d
-
-# Stop containers
-docker-compose down
-
-# View logs
-docker-compose logs -f
-
-# Run artisan in container
-docker-compose exec app php artisan migrate
-```
 
 ## Git Workflow
 

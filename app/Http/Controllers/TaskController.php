@@ -117,6 +117,7 @@ class TaskController extends Controller
         ]);
 
         // Notify project owner about the status change request
+        $task->loadMissing('project.user');
         $owner = $task->project->user;
         if ($owner) {
             $owner->notify(new TaskStatusChangeRequested($statusRequest));
@@ -131,6 +132,7 @@ class TaskController extends Controller
     public function reviewStatusRequest(Request $request, TaskStatusRequest $statusRequest)
     {
         $user = Auth::user();
+        $statusRequest->loadMissing('task.project.user');
         $task = $statusRequest->task;
 
         // Only project owner can review
@@ -222,12 +224,12 @@ class TaskController extends Controller
         if ($request->filled('requirement_id') && $request->filled('requirement_type')) {
             if ($request->requirement_type === 'functional') {
                 $requirementType = SrsFunctionalRequirement::class;
-                $requirement = SrsFunctionalRequirement::find($request->requirement_id);
+                $requirement = SrsFunctionalRequirement::findOrFail($request->requirement_id);
             } else {
                 $requirementType = SrsNonFunctionalRequirement::class;
-                $requirement = SrsNonFunctionalRequirement::find($request->requirement_id);
+                $requirement = SrsNonFunctionalRequirement::findOrFail($request->requirement_id);
             }
-            $requirementId = $request->requirement_id;
+            $requirementId = $requirement->id;
         }
 
         $task = $project->tasks()->create([
@@ -333,12 +335,12 @@ class TaskController extends Controller
         if ($request->filled('requirement_id') && $request->filled('requirement_type')) {
             if ($request->requirement_type === 'functional') {
                 $requirementType = SrsFunctionalRequirement::class;
-                $requirement = SrsFunctionalRequirement::find($request->requirement_id);
+                $requirement = SrsFunctionalRequirement::findOrFail($request->requirement_id);
             } else {
                 $requirementType = SrsNonFunctionalRequirement::class;
-                $requirement = SrsNonFunctionalRequirement::find($request->requirement_id);
+                $requirement = SrsNonFunctionalRequirement::findOrFail($request->requirement_id);
             }
-            $requirementId = $request->requirement_id;
+            $requirementId = $requirement->id;
         }
         
         $task->update([
@@ -495,11 +497,15 @@ class TaskController extends Controller
 
         // Sort
         $sort = $request->get('sort', 'due_date');
-        $direction = $request->get('direction', 'asc');
-        
+        $direction = strtolower($request->get('direction', 'asc')) === 'desc' ? 'desc' : 'asc';
+
+        // Only allow ordering by known columns to avoid SQL injection via raw expressions
         if ($sort === 'due_date') {
             $query->orderByRaw('due_date IS NULL, due_date ' . $direction);
         } else {
+            // whitelist simple sortable columns
+            $allowedSorts = ['created_at', 'priority', 'status', 'due_date'];
+            $sort = in_array($sort, $allowedSorts, true) ? $sort : 'due_date';
             $query->orderBy($sort, $direction);
         }
 

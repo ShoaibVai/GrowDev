@@ -112,7 +112,7 @@ class ProjectController extends Controller
         }
 
         $tasks = $tasksQuery->get();
-        $members = $project->team
+        $members = $project->relationLoaded('team') && $project->team
             ? $project->team->members()->pluck('users.name', 'users.id')
             : collect([auth()->id() => 'Me']);
 
@@ -165,27 +165,23 @@ class ProjectController extends Controller
         
         // Optimize with single query using conditional aggregation
         $memberIds = $members->pluck('id');
-        $taskCounts = \App\Models\Task::where('project_id', $project->id)
+
+        // Get aggregated counts per member in a single query to avoid unions and pluck misuse
+        $taskCountsCollection = \App\Models\Task::where('project_id', $project->id)
             ->whereIn('assigned_to', $memberIds)
-            ->selectRaw('assigned_to, COUNT(*) as total_tasks')
-            ->selectRaw("SUM(CASE WHEN status IN ('To Do', 'In Progress', 'Review') THEN 1 ELSE 0 END) as active_tasks")
+            ->selectRaw('assigned_to, COUNT(*) as total_tasks, SUM(CASE WHEN status IN (\'To Do\', \'In Progress\', \'Review\') THEN 1 ELSE 0 END) as active_tasks')
             ->groupBy('assigned_to')
-            ->pluck('active_tasks', 'assigned_to')
-            ->union(
-                \App\Models\Task::where('project_id', $project->id)
-                    ->whereIn('assigned_to', $memberIds)
-                    ->selectRaw('assigned_to, COUNT(*) as total_tasks')
-                    ->groupBy('assigned_to')
-                    ->pluck('total_tasks', 'assigned_to')
-            );
-        
-        $summary = $members->map(function ($m) use ($taskCounts) {
+            ->get()
+            ->keyBy('assigned_to');
+
+        $summary = $members->map(function ($m) use ($taskCountsCollection) {
+            $counts = $taskCountsCollection->get($m->id);
             return [
                 'id' => $m->id,
                 'name' => $m->name,
                 'email' => $m->email,
-                'active_tasks' => $taskCounts[$m->id]['active'] ?? 0,
-                'total_tasks' => $taskCounts[$m->id]['total'] ?? 0,
+                'active_tasks' => $counts->active_tasks ?? 0,
+                'total_tasks' => $counts->total_tasks ?? 0,
             ];
         });
         return response()->json(['members' => $summary]);

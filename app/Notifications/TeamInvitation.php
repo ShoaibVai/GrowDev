@@ -46,7 +46,6 @@ class TeamInvitation extends Notification
             'type' => 'team_invitation',
             'team_id' => $this->invitation->team_id,
             'invitation_id' => $this->invitation->id,
-            'token' => $this->invitation->token,
             'action_url' => route('invitations.accept', ['token' => $this->invitation->token]),
             'decline_url' => route('invitations.decline', ['token' => $this->invitation->token]),
         ];

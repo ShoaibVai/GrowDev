@@ -17,7 +17,7 @@ class AITaskController extends Controller
      * Show the AI task generation preview page.
      * Loads project context, SRS requirements, and team members for the AI.
      */
-    public function preview(Project $project)
+    public function preview(Project $project): \Illuminate\View\View|\Illuminate\Http\JsonResponse
     {
         $this->authorize('view', $project);
 
@@ -45,7 +45,7 @@ class AITaskController extends Controller
      * Generate tasks via server-side OpenRouter API call.
      * This endpoint is a fallback — the blade view calls OpenRouter directly from JS.
      */
-    public function generate(Request $request, Project $project)
+    public function generate(Request $request, Project $project): \Illuminate\Http\JsonResponse
     {
         $this->authorize('view', $project);
 
@@ -154,9 +154,9 @@ class AITaskController extends Controller
     /**
      * Save the AI-generated tasks to the database.
      */
-    public function store(Request $request, Project $project)
+    public function store(Request $request, Project $project): \Illuminate\Http\JsonResponse
     {
-        $this->authorize('view', $project);
+        $this->authorize('update', $project);
 
         $request->validate([
             'tasks' => 'required|array|min:1',
@@ -181,17 +181,13 @@ class AITaskController extends Controller
 
                 if (!empty($taskData['requirement_id']) && !empty($taskData['requirement_type'])) {
                     if ($taskData['requirement_type'] === 'functional') {
-                        $req = SrsFunctionalRequirement::find($taskData['requirement_id']);
-                        if ($req) {
-                            $requirementType = SrsFunctionalRequirement::class;
-                            $requirementId = $req->id;
-                        }
+                        $req = SrsFunctionalRequirement::findOrFail($taskData['requirement_id']);
+                        $requirementType = SrsFunctionalRequirement::class;
+                        $requirementId = $req->id;
                     } elseif ($taskData['requirement_type'] === 'non_functional') {
-                        $req = SrsNonFunctionalRequirement::find($taskData['requirement_id']);
-                        if ($req) {
-                            $requirementType = SrsNonFunctionalRequirement::class;
-                            $requirementId = $req->id;
-                        }
+                        $req = SrsNonFunctionalRequirement::findOrFail($taskData['requirement_id']);
+                        $requirementType = SrsNonFunctionalRequirement::class;
+                        $requirementId = $req->id;
                     }
                 }
 

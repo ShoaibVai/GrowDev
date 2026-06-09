@@ -39,15 +39,15 @@ class AdminController extends Controller
 
             if ($type === 'users') {
                 fputcsv($file, ['ID', 'Name', 'Email', 'Joined At', 'Projects Count', 'Teams Count']);
-                User::chunk(100, function($users) use ($file) {
+                User::withCount(['projects', 'teams'])->chunk(100, function($users) use ($file) {
                     foreach ($users as $user) {
                         fputcsv($file, [
                             $user->id, 
                             $user->name, 
                             $user->email, 
                             $user->created_at,
-                            $user->projects()->count(),
-                            $user->teams()->count()
+                            $user->projects_count,
+                            $user->teams_count,
                         ]);
                     }
                 });

@@ -29,10 +29,12 @@ class TickTaskTimers extends Command
                     }
 
                     if (!$dryRun) {
-                        $task->forceFill([
-                            'time_spent_seconds' => $task->time_spent_seconds + $elapsed,
-                            'last_timer_tick_at' => $now,
-                        ])->save();
+                        Task::where('id', $task->id)
+                            ->where('timer_state', 'running')
+                            ->update([
+                                'time_spent_seconds' => \Illuminate\Support\Facades\DB::raw("time_spent_seconds + {$elapsed}"),
+                                'last_timer_tick_at' => $now,
+                            ]);
                     }
                 }
             });

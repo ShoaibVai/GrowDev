@@ -37,9 +37,8 @@
 | `.env.example` | Updated with `VITE_OPENROUTER_API_KEY` | ✅ Updated |
 | `.env.production` | Production environment template | ✅ Created |
 | `config/cors.php` | CORS configuration for API | ✅ Created |
-| `Procfile` | Heroku deployment configuration | ✅ Created |
-| `fly.toml` | Fly.io deployment configuration | ✅ Created |
-| `Dockerfile` | Docker container configuration | ✅ Created |
+| `Procfile` | Removed (no longer needed for Vercel) | ❌ Removed |
+
 | `docs/VERCEL_DEPLOYMENT.md` | Complete deployment guide | ✅ Created |
 
 ---
@@ -174,85 +173,36 @@ vercel --prod
 ### Option 1: Heroku
 
 ```bash
-# Create Heroku app
-heroku create growdev-backend
+# Deploy to Vercel (backend will be served directly)
+# No separate backend deployment needed for integrated Laravel/Vercel setup
 
-# Add PostgreSQL database
-heroku addons:create heroku-postgresql:mini
-
-# Set environment variables
-heroku config:set \
-  APP_ENV=production \
-  APP_DEBUG=false \
-  GEMINI_API_KEY=your-new-key \
-  CORS_ALLOWED_ORIGINS=https://yourdomain.vercel.app,https://yourdomain.com
+# Set environment variables in Vercel dashboard:
+#   APP_ENV=production
+#   APP_DEBUG=false
+#   DB_CONNECTION=pgsql
+#   DB_HOST=your-project.supabase.co
+#   DB_PORT=5432
+#   DB_DATABASE=postgres
+#   DB_USERNAME=postgres
+#   DB_PASSWORD=your-supabase-password
+#   DB_SSL_MODE=require
+#   GEMINI_API_KEY=your-openrouter-key (from OpenRouter, not Gemini)
+#   VITE_SUPABASE_URL=your-project.supabase.co
+#   VITE_SUPABASE_PUBLISHABLE_KEY=your-anon-public-key
+#   CORS_ALLOWED_ORIGINS=https://yourdomain.vercel.app,https://yourdomain.com
 
 # Deploy
-git push heroku main
+vercel --prod
 
-# Run migrations
-heroku run php artisan migrate:fresh --seed
-
-# Enable queue worker (for notifications)
-heroku ps:scale queue=1
+# Run migrations (after deployment)
+# You can run these via Vercel dashboard or SSH if needed
+php artisan migrate:fresh --seed
 
 # View logs
-heroku logs --tail
+vercel logs
 ```
 
-### Option 2: Fly.io
 
-```bash
-# Install flyctl: https://fly.io/docs/hands-on/install-flyctl/
-
-# Create PostgreSQL database
-flyctl postgres create --name growdev-db
-
-# Create app
-flyctl launch --name growdev-backend
-
-# Attach database
-flyctl postgres attach growdev-db
-
-# Set secrets
-flyctl secrets set \
-  APP_ENV=production \
-  APP_DEBUG=false \
-  GEMINI_API_KEY=your-new-key \
-  CORS_ALLOWED_ORIGINS=https://yourdomain.vercel.app,https://yourdomain.com
-
-# Deploy
-flyctl deploy
-
-# Run migrations
-flyctl ssh console
-php artisan migrate:fresh --seed
-```
-
-### Option 3: Docker (Any Platform)
-
-```bash
-# Build image
-docker build -t growdev:latest .
-
-# Run locally to test
-docker run -p 8000:8000 \
-  -e APP_ENV=production \
-  -e APP_DEBUG=false \
-  -e DB_CONNECTION=pgsql \
-  -e DB_HOST=your-db-host \
-  -e DB_DATABASE=growdev \
-  -e DB_USERNAME=user \
-  -e DB_PASSWORD=password \
-  growdev:latest
-
-# Push to Docker Hub
-docker tag growdev:latest yourusername/growdev:latest
-docker push yourusername/growdev:latest
-
-# Deploy via your container platform
-# (Google Cloud Run, AWS ECS, DigitalOcean, etc.)
-```
 
 ---
 
@@ -277,9 +227,6 @@ fetch('https://api.yourdomain.com/api/health')
 ```bash
 # SSH into backend and check database
 heroku ps:exec php artisan tinker
-# or
-flyctl ssh console
-php artisan tinker
 
 # In Tinker:
 DB::table('users')->first();
@@ -300,12 +247,6 @@ DB::table('users')->first();
 ```bash
 # Heroku logs
 heroku logs --tail
-
-# Fly.io logs
-flyctl logs --follow
-
-# Docker logs
-docker logs -f container-name
 ```
 
 ---
@@ -384,7 +325,7 @@ mysql://user:password@host:3306/growdev
 
 For background notifications and task processing:
 - **Development**: `php artisan queue:work --timeout=0`
-- **Production**: Use platform-specific worker (Heroku dynos, Fly.io machines, etc.)
+- **Production**: Use platform-specific worker (Heroku dynos, etc.)
 
 Without a queue worker, notifications won't be sent immediately.
 
@@ -421,7 +362,6 @@ Update for your actual frontend domain.
 ### Permission Issues
 - Ensure `storage/` and `bootstrap/cache/` are writable
 - Fix permissions: `chmod -R 775 storage bootstrap/cache`
-- In Docker: permissions handled automatically
 
 ---
 
@@ -429,7 +369,7 @@ Update for your actual frontend domain.
 
 - **Vercel Docs**: https://vercel.com/docs
 - **Laravel Docs**: https://laravel.com/docs/12.x
-- **Fly.io Docs**: https://fly.io/docs/
+
 - **Heroku Docs**: https://devcenter.heroku.com/
 - **OpenRouter API Docs**: https://openrouter.ai/docs
 
@@ -450,15 +390,14 @@ Update for your actual frontend domain.
 - `.env.production` - Production environment template
 - `config/cors.php` - CORS configuration
 - `Procfile` - Heroku deployment
-- `fly.toml` - Fly.io deployment
-- `Dockerfile` - Docker containerization
+
 - `docs/VERCEL_DEPLOYMENT.md` - Complete deployment guide
 
 **Next Steps:**
 1. Rotate Gemini API key immediately
 2. Test locally with `npm run build`
 3. Deploy frontend to Vercel
-4. Deploy backend to Heroku/Fly.io/Docker
+4. Deploy backend to Heroku
 5. Configure environment variables
 6. Run database migrations
 7. Test authentication and API connectivity

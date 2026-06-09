@@ -16,9 +16,9 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         // send reminders daily; digests processed hourly
-        $schedule->command('tasks:send-reminders')->daily();
-        $schedule->command('task:tick-timers')->everyMinute();
-        $schedule->command('notifications:send-digests')->hourly();
+        $schedule->command('tasks:send-reminders')->daily()->withoutOverlapping();
+        $schedule->command('task:tick-timers')->everyMinute()->withoutOverlapping(5);
+        $schedule->command('notifications:send-digests')->hourly()->withoutOverlapping();
     }
 
     protected function commands(): void

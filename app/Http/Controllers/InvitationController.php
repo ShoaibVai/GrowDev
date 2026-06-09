@@ -32,6 +32,7 @@ class InvitationController extends Controller
         }
 
         // Attach user to team if not already a member
+        $invitation->loadMissing('team.members');
         if (! $invitation->team->members->contains($user)) {
             $invitation->team->members()->attach($user->id, ['role' => 'Member']);
         }

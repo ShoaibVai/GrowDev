@@ -27,6 +27,11 @@ class SrsNonFunctionalRequirement extends Model
         'order',
     ];
 
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
     /**
      * The available categories for non-functional requirements.
      */
