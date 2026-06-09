@@ -1,398 +1,111 @@
-# 🚀 Vercel Deployment - READY TO DEPLOY
+# GrowDev Vercel Deployment
 
-Your GrowDev application is now fully configured for Vercel deployment.
+GrowDev is now configured for **full-stack Vercel deployment** — both the Laravel backend and Vite frontend run in a single Vercel project using the `@vercel/php` runtime.
 
-## Current Status ✅
+## Architecture
 
-### Completed:
-- [x] Security vulnerabilities fixed
-- [x] Hardcoded API keys removed
-- [x] Vercel configuration created (`vercel.json`)
-- [x] Deployment scripts ready (`deploy-vercel.sh`, `deploy-vercel.bat`)
-- [x] Environment variables configured
-- [x] CORS setup for backend communication
-- [x] Deployment documentation complete
-
-### What's Left (User Actions):
-1. [ ] Gather required information (backend URL, API key)
-2. [ ] Open terminal in project directory
-3. [ ] Run deployment script (fully automated)
-4. [ ] Test deployment in browser
-
----
-
-## PART 1: Gather Information (5 minutes)
-
-Before you deploy, prepare these values:
-
-### 1. Backend URL
-This is where your Laravel backend will be hosted.
-
-**If using Heroku:**
-```bash
-# In another terminal, check your Heroku backend
-heroku apps
-heroku apps:info -a growdev-backend
-
-# Look for "Web URL:" line
-# Example: https://growdev-backend.herokuapp.com
+```
+Request → Vercel CDN
+  ├── /build/*, /favicon.ico, /robots.txt, /logo.svg → served as static assets
+  └── /* → api/index.php (PHP serverless function)
+              → Laravel HTTP kernel
+              → Response (HTML, JSON, etc.)
 ```
 
-**If using Railway:**
-Your backend URL from Railway dashboard
+- **Frontend**: Built by Vite to `public/build/`, served as static assets
+- **Backend**: Laravel 12 running via `@vercel/php` serverless runtime
+- **Storage**: Writable paths mapped to `/tmp` (Vercel's ephemeral storage)
+- **Session**: `cookie` driver (no server-side file storage)
+- **Queue**: `sync` driver (jobs run inline)
+- **Cache**: `database` driver (uses Supabase PostgreSQL)
+- **Logging**: `stderr` (appears in Vercel function logs)
 
-**Write this down:** `BACKEND_URL = _______________`
+## Prerequisites
 
-### 2. OpenRouter API Key
+- Node.js 18+
+- PHP 8.2+ with Composer (for local build testing)
+- [Vercel CLI](https://vercel.com/docs/cli) installed (`npm install -g vercel`)
+- Vercel account
+- Supabase PostgreSQL database (already configured)
 
-**Go to:** https://openrouter.ai
-1. Sign up or log in with GitHub
-2. Go to https://openrouter.ai/keys
-3. Click "Create new key"
-4. Copy the key (starts with `sk-or-v1-...`)
-5. Go to https://openrouter.ai/account/billing/overview
-6. Add credits ($5+ recommended)
+## Setup Environment Variables in Vercel
 
-**Write this down:** `OPENROUTER_API_KEY = _______________`
+Set these in your Vercel project dashboard (or via `vercel env add`):
 
-**Why OpenRouter?**
-- Access to 200+ AI models (GPT-4, Claude, Llama, etc.)
-- Single unified API
-- Transparent pricing ($0.0005+ per 1K tokens)
-- Better reliability than single-provider APIs
-- Can switch models anytime
+### Application
+| Variable | Value |
+|---|---|
+| `APP_ENV` | `production` |
+| `APP_KEY` | Run `php artisan key:generate` locally, paste the value |
+| `APP_URL` | `https://growdev.vercel.app` (your Vercel domain) |
+| `APP_STORAGE_PATH` | `/tmp/storage` |
 
----
+### Database (Supabase PostgreSQL)
+| Variable | Value |
+|---|---|
+| `DB_CONNECTION` | `pgsql` |
+| `DB_HOST` | Your Supabase DB host |
+| `DB_PORT` | `6543` |
+| `DB_DATABASE` | `postgres` |
+| `DB_USERNAME` | `postgres` |
+| `DB_PASSWORD` | Your Supabase DB password |
+| `DB_SSL_MODE` | `require` |
 
-## PART 2: Deploy Frontend (5 minutes)
+### Drivers
+| Variable | Value |
+|---|---|
+| `SESSION_DRIVER` | `cookie` |
+| `QUEUE_CONNECTION` | `sync` |
+| `CACHE_STORE` | `database` |
+| `LOG_CHANNEL` | `stderr` |
 
-### For Windows Users:
+### AI (OpenRouter)
+| Variable | Value |
+|---|---|
+| `OPENROUTER_API_KEY` | Your OpenRouter API key |
+| `OPENROUTER_MODEL` | `tencent/hy3-preview:free` |
 
-1. **Open Command Prompt or PowerShell**
-   - Press `Win + R`
-   - Type `cmd` or `powershell`
-   - Press Enter
+### File Storage (S3 — optional, for future use)
+| Variable | Value |
+|---|---|
+| `FILESYSTEM_DISK` | `s3` |
+| `AWS_ACCESS_KEY_ID` | Your AWS key |
+| `AWS_SECRET_ACCESS_KEY` | Your AWS secret |
+| `AWS_DEFAULT_REGION` | `us-east-1` |
+| `AWS_BUCKET` | `growdev-uploads` |
 
-2. **Navigate to project:**
-   ```cmd
-   cd c:\Users\Endow_Corp\Documents\GitHub\GrowDev
-   ```
+## Deploy
 
-3. **Run deployment script:**
-   ```cmd
-   scripts\deploy-vercel.bat
-   ```
+### Option 1: Git Push (Automatic)
 
-4. **When prompted:**
-   - Keep backend URL handy
-   - Keep OpenRouter API key handy
-   - The script will ask for Vercel authentication
-   - Log in when browser opens
-
-5. **During setup, the script will ask:**
-   - Vercel project name → Type: `growdev` (or your choice)
-   - Backend URL → Paste your backend URL
-   - OpenRouter API key → Paste your OpenRouter API key
-   - Model → Press Enter for default (gpt-3.5-turbo)
-
-### For Mac/Linux Users:
-
-1. **Open Terminal**
-
-2. **Navigate to project:**
-   ```bash
-   cd ~/path/to/GrowDev
-   ```
-
-3. **Make script executable:**
-   ```bash
-   chmod +x scripts/deploy-vercel.sh
-   ```
-
-4. **Run deployment script:**
-   ```bash
-   ./scripts/deploy-vercel.sh
-   ```
-
-5. **Follow prompts** (same as Windows above)
-
----
-
-## PART 3: Manual Alternative (If Script Doesn't Work)
-
-If the automated script has issues, run these commands manually:
+Push to the `main` branch. Vercel will automatically:
+1. Run `composer install --no-dev --optimize-autoloader`
+2. Run `npm install`
+3. Run `npm run build` (Vite)
+4. Deploy with PHP runtime for `api/index.php`
 
 ```bash
-# Step 1: Install Vercel CLI (if not installed)
-npm install -g vercel
+git add .
+git commit -m "Deploy: update"
+git push origin main
+```
 
-# Step 2: Login to Vercel
-vercel login
-# Browser will open, log in with your account
+### Option 2: Vercel CLI
 
-# Step 3: Install dependencies
+```bash
+# Install dependencies
+composer install --no-dev --optimize-autoloader
 npm install
 
-# Step 4: Build frontend
+# Build frontend
 npm run build
-
-# Step 5: Link to Vercel
-vercel link --project-name=growdev
-
-# Step 6: Set environment variables
-vercel env add VITE_API_URL
-# Paste: https://your-backend-url.com
-# Press Enter
-
-vercel env add VITE_OPENROUTER_API_KEY
-# Paste: your-openrouter-api-key
-# Press Enter
-
-vercel env add VITE_OPENROUTER_MODEL
-# Paste: openai/gpt-3.5-turbo (or your preferred model)
-# Press Enter
-
-# Step 7: Deploy
-vercel --prod
-
-# Done! Your frontend is live
-```
-
----
-
-## PART 4: Test Deployment (5 minutes)
-
-After deployment completes:
-
-### 1. Check Deployment Status
-Look for output like:
-```
-✓ Production URL: https://growdev.vercel.app
-✓ Deployment Complete
-```
-
-### 2. Open in Browser
-Visit the URL shown (or https://yourdomain.vercel.app)
-
-### 3. Test in Browser Console
-Right-click → Inspect → Console tab
-
-Paste this code:
-```javascript
-// Test API connection
-fetch(import.meta.env.VITE_API_URL + '/api/health')
-  .then(r => r.text())
-  .then(result => console.log('✓ API Status:', result))
-  .catch(e => console.error('✗ API Error:', e.message))
-
-// Check API URL
-console.log('Backend URL:', import.meta.env.VITE_API_URL)
-
-// Check OpenRouter is configured
-console.log('OpenRouter Key:', import.meta.env.VITE_OPENROUTER_API_KEY ? '✓ Set' : '✗ Missing')
-console.log('OpenRouter Model:', import.meta.env.VITE_OPENROUTER_MODEL || 'openai/gpt-3.5-turbo')
-```
-
-### Expected Output:
-```
-✓ API Status: OK
-Backend URL: https://your-backend-url.com
-OpenRouter Key: ✓ Set
-OpenRouter Model: openai/gpt-3.5-turbo
-```
-
-If you see errors:
-- Check backend URL is correct
-- Verify backend is running
-- Check CORS configuration on backend
-
-### 4. Test Login
-Try logging in with admin credentials or register new account
-
-### 5. Test Features
-- Create a task
-- Update task status
-- Check if notifications work
-
----
-
-## PART 5: Deploy Backend (15-30 minutes)
-
-Once frontend is live, deploy the backend:
-
-### For Heroku:
-
-```bash
-# Create Heroku app
-heroku create growdev-backend
-
-# Add PostgreSQL database
-heroku addons:create heroku-postgresql:mini
-
-# Set environment variables
-heroku config:set \
-  APP_ENV=production \
-  APP_DEBUG=false \
-  GEMINI_API_KEY=your-new-key \
-  CORS_ALLOWED_ORIGINS=https://growdev.vercel.app
 
 # Deploy
-git push heroku main
-
-# Run migrations
-heroku run php artisan migrate:fresh --seed
-
-# Start queue worker
-heroku ps:scale queue=1
-
-# View logs
-heroku logs --tail
-```
-
-See `docs/VERCEL_DEPLOYMENT.md` for Railway instructions.
-
----
-
-## After Deployment: Next Steps
-
-### Monitoring
-```bash
-# View real-time logs
-vercel logs --follow
-
-# Check deployments
-vercel ls
-
-# View project dashboard
-https://vercel.com/dashboard
-```
-
-### Making Updates
-```bash
-# After making code changes
-git add .
-git commit -m "Update: description"
-git push origin main
-
-# Redeploy manually
 vercel --prod
 ```
 
-### Custom Domain (Optional)
-```bash
-# Add custom domain
-vercel domains add yourdomain.com
+### Option 3: Deployment Scripts
 
-# Follow DNS setup in Vercel dashboard
-```
-
----
-
-## Troubleshooting
-
-### Deployment Fails
-```bash
-# Clear and retry
-rm -rf node_modules package-lock.json
-npm install
-npm run build
-vercel --prod --force
-```
-
-### API Calls Fail (CORS Error)
-1. Check `VITE_API_URL` environment variable is set
-2. Verify backend CORS includes: `https://growdev.vercel.app`
-3. Ensure backend is running and accessible
-
-**Fix backend CORS (Heroku):**
-```bash
-heroku config:set CORS_ALLOWED_ORIGINS=https://growdev.vercel.app -a growdev-backend
-```
-
-### Can't Login to Vercel
-```bash
-vercel login
-# Browser will open, complete login, then run deployment script again
-```
-
----
-
-## Summary of What Was Done
-
-**Your codebase is now ready:**
-
-✅ Security vulnerabilities fixed
-✅ Hardcoded API keys removed
-✅ Environment variables configured
-✅ Vercel JSON config created
-✅ Deployment scripts created
-✅ CORS configured
-✅ Backend templates created
-✅ Complete documentation provided
-
-**Files modified:** 6 files
-**Files created:** 11 files
-**Ready to deploy:** YES ✓
-
----
-
-## Quick Command Reference
-
-```bash
-# Verify Vercel CLI
-vercel --version
-
-# Login
-vercel login
-
-# Deploy frontend
-vercel --prod
-
-# Check status
-vercel ls
-vercel whoami
-
-# View logs
-vercel logs
-vercel logs --error
-
-# Environment variables
-vercel env ls
-vercel env pull
-
-# Rollback
-vercel promote https://previous-url.vercel.app
-
-# More help
-vercel help
-vercel help [command]
-```
-
----
-
-## Document Index
-
-- **DEPLOY_QUICK_START.md** ← Start here
-- **VERCEL_CLI_DEPLOYMENT.md** - Step-by-step CLI guide
-- **VERCEL_DEPLOYMENT.md** - Full frontend & backend deployment
-- **DEPLOYMENT_CHECKLIST.md** - Pre/post deployment verification
-- **scripts/deploy-vercel.sh** - Automated deployment (Mac/Linux)
-- **scripts/deploy-vercel.bat** - Automated deployment (Windows)
-
----
-
-## Support
-
-- **Vercel Docs:** https://vercel.com/docs
-- **Project Status:** Ready for deployment ✓
-- **Estimated Time:** 5 minutes (frontend), 30 minutes (backend)
-- **Difficulty Level:** Easy (automated script does heavy lifting)
-
----
-
-## NOW: Ready to Deploy? 
-
-### Option 1: Run Automated Script (Recommended)
 ```bash
 # Windows
 scripts\deploy-vercel.bat
@@ -401,17 +114,54 @@ scripts\deploy-vercel.bat
 ./scripts/deploy-vercel.sh
 ```
 
-### Option 2: Use Manual Commands
-See "PART 2: Deploy Frontend" above
+## Post-Deploy Tasks
 
-### Option 3: Deploy via Web Dashboard
-1. Go to https://vercel.com/new
-2. Import your GitHub repository
-3. Set environment variables
-4. Click Deploy
+### 1. Run Database Migrations
 
----
+Vercel has no persistent CLI, so run migrations via:
 
-**Last Updated:** May 2, 2026
-**Status:** ✅ READY TO DEPLOY
-**Next Action:** Run deployment script or follow manual steps above
+```bash
+# Locally (pointing at production DB)
+php artisan migrate --force
+
+# Or via GitHub Actions (recommended)
+# Add a workflow step:
+# - run: php artisan migrate --force
+```
+
+### 2. Verify Deployment
+
+- Visit your Vercel URL
+- Check the browser console for API connectivity
+- Test login, task creation, AI generation
+- View logs: `vercel logs`
+
+### 3. Monitor
+
+```bash
+vercel logs          # View function logs
+vercel logs --error  # View error logs only
+```
+
+## Troubleshooting
+
+| Symptom | Likely Cause | Fix |
+|---|---|---|
+| Blank page / 503 | PHP runtime not installed | Check `@vercel/php` is in `devDependencies` |
+| `vendor/autoload.php` not found | Composer not run | Ensure `composer install` runs during build |
+| Storage errors | `/tmp` not writable | Verify `APP_STORAGE_PATH=/tmp/storage` is set |
+| Database connection refused | Wrong DB env vars | Check `DB_HOST`, `DB_PORT`, credentials |
+| 500 Internal Server Error | App key missing | Set `APP_KEY` from `php artisan key:generate` |
+| Session issues | Wrong session driver | Set `SESSION_DRIVER=cookie` |
+| Queue jobs not running | Wrong queue driver | Set `QUEUE_CONNECTION=sync` |
+
+## Files Changed for Vercel
+
+| File | Purpose |
+|---|---|
+| `api/index.php` | Serverless function entry point (Laravel bootstrap) |
+| `vercel.json` | PHP runtime config, routes, build command |
+| `.vercelignore` | Excludes only what's unnecessary at runtime |
+| `package.json` | Added `@vercel/php` |
+| `composer.json` | Added `league/flysystem-aws-s3-v3` |
+| `config/queue.php` | Default queue driver changed to `sync` |
