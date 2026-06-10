@@ -16,7 +16,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    'default' => env('DB_CONNECTION', 'pgsql'),
 
     /*
     |--------------------------------------------------------------------------
@@ -30,18 +30,6 @@ return [
     */
 
     'connections' => [
-
-        'sqlite' => [
-            'driver' => 'sqlite',
-            'url' => env('DB_URL'),
-            'database' => env('DB_DATABASE', database_path('database.sqlite')),
-            'prefix' => '',
-            'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
-            'busy_timeout' => null,
-            'journal_mode' => null,
-            'synchronous' => null,
-            'transaction_mode' => 'DEFERRED',
-        ],
 
         'mysql' => [
             'driver' => 'mysql',
@@ -83,20 +71,38 @@ return [
             ]) : [],
         ],
 
-'pgsql' => [
-    'driver' => 'pgsql',
-    'url' => env('DB_URL'),
-    'host' => env('DB_HOST', '127.0.0.1'),
-    'port' => env('DB_PORT', '5432'),
-    'database' => env('DB_DATABASE', 'laravel'),
-    'username' => env('DB_USERNAME', 'root'),
-    'password' => env('DB_PASSWORD', ''),
-    'charset' => env('DB_CHARSET', 'utf8'),
-    'prefix' => '',
-    'prefix_indexes' => true,
-    'search_path' => 'public',
-    'sslmode' => env('DB_SSL_MODE', 'require'),
-],
+'pgsql' => (function () {
+    $url = env('DATABASE_URL');
+    if ($url) {
+        $parsed = parse_url($url);
+        return [
+            'driver'         => 'pgsql',
+            'host'           => $parsed['host'],
+            'port'           => $parsed['port'] ?? 5432,
+            'database'       => ltrim($parsed['path'], '/'),
+            'username'       => $parsed['user'],
+            'password'       => $parsed['pass'] ?? '',
+            'charset'        => 'utf8',
+            'prefix'         => '',
+            'prefix_indexes' => true,
+            'search_path'    => 'public',
+            'sslmode'        => 'require',
+        ];
+    }
+    return [
+        'driver'         => 'pgsql',
+        'host'           => env('DB_HOST', '127.0.0.1'),
+        'port'           => env('DB_PORT', '5432'),
+        'database'       => env('DB_DATABASE', 'growdev'),
+        'username'       => env('DB_USERNAME', 'postgres'),
+        'password'       => env('DB_PASSWORD', ''),
+        'charset'        => 'utf8',
+        'prefix'         => '',
+        'prefix_indexes' => true,
+        'search_path'    => 'public',
+        'sslmode'        => env('DB_SSLMODE', 'prefer'),
+    ];
+})(),
 
         'sqlsrv' => [
             'driver' => 'sqlsrv',

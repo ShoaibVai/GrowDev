@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * DocumentationController
@@ -505,29 +506,32 @@ class DocumentationController extends Controller
     }
 
     /**
-     * Generate and download SRS document as PDF.
+     * Generate SRS document as PDF and store in R2.
      * 
      * This method:
      * 1. Authorizes the user to view the SRS document (via policy)
      * 2. Renders the SRS data using the PDF view template
      * 3. Generates a PDF file using DomPDF
-     * 4. Triggers browser download with SRS title as filename
+     * 4. Stores PDF in Cloudflare R2 and returns public URL
      *
      * @param SrsDocument $srsDocument The SRS document to export
-     * @return \Illuminate\Http\Response PDF file download response
+     * @return \Illuminate\Http\JsonResponse JSON with PDF URL
      * @throws \Illuminate\Auth\Access\AuthorizationException If user cannot view the document
      */
     public function generateSrsPdf(SrsDocument $srsDocument)
     {
-        // Verify user authorization via SrsDocumentPolicy
-        // Ensures only the document owner can download it
         $this->authorize('view', $srsDocument);
 
-        // Load the PDF view template with SRS data
         $pdf = Pdf::loadView('documentation.srs.pdf', compact('srsDocument'));
-        
-        // Return downloadable PDF with formatted filename
-        return $pdf->download('SRS_' . $srsDocument->title . '.pdf');
+        $filename = 'pdfs/srs_' . $srsDocument->id . '_' . now()->timestamp . '.pdf';
+        $pdfContent = $pdf->output();
+
+        Storage::disk('r2')->put($filename, $pdfContent, [
+            'ContentType' => 'application/pdf',
+        ]);
+
+        $url = env('R2_URL') . '/' . $filename;
+        return response()->json(['url' => $url]);
     }
 
     /**

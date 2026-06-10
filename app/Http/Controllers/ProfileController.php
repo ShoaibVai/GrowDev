@@ -10,6 +10,7 @@ use App\Models\Certification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -443,15 +444,15 @@ class ProfileController extends Controller
     }
 
     /**
-     * Generate and download CV (Curriculum Vitae) as PDF.
+     * Generate CV (Curriculum Vitae) as PDF and store in R2.
      * 
      * This method:
      * 1. Loads all user profile relationships (experiences, education, skills, certifications, projects)
      * 2. Renders the CV using a professional PDF template
      * 3. Configures PDF margins to 0 for better page utilization (A4 format)
-     * 4. Generates and triggers browser download with user name and date
+     * 4. Stores PDF in Cloudflare R2 and returns public URL
      *
-     * @return \Illuminate\Http\Response PDF file download response
+     * @return \Illuminate\Http\JsonResponse JSON with PDF URL
      */
     public function generatePDF()
     {
@@ -470,7 +471,15 @@ class ProfileController extends Controller
             ->setOption('margin-bottom', 0)
             ->setOption('margin-left', 0);
 
-        return $pdf->download('CV_' . $user->name . '_' . now()->format('Y-m-d') . '.pdf');
+        $filename = 'pdfs/cv_' . $user->id . '_' . now()->timestamp . '.pdf';
+        $pdfContent = $pdf->output();
+
+        Storage::disk('r2')->put($filename, $pdfContent, [
+            'ContentType' => 'application/pdf',
+        ]);
+
+        $url = env('R2_URL') . '/' . $filename;
+        return response()->json(['url' => $url]);
     }
 
     /**

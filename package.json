@@ -13,7 +13,6 @@
     },
     "devDependencies": {
         "@tailwindcss/forms": "^0.5.2",
-        "@vercel/php": "^0.7.0",
         "alpinejs": "^3.4.2",
         "autoprefixer": "^10.4.2",
         "axios": "^1.11.0",
@@ -27,7 +26,9 @@
         "animejs": "^3.2.2",
         "aos": "^2.3.4",
         "gsap": "^3.12.5",
+        "laravel-echo": "^1.17.1",
         "particles.js": "^2.0.0",
+        "pusher-js": "^8.4.0",
         "sortablejs": "^1.15.7",
         "typed.js": "^2.1.0"
     }
