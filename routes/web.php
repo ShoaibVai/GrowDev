@@ -34,6 +34,17 @@ Route::post('/test-session', function () {
     ]);
 });
 
+Route::get('/debug-session', function () {
+    $sessionId = session()->getId();
+    $sessionData = \DB::table('sessions')->where('id', $sessionId)->first();
+    return response()->json([
+        'session_id' => $sessionId,
+        'in_database' => $sessionData ? true : false,
+        'session_data' => $sessionData,
+        'cookie' => request()->cookie('growdev-session'),
+    ]);
+});
+
 use App\Http\Controllers\DashboardController;
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
