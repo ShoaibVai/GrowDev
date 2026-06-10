@@ -17,6 +17,23 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/test-session', function () {
+    session(['test' => 'value']);
+    return response()->json([
+        'session_id' => session()->getId(),
+        'test_value' => session('test'),
+        'csrf_token' => csrf_token(),
+    ]);
+});
+
+Route::post('/test-session', function () {
+    return response()->json([
+        'session_id' => session()->getId(),
+        'test_value' => session('test'),
+        'csrf_token' => csrf_token(),
+    ]);
+});
+
 use App\Http\Controllers\DashboardController;
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
