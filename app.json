@@ -1,0 +1,40 @@
+{
+    "name": "GrowDev",
+    "description": "GrowDev - Project Management Platform for Software Development Teams",
+    "repository": "https://github.com/ShoaibVai/GrowDev",
+    "keywords": ["laravel", "php", "project-management"],
+    "env": {
+        "APP_ENV": {
+            "value": "production"
+        },
+        "APP_DEBUG": {
+            "value": "false"
+        },
+        "APP_URL": {
+            "value": "https://growdev-backend.herokuapp.com"
+        },
+        "LOG_CHANNEL": {
+            "value": "stack"
+        },
+        "LOG_LEVEL": {
+            "value": "error"
+        },
+        "DB_CONNECTION": {
+            "value": "pgsql"
+        },
+        "SESSION_DRIVER": {
+            "value": "database"
+        },
+        "QUEUE_CONNECTION": {
+            "value": "database"
+        },
+        "CACHE_STORE": {
+            "value": "database"
+        }
+    },
+    "buildpacks": [
+        {
+            "url": "heroku/php"
+        }
+    ]
+}

@@ -62,8 +62,7 @@
             "@php artisan test"
         ],
         "post-install-cmd": [
-            "npm install --prefer-offline --no-audit --no-fund",
-            "npm run build"
+            "@php -r \"if (getenv('HEROKU') !== 'true') { passthru('npm install --prefer-offline --no-audit --no-fund'); passthru('npm run build'); }\""
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
