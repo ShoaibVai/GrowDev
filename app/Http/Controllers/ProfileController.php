@@ -165,7 +165,7 @@ class ProfileController extends Controller
 
         // Use transaction to ensure data integrity
         DB::transaction(function () use ($user, $validated, $originalEmail, $prefValidated) {
-            // Update user profile and reset verification when email changes
+            // Update user profile
             $user->fill([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
@@ -176,10 +176,6 @@ class ProfileController extends Controller
                 'linkedin_url' => $validated['linkedin_url'] ?? null,
                 'github_url' => $validated['github_url'] ?? null,
             ]);
-
-            if ($validated['email'] !== $originalEmail) {
-                $user->email_verified_at = null;
-            }
 
             $user->save();
 
