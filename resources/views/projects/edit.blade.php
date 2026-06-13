@@ -1,128 +1,47 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Edit Project') }}
-        </h2>
-    </x-slot>
-
-    <div class="py-12">
-        <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <form method="POST" action="{{ route('projects.update', $project) }}">
-                        @csrf
-                        @method('PUT')
-
-                        <!-- Project Name -->
-                        <div>
-                            <x-input-label for="name" :value="__('Project Name')" />
-                            <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name', $project->name)" required autofocus />
-                            <x-input-error :messages="$errors->get('name')" class="mt-2" />
-                        </div>
-
-                        <!-- Description -->
-                        <div class="mt-4">
-                            <x-input-label for="description" :value="__('Description')" />
-                            <textarea id="description" name="description" rows="4" 
-                                      class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm mt-1 block w-full">{{ old('description', $project->description) }}</textarea>
-                            <x-input-error :messages="$errors->get('description')" class="mt-2" />
-                        </div>
-
-                        <!-- Status -->
-                        <div class="mt-4">
-                            <x-input-label for="status" :value="__('Status')" />
-                            <select id="status" name="status" required
-                                    class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm mt-1 block w-full">
-                                <option value="active" {{ old('status', $project->status) == 'active' ? 'selected' : '' }}>Active</option>
-                                <option value="on_hold" {{ old('status', $project->status) == 'on_hold' ? 'selected' : '' }}>On Hold</option>
-                                <option value="completed" {{ old('status', $project->status) == 'completed' ? 'selected' : '' }}>Completed</option>
-                            </select>
-                            <x-input-error :messages="$errors->get('status')" class="mt-2" />
-                        </div>
-
-                        <!-- Project Type -->
-                        <div class="mt-4">
-                            <x-input-label for="type" :value="__('Project Type')" />
-                            <div class="flex gap-4 items-center mt-2">
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="type" value="solo" class="form-radio" {{ old('type', $project->type) === 'solo' ? 'checked' : '' }} />
-                                    <span class="ml-2">Solo</span>
-                                </label>
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="type" value="team" class="form-radio" {{ old('type', $project->type) === 'team' ? 'checked' : '' }} />
-                                    <span class="ml-2">Team</span>
-                                </label>
-                            </div>
-                            <x-input-error :messages="$errors->get('type')" class="mt-2" />
-                        </div>
-
-                        <!-- Team selection (if team) -->
-                        <div class="mt-4" id="teamSelect" style="display: {{ old('type', $project->type) === 'team' ? 'block' : 'none' }};">
-                            <x-input-label for="team_id" :value="__('Assign to Team')" />
-                            <div class="flex gap-2">
-                                <select id="team_id" name="team_id" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm mt-1 block w-full">
-                                    <option value="">Select a team</option>
-                                    @if(isset($teams) && $teams->count())
-                                        @foreach($teams as $team)
-                                            <option value="{{ $team->id }}" {{ old('team_id', $project->team_id) == $team->id ? 'selected' : '' }}>{{ $team->name }}</option>
-                                        @endforeach
-                                    @endif
-                                </select>
-                                @if(!(isset($teams) && $teams->count()))
-                                    <a href="{{ route('teams.create') }}" class="inline-flex items-center px-3 py-2 bg-green-500 text-white rounded-md">Create Team</a>
-                                @endif
-                            </div>
-                        </div>
-
-                        <!-- Start/End Dates -->
-                        <div class="grid grid-cols-2 gap-4 mt-4">
-                            <div>
-                                <x-input-label for="start_date" :value="__('Start Date')" />
-                                <input type="date" name="start_date" id="start_date" value="{{ old('start_date', optional($project->start_date)->format('Y-m-d')) }}" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm mt-1 block w-full" />
-                            </div>
-                            <div>
-                                <x-input-label for="end_date" :value="__('End Date')" />
-                                <input type="date" name="end_date" id="end_date" value="{{ old('end_date', optional($project->end_date)->format('Y-m-d')) }}" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm mt-1 block w-full" />
-                            </div>
-                        </div>
-
-                        <div class="flex items-center justify-end mt-6 gap-4">
-                            <a href="{{ route('dashboard') }}" 
-                               class="inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-300 focus:bg-gray-300 active:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                                {{ __('Cancel') }}
-                            </a>
-
-                            <x-primary-button>
-                                {{ __('Update Project') }}
-                            </x-primary-button>
-                        </div>
-                    </form>
-                    <script>
-                        // Toggle team select in edit view
-                        const radios = document.querySelectorAll('input[name="type"]');
-                        const teamSelect = document.getElementById('teamSelect');
-                        const toggleTeamSelect = (value) => {
-                            if (value === 'team') {
-                                teamSelect.style.display = 'block';
-                            } else {
-                                teamSelect.style.display = 'none';
-                                const teamField = document.getElementById('team_id');
-                                if (teamField) {
-                                    teamField.value = '';
-                                }
-                            }
-                        };
-                        radios.forEach(r => {
-                            r.addEventListener('change', function(){
-                                toggleTeamSelect(this.value);
-                            });
-                            if (r.checked) {
-                                toggleTeamSelect(r.value);
-                            }
-                        });
-                    </script>
-                </div>
-            </div>
+        <div class="flex items-center gap-3">
+            <span class="gd-chip">P-{{ $project->id }}</span>
+            <h2 class="text-[18px] font-semibold" style="color:var(--color-text)">Edit Project</h2>
         </div>
+    </x-slot>
+    <div class="max-w-lg">
+        <form action="{{ route('projects.update', $project) }}" method="POST" class="gd-card p-5 space-y-4">
+            @csrf @method('PUT')
+            <div><label class="gd-label" for="name">Project Name</label>
+            <input type="text" name="name" id="name" required class="gd-input text-[13px]" value="{{ old('name', $project->name) }}"></div>
+            <div><label class="gd-label" for="description">Description</label>
+            <textarea name="description" id="description" rows="3" class="gd-textarea text-[13px]">{{ old('description', $project->description) }}</textarea></div>
+            <div class="grid grid-cols-2 gap-3">
+                <div><label class="gd-label" for="status">Status</label>
+                <select name="status" id="status" class="gd-select text-[13px]">
+                    <option value="active" {{ old('status', $project->status) === 'active' ? 'selected' : '' }}>Active</option>
+                    <option value="on_hold" {{ old('status', $project->status) === 'on_hold' ? 'selected' : '' }}>On Hold</option>
+                    <option value="completed" {{ old('status', $project->status) === 'completed' ? 'selected' : '' }}>Completed</option>
+                </select></div>
+                <div><label class="gd-label" for="type">Type</label>
+                <select name="type" id="type" class="gd-select text-[13px]" onchange="document.getElementById('teamField').classList.toggle('hidden', this.value !== 'team')">
+                    <option value="solo" {{ old('type', $project->type) === 'solo' ? 'selected' : '' }}>Solo</option>
+                    <option value="team" {{ old('type', $project->type) === 'team' ? 'selected' : '' }}>Team</option>
+                </select></div>
+            </div>
+            <div id="teamField" class="{{ old('type', $project->type) === 'team' ? '' : 'hidden' }}"><label class="gd-label" for="team_id">Team</label>
+            <select name="team_id" id="team_id" class="gd-select text-[13px]">
+                <option value="">Select team...</option>
+                @foreach($teams as $team)
+                    <option value="{{ $team->id }}" {{ old('team_id', $project->team_id) == $team->id ? 'selected' : '' }}>{{ $team->name }}</option>
+                @endforeach
+            </select></div>
+            <div class="grid grid-cols-2 gap-3">
+                <div><label class="gd-label" for="start_date">Start Date</label>
+                <input type="date" name="start_date" id="start_date" class="gd-input text-[13px]" value="{{ old('start_date', $project->start_date?->format('Y-m-d')) }}"></div>
+                <div><label class="gd-label" for="end_date">End Date</label>
+                <input type="date" name="end_date" id="end_date" class="gd-input text-[13px]" value="{{ old('end_date', $project->end_date?->format('Y-m-d')) }}"></div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <a href="{{ route('projects.show', $project) }}" class="gd-btn gd-btn-secondary">Cancel</a>
+                <button type="submit" class="gd-btn gd-btn-primary">Update Project</button>
+            </div>
+        </form>
     </div>
 </x-app-layout>

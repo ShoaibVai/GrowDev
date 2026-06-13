@@ -1,321 +1,290 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex justify-between items-center">
+        <div class="flex items-center justify-between">
             <div>
-                <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
-                    Dashboard
-                </h2>
-                <p class="mt-1 text-sm text-gray-500">Overview of your projects and tasks.</p>
+                <p class="text-[22px] font-semibold" style="font-family:var(--font-sans);color:var(--color-text)">
+                    Good {{ now()->hour < 12 ? 'morning' : (now()->hour < 17 ? 'afternoon' : 'evening') }}, <span style="color:var(--color-text)">{{ Auth::user()->name }}</span>.
+                </p>
+                @if($activeSprints->first())
+                    <p class="mt-1 text-[13px]" style="font-family:var(--font-mono);color:var(--color-text-muted)">
+                        {{ $activeSprints->first()->name }} &middot; {{ $activeSprints->first()->end_date->diffInDays(now()) }}d remaining
+                    </p>
+                @endif
             </div>
-            <div class="flex space-x-3">
-                <a href="{{ route('projects.create') }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    New Project
-                </a>
-            </div>
+            <a href="{{ route('projects.create') }}" class="gd-btn gd-btn-primary">
+                <svg class="h-4 w-4 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                New Project
+            </a>
         </div>
     </x-slot>
 
-    <!-- Stats Grid -->
-    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-        <!-- Total Projects -->
-        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-300">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 bg-indigo-500 rounded-md p-3">
-                        <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Projects</dt>
-                            <dd>
-                                <div class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ $totalProjects }}</div>
-                            </dd>
-                        </dl>
-                    </div>
+    {{-- ===== STATS ROW ===== --}}
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 stagger">
+        <div class="gd-card p-4 flex flex-col">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-[11px] font-medium uppercase tracking-wider" style="color:var(--color-text-faint)">Total Projects</p>
+                    <p class="text-[36px] font-bold mt-1 tracking-tight" style="font-family:var(--font-mono);color:var(--color-text)">{{ $totalProjects }}</p>
+                </div>
+                <div class="w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0" style="background:color-mix(in srgb, var(--color-accent) 12%, transparent)">
+                    <svg class="h-4 w-4" style="color:var(--color-accent)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
                 </div>
             </div>
-            <div class="bg-gray-50 dark:bg-gray-700 px-5 py-3">
-                <div class="text-sm">
-                    <a href="{{ route('projects.index') }}" class="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-900">View all</a>
-                </div>
-            </div>
+            <a href="{{ route('projects.index') }}" class="mt-2 text-[12px] hover:underline" style="color:var(--color-accent)">View all</a>
         </div>
 
-        <!-- Active Projects -->
-        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-300">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
-                        <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Active Projects</dt>
-                            <dd>
-                                <div class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ $activeProjects }}</div>
-                            </dd>
-                        </dl>
-                    </div>
+        <div class="gd-card p-4 flex flex-col">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-[11px] font-medium uppercase tracking-wider" style="color:var(--color-text-faint)">Active</p>
+                    <p class="text-[36px] font-bold mt-1 tracking-tight" style="font-family:var(--font-mono);color:var(--color-success)">{{ $activeProjects }}</p>
+                </div>
+                <div class="w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0" style="background:color-mix(in srgb, var(--color-success) 12%, transparent)">
+                    <svg class="h-4 w-4" style="color:var(--color-success)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                 </div>
             </div>
-            <div class="bg-gray-50 dark:bg-gray-700 px-5 py-3">
-                <div class="text-sm">
-                    <a href="{{ route('projects.index') }}" class="font-medium text-green-600 dark:text-green-400 hover:text-green-900">View active</a>
-                </div>
-            </div>
+            <span class="mt-2 text-[12px]" style="color:var(--color-text-muted)">{{ $completedProjects }} completed</span>
         </div>
 
-        <!-- Open Tasks -->
-        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-300">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 bg-yellow-500 rounded-md p-3">
-                        <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Open Tasks</dt>
-                            <dd>
-                                <div class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ $openTasksCount }}</div>
-                            </dd>
-                        </dl>
-                    </div>
+        <div class="gd-card p-4 flex flex-col">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-[11px] font-medium uppercase tracking-wider" style="color:var(--color-text-faint)">Open Tasks</p>
+                    <p class="text-[36px] font-bold mt-1 tracking-tight" style="font-family:var(--font-mono);color:var(--color-warning)">{{ $openTasksCount }}</p>
+                </div>
+                <div class="w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0" style="background:color-mix(in srgb, var(--color-warning) 12%, transparent)">
+                    <svg class="h-4 w-4" style="color:var(--color-warning)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
                 </div>
             </div>
-            <div class="bg-gray-50 dark:bg-gray-700 px-5 py-3">
-                <div class="text-sm">
-                    <a href="{{ route('tasks.my-tasks') }}" class="font-medium text-yellow-600 dark:text-yellow-400 hover:text-yellow-900">View tasks</a>
-                </div>
-            </div>
+            <a href="{{ route('tasks.my-tasks') }}" class="mt-2 text-[12px] hover:underline" style="color:var(--color-accent)">View tasks</a>
         </div>
 
-        <!-- Teams -->
-        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-300">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 bg-purple-500 rounded-md p-3">
-                        <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Teams</dt>
-                            <dd>
-                                <div class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ $teamsCount }}</div>
-                            </dd>
-                        </dl>
-                    </div>
+        <div class="gd-card p-4 flex flex-col">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-[11px] font-medium uppercase tracking-wider" style="color:var(--color-text-faint)">Teams</p>
+                    <p class="text-[36px] font-bold mt-1 tracking-tight" style="font-family:var(--font-mono);color:var(--color-purple)">{{ $teamsCount }}</p>
+                </div>
+                <div class="w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0" style="background:color-mix(in srgb, var(--color-purple) 12%, transparent)">
+                    <svg class="h-4 w-4" style="color:var(--color-purple)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 </div>
             </div>
-            <div class="bg-gray-50 dark:bg-gray-700 px-5 py-3">
-                <div class="text-sm">
-                    <a href="{{ route('teams.index') }}" class="font-medium text-purple-600 dark:text-purple-400 hover:text-purple-900">View teams</a>
-                </div>
-            </div>
+            <a href="{{ route('teams.index') }}" class="mt-2 text-[12px] hover:underline" style="color:var(--color-accent)">View teams</a>
         </div>
     </div>
 
-    <!-- Active Sprints -->
-    @if($activeSprints->count() > 0)
-    <div class="mb-8">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Active Sprints</h3>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            @foreach($activeSprints as $sprint)
-                <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow">
-                    <div class="flex items-center justify-between mb-2">
-                        <a href="{{ route('sprints.show', [$sprint->project, $sprint]) }}" class="font-medium text-gray-900 dark:text-gray-100 hover:text-indigo-600">{{ $sprint->name }}</a>
-                        <span class="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 px-2 py-0.5 rounded-full">Active</span>
-                    </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">{{ $sprint->project->name }}</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ $sprint->start_date->format('M d') }} — {{ $sprint->end_date->format('M d') }}</p>
-                    @php $p = $sprint->progress(); @endphp
-                    @if($p['total'] > 0)
-                        <div class="mt-2">
-                            <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-                                <span>{{ $p['done'] }}/{{ $p['total'] }} done</span>
-                                <span>{{ $p['percentage'] }}%</span>
-                            </div>
-                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                                <div class="bg-indigo-600 h-2 rounded-full" style="width: {{ $p['percentage'] }}%"></div>
-                            </div>
+    {{-- ===== PENDING INVITATIONS ===== --}}
+    @if($pendingInvitations->count() > 0)
+        <div class="mb-8 gd-card p-4" style="border-left:3px solid var(--color-accent)">
+            <p class="text-[12px] font-semibold uppercase tracking-wider mb-3" style="color:var(--color-text-muted)">Pending Invitations</p>
+            <div class="space-y-2">
+                @foreach($pendingInvitations as $inv)
+                    <div class="flex items-center justify-between text-[13px]">
+                        <span>
+                            <span style="color:var(--color-text)">{{ $inv->team->name }}</span>
+                            <span class="text-[11px] ml-2" style="color:var(--color-text-muted);font-family:var(--font-mono)">invited by {{ $inv->inviter->name }}</span>
+                        </span>
+                        <div class="flex gap-2">
+                            <a href="{{ route('invitations.accept', $inv->token) }}" class="gd-btn gd-btn-primary gd-btn-sm">Accept</a>
+                            <a href="{{ route('invitations.decline', $inv->token) }}" class="gd-btn gd-btn-secondary gd-btn-sm">Decline</a>
                         </div>
-                    @endif
-                </div>
-            @endforeach
+                    </div>
+                @endforeach
+            </div>
         </div>
-    </div>
     @endif
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        <!-- Main Column (Projects & Tasks) -->
-        <div class="lg:col-span-2 space-y-8">
-            
-            <!-- Recent Projects -->
-            <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
-                <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">Recent Projects</h3>
-                    <a href="{{ route('projects.index') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 font-medium">View all</a>
+    {{-- ===== MAIN GRID ===== --}}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 stagger">
+
+        {{-- LEFT COLUMN (66%) --}}
+        <div class="lg:col-span-2 space-y-6">
+
+            {{-- Active Sprints --}}
+            @if($activeSprints->count() > 0)
+                <div class="gd-card p-0 overflow-hidden">
+                    <div class="px-5 py-4" style="border-bottom:1px solid var(--color-border)">
+                        <p class="text-[12px] font-semibold uppercase tracking-wider" style="color:var(--color-text-muted)">Active Sprints</p>
+                    </div>
+                    <div class="divide-y" style="border-color:var(--color-border)">
+                        @foreach($activeSprints as $sprint)
+                            @php $p = $sprint->progress(); @endphp
+                            <a href="{{ route('sprints.show', [$sprint->project, $sprint]) }}" class="block px-5 py-4 hover:bg-gd-surface-3 transition-colors duration-120">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div>
+                                        <span class="gd-chip text-[10px] mr-2">SPRINT-{{ $sprint->id }}</span>
+                                        <span class="text-[14px] font-medium" style="color:var(--color-text)">{{ $sprint->name }}</span>
+                                    </div>
+                                    <span class="gd-badge gd-badge-in-progress">Active</span>
+                                </div>
+                                <p class="text-[12px] mb-2" style="color:var(--color-text-faint)">
+                                    {{ $sprint->project->name }}
+                                    &middot; {{ $sprint->start_date->format('M d') }} &mdash; {{ $sprint->end_date->format('M d') }}
+                                </p>
+                                @if($p['total'] > 0)
+                                    <div class="flex items-center gap-3">
+                                        <div class="gd-progress flex-1">
+                                            <div class="gd-progress-bar"
+                                                 style="width:{{ $p['percentage'] }}%;
+                                                 background:{{ $p['percentage'] >= 70 ? 'linear-gradient(90deg, var(--color-accent), var(--color-success))' : ($p['percentage'] >= 30 ? 'linear-gradient(90deg, var(--color-warning), var(--color-accent))' : 'linear-gradient(90deg, var(--color-danger), var(--color-warning))') }}"></div>
+                                        </div>
+                                        <span class="text-[12px] font-semibold tabular-nums" style="font-family:var(--font-mono);color:var(--color-text-muted)">{{ $p['done'] }}/{{ $p['total'] }}</span>
+                                    </div>
+                                @endif
+                            </a>
+                        @endforeach
+                    </div>
                 </div>
-                <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            @endif
+
+            {{-- Recent Projects --}}
+            <div class="gd-card p-0 overflow-hidden">
+                <div class="px-5 py-4 flex items-center justify-between" style="border-bottom:1px solid var(--color-border)">
+                    <p class="text-[12px] font-semibold uppercase tracking-wider" style="color:var(--color-text-muted)">Recent Projects</p>
+                    <a href="{{ route('projects.index') }}" class="text-[12px] hover:underline" style="color:var(--color-accent)">View all</a>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-px" style="background:var(--color-border)">
                     @forelse($projects as $project)
-                        <div class="group relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:border-indigo-300 dark:hover:border-indigo-500 hover:shadow-md transition-all duration-200 cursor-pointer" onclick="window.location='{{ route('projects.show', $project) }}'">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <h4 class="text-base font-semibold text-gray-900 dark:text-gray-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{{ $project->name }}</h4>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{{ $project->description }}</p>
-                                </div>
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $project->status === 'active' ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300' }}">
-                                    {{ ucfirst($project->status) }}
-                                </span>
+                        <div class="gd-card-interactive p-4 cursor-pointer" style="background:var(--color-surface)" onclick="window.location='{{ route('projects.show', $project) }}'">
+                            <div class="flex items-start justify-between mb-2">
+                                <p class="text-[15px] font-semibold truncate" style="font-family:var(--font-mono);color:var(--color-text)">{{ $project->name }}</p>
+                                @php
+                                    $statusBadge = match($project->status) {
+                                        'active' => 'in-progress',
+                                        'completed' => 'done',
+                                        'on_hold' => 'todo',
+                                        default => 'todo'
+                                    };
+                                @endphp
+                                <span class="gd-badge gd-badge-{{ $statusBadge }}">{{ ucfirst($project->status) }}</span>
                             </div>
-                            <div class="mt-4">
-                                <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-                                    <span>Progress</span>
-                                    <span>{{ $project->progress ?? 0 }}%</span>
+                            <p class="text-[13px] mb-3 line-clamp-2" style="color:var(--color-text-muted)">{{ $project->description ?: 'No description' }}</p>
+                            <div class="flex items-center gap-2 mb-3">
+                                <div class="gd-progress flex-1">
+                                    <div class="gd-progress-bar"
+                                         style="width:{{ $project->progress ?? 0 }}%;
+                                         background:{{ ($project->progress ?? 0) >= 70 ? 'linear-gradient(90deg, var(--color-accent), var(--color-success))' : (($project->progress ?? 0) >= 30 ? 'linear-gradient(90deg, var(--color-warning), var(--color-accent))' : 'linear-gradient(90deg, var(--color-danger), var(--color-warning))') }}"></div>
                                 </div>
-                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                                    <div class="bg-indigo-600 h-2 rounded-full transition-all duration-500" style="width: {{ $project->progress ?? 0 }}%"></div>
-                                </div>
+                                <span class="text-[11px] tabular-nums" style="font-family:var(--font-mono);color:var(--color-text-muted)">{{ $project->progress ?? 0 }}%</span>
                             </div>
-                            <div class="mt-4 flex items-center justify-between">
-                                <div class="flex -space-x-2 overflow-hidden">
-                                    <div class="inline-block h-6 w-6 rounded-full ring-2 ring-white dark:ring-gray-800 bg-gray-300 flex items-center justify-center text-xs text-white">A</div>
-                                    <div class="inline-block h-6 w-6 rounded-full ring-2 ring-white dark:ring-gray-800 bg-gray-400 flex items-center justify-center text-xs text-white">B</div>
-                                </div>
-                                <div class="text-xs text-gray-400 dark:text-gray-500">
-                                    Updated {{ $project->updated_at->diffForHumans() }}
-                                </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px]" style="color:var(--color-text-faint);font-family:var(--font-mono)">{{ $project->updated_at->diffForHumans() }}</span>
+                                @if($project->team)
+                                    <span class="gd-chip text-[10px]">{{ $project->team->name }}</span>
+                                @endif
                             </div>
                         </div>
                     @empty
-                        <div class="col-span-2 text-center py-8 text-gray-500 dark:text-gray-400">
-                            No projects found. <a href="{{ route('projects.create') }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">Create one?</a>
+                        <div class="col-span-2 p-8 text-center" style="background:var(--color-surface)">
+                            <p class="text-[13px] mb-3" style="color:var(--color-text-muted)">No projects yet</p>
+                            <a href="{{ route('projects.create') }}" class="gd-btn gd-btn-primary">Create your first project</a>
                         </div>
                     @endforelse
                 </div>
             </div>
 
-            <!-- My Tasks -->
-            <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
-                <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">My Tasks</h3>
-                    <a href="{{ route('tasks.my-tasks') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 font-medium">View all</a>
+            {{-- My Tasks --}}
+            <div class="gd-card p-0 overflow-hidden">
+                <div class="px-5 py-4 flex items-center justify-between" style="border-bottom:1px solid var(--color-border)">
+                    <p class="text-[12px] font-semibold uppercase tracking-wider" style="color:var(--color-text-muted)">My Tasks</p>
+                    <a href="{{ route('tasks.my-tasks') }}" class="text-[12px] hover:underline" style="color:var(--color-accent)">View all</a>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead class="bg-gray-50 dark:bg-gray-700">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Task</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Project</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Due</th>
+                    <table class="w-full text-[13px]">
+                        <thead>
+                            <tr style="border-bottom:1px solid var(--color-border)">
+                                <th class="text-left px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wider" style="color:var(--color-text-faint)">Task</th>
+                                <th class="text-left px-2 py-2.5 text-[11px] font-semibold uppercase tracking-wider hidden sm:table-cell" style="color:var(--color-text-faint)">Project</th>
+                                <th class="text-left px-2 py-2.5 text-[11px] font-semibold uppercase tracking-wider" style="color:var(--color-text-faint)">Status</th>
+                                <th class="text-right px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wider hidden sm:table-cell" style="color:var(--color-text-faint)">Due</th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        <tbody class="divide-y" style="border-color:var(--color-border)">
                             @forelse($tasksAssigned as $task)
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer" onclick="window.location='{{ route('tasks.show', $task) }}'">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center">
-                                            <div class="ml-0">
-                                                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ Str::limit($task->title, 40) }}</div>
-                                                <div class="text-xs text-gray-500 dark:text-gray-400">{{ $task->priority }} Priority</div>
-                                            </div>
+                                <tr class="hover:bg-gd-surface-3 transition-colors duration-120 cursor-pointer" onclick="window.location='{{ route('tasks.show', $task) }}'">
+                                    <td class="px-5 py-3">
+                                        <div class="flex items-center gap-2">
+                                            <span class="gd-chip text-[10px] hidden sm:inline-flex">T-{{ $task->id }}</span>
+                                            <span class="font-medium truncate block max-w-[200px]" style="color:var(--color-text)">{{ Str::limit($task->title, 40) }}</span>
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900 dark:text-gray-100">{{ Str::limit($task->project->name ?? 'N/A', 20) }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
+                                    <td class="px-2 py-3 hidden sm:table-cell" style="color:var(--color-text-muted)">{{ Str::limit($task->project->name ?? 'N/A', 20) }}</td>
+                                    <td class="px-2 py-3">
                                         @php
-                                            $statusColors = [
-                                                'To Do' => 'bg-gray-100 text-gray-800',
-                                                'In Progress' => 'bg-blue-100 text-blue-800',
-                                                'Review' => 'bg-yellow-100 text-yellow-800',
-                                                'Done' => 'bg-green-100 text-green-800',
-                                            ];
+                                            $taskStatus = match($task->status) {
+                                                'To Do' => 'todo',
+                                                'In Progress' => 'in-progress',
+                                                'Review' => 'review',
+                                                'Done' => 'done',
+                                                default => 'todo'
+                                            };
                                         @endphp
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statusColors[$task->status] ?? 'bg-gray-100 text-gray-800' }}">
-                                            {{ $task->status }}
-                                        </span>
+                                        <span class="gd-badge gd-badge-{{ $taskStatus }}">{{ $task->status }}</span>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {{ $task->due_date ? $task->due_date->format('M d') : '-' }}
+                                    <td class="px-5 py-3 text-right hidden sm:table-cell">
+                                        <span class="text-[12px] tabular-nums" style="font-family:var(--font-mono);color:var(--color-text-faint)">{{ $task->due_date ? $task->due_date->format('M d') : '—' }}</span>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">No tasks assigned to you.</td>
+                                    <td colspan="4" class="px-5 py-6 text-center text-[13px]" style="color:var(--color-text-muted)">No tasks assigned to you</td>
                                 </tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
             </div>
-
         </div>
 
-        <!-- Right Column (Widgets) -->
-        <div class="space-y-8">
-            
-            <!-- Upcoming Deadlines -->
-            <div class="bg-white shadow rounded-lg overflow-hidden">
-                <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">Upcoming Deadlines</h3>
+        {{-- RIGHT COLUMN (34%) --}}
+        <div class="space-y-6">
+
+            {{-- Upcoming Deadlines --}}
+            <div class="gd-card p-0 overflow-hidden">
+                <div class="px-5 py-4" style="border-bottom:1px solid var(--color-border)">
+                    <p class="text-[12px] font-semibold uppercase tracking-wider" style="color:var(--color-text-muted)">Upcoming Deadlines</p>
                 </div>
-                <div class="p-6">
-                    <ul class="space-y-4">
-                        @forelse($upcomingTasks as $task)
-                            <li class="flex items-start space-x-3">
-                                <div class="flex-shrink-0">
-                                    <span class="inline-block h-2 w-2 rounded-full bg-red-500 mt-2"></span>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-medium text-gray-900 truncate">
-                                        <a href="{{ route('tasks.show', $task) }}" class="hover:underline">{{ $task->title }}</a>
-                                    </p>
-                                    <p class="text-xs text-gray-500">
-                                        Due {{ $task->due_date->format('M d, Y') }}
-                                    </p>
-                                </div>
-                            </li>
-                        @empty
-                            <li class="text-sm text-gray-500">No upcoming deadlines this week.</li>
-                        @endforelse
-                    </ul>
+                <div class="p-5">
+                    @forelse($upcomingTasks as $task)
+                        @php
+                            $daysLeft = $task->due_date->diffInDays(now());
+                            $urgencyDot = $daysLeft < 2 ? 'var(--color-danger)' : ($daysLeft < 7 ? 'var(--color-orange)' : 'var(--color-text-faint)');
+                        @endphp
+                        <div class="flex items-start gap-3 py-2" @if(!$loop->last) style="border-bottom:1px solid var(--color-border)" @endif>
+                            <span class="w-2 h-2 rounded-full mt-1.5 flex-shrink-0" style="background:{{ $urgencyDot }}"></span>
+                            <div class="min-w-0">
+                                <a href="{{ route('tasks.show', $task) }}" class="text-[13px] font-medium hover:underline block truncate" style="color:var(--color-text)">{{ $task->title }}</a>
+                                <p class="text-[12px] mt-0.5" style="color:var(--color-text-faint)">
+                                    <span style="font-family:var(--font-mono)">{{ $task->due_date->format('M d') }}</span>
+                                    &middot; {{ $task->project->name ?? '' }}
+                                </p>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="text-[13px] text-center py-4" style="color:var(--color-text-muted)">No upcoming deadlines this week</p>
+                    @endforelse
                 </div>
             </div>
 
-            <!-- Recent SRS Documents -->
-            <div class="bg-white shadow rounded-lg overflow-hidden">
-                <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">Recent Documents</h3>
+            {{-- Recent SRS Documents --}}
+            <div class="gd-card p-0 overflow-hidden">
+                <div class="px-5 py-4" style="border-bottom:1px solid var(--color-border)">
+                    <p class="text-[12px] font-semibold uppercase tracking-wider" style="color:var(--color-text-muted)">Recent Documents</p>
                 </div>
-                <div class="p-6">
-                    <ul class="space-y-4">
-                        @forelse($recentSrs as $doc)
-                            <li class="flex items-start space-x-3">
-                                <div class="flex-shrink-0">
-                                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-medium text-gray-900 truncate">
-                                        <a href="{{ route('documentation.srs.edit', $doc) }}" class="hover:underline">{{ $doc->title }}</a>
-                                    </p>
-                                    <p class="text-xs text-gray-500">
-                                        Updated {{ $doc->updated_at->diffForHumans() }}
-                                    </p>
-                                </div>
-                            </li>
-                        @empty
-                            <li class="text-sm text-gray-500">No recent documents.</li>
-                        @endforelse
-                    </ul>
+                <div class="p-5">
+                    @forelse($recentSrs as $doc)
+                        <div class="flex items-start gap-3 py-2" @if(!$loop->last) style="border-bottom:1px solid var(--color-border)" @endif>
+                            <svg class="h-4 w-4 flex-shrink-0 mt-0.5" style="color:var(--color-text-faint)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            <div class="min-w-0">
+                                <a href="{{ route('documentation.srs.edit', $doc) }}" class="text-[13px] font-medium hover:underline block truncate" style="color:var(--color-text)">{{ $doc->title }}</a>
+                                <p class="text-[11px] mt-0.5" style="font-family:var(--font-mono);color:var(--color-text-faint)">{{ $doc->updated_at->diffForHumans() }}</p>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="text-[13px] text-center py-4" style="color:var(--color-text-muted)">No SRS documents yet</p>
+                    @endforelse
                 </div>
             </div>
-
         </div>
     </div>
 </x-app-layout>

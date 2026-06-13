@@ -1,418 +1,323 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <div>
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    {{ $task->title }}
-                </h2>
-                <p class="text-sm text-gray-500 mt-1">
-                    Project: <a href="{{ route('projects.show', $task->project) }}" class="text-indigo-600 hover:underline">{{ $task->project->name }}</a>
-                </p>
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3 min-w-0">
+                <span class="gd-chip">T-{{ $task->id }}</span>
+                <h2 class="text-[18px] font-semibold truncate" style="font-family:var(--font-mono);color:var(--color-text)">{{ $task->title }}</h2>
+                @if($task->is_scaffold)
+                    <span class="gd-badge gd-badge-purple">Scaffold</span>
+                @endif
             </div>
-            <a href="{{ route('tasks.my-tasks') }}" class="text-sm text-indigo-600 hover:underline">← Back to My Tasks</a>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('projects.show', $task->project) }}" class="gd-btn gd-btn-ghost gd-btn-sm">
+                    <svg class="h-3.5 w-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    Back
+                </a>
+            </div>
         </div>
     </x-slot>
 
-    <div class="py-8">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            @if (session('success'))
-                <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
-                    {{ session('success') }}
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        {{-- ====== MAIN CONTENT (flex-1) ====== --}}
+        <div class="lg:col-span-6 space-y-6">
+
+            {{-- Task Details --}}
+            <div class="gd-card p-5">
+                <div class="flex items-start justify-between mb-5">
+                    <div>
+                        <p class="text-[12px] font-semibold uppercase tracking-wider mb-1" style="color:var(--color-text-muted)">Task Details</p>
+                        <p class="text-[11px]" style="font-family:var(--font-mono);color:var(--color-text-faint)">Created by {{ $task->creator->name ?? 'Unknown' }} {{ $task->created_at->diffForHumans() }}</p>
+                    </div>
+                    @php $prioBadge = match($task->priority) { 'Critical' => 'critical', 'High' => 'high', 'Medium' => 'medium', default => 'low' }; @endphp
+                    <span class="gd-badge gd-badge-{{ $prioBadge }}">{{ $task->priority }}</span>
                 </div>
-            @endif
-            @if (session('error'))
-                <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-                    {{ session('error') }}
-                </div>
-            @endif
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Main Task Content -->
-                <div class="lg:col-span-2 space-y-6">
-                    <!-- Task Details Card -->
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6">
-                            <div class="flex justify-between items-start mb-6">
-                                <div>
-                                    <h3 class="text-lg font-bold text-gray-900">Task Details</h3>
-                                    <p class="text-sm text-gray-500">Created by {{ $task->creator->name ?? 'Unknown' }} on {{ $task->created_at->format('M d, Y') }}</p>
-                                </div>
-                                @php
-                                    $priorityColors = [
-                                        'Critical' => 'bg-red-100 text-red-800 border-red-300',
-                                        'High' => 'bg-orange-100 text-orange-800 border-orange-300',
-                                        'Medium' => 'bg-yellow-100 text-yellow-800 border-yellow-300',
-                                        'Low' => 'bg-green-100 text-green-800 border-green-300',
-                                    ];
-                                @endphp
-                                <span class="px-3 py-1 text-sm font-semibold rounded-full border {{ $priorityColors[$task->priority] ?? 'bg-gray-100 text-gray-800' }}">
-                                    {{ $task->priority }} Priority
-                                </span>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-4 mb-6">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-500">Current Status</label>
-                                    @php
-                                        $statusColors = [
-                                            'To Do' => 'bg-gray-100 text-gray-800',
-                                            'In Progress' => 'bg-blue-100 text-blue-800',
-                                            'Review' => 'bg-yellow-100 text-yellow-800',
-                                            'Done' => 'bg-green-100 text-green-800',
-                                        ];
-                                    @endphp
-                                    <span class="mt-1 inline-block px-3 py-1 text-sm font-semibold rounded-full {{ $statusColors[$task->status] ?? 'bg-gray-100' }}">
-                                        {{ $task->status }}
-                                    </span>
-                                    @if($task->pendingStatusRequest)
-                                        <span class="ml-2 text-xs text-amber-600 font-medium">
-                                            ⏳ Pending change to "{{ $task->pendingStatusRequest->requested_status }}"
-                                        </span>
-                                    @endif
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-500">Due Date</label>
-                                    <p class="mt-1 text-gray-900">
-                                        @if($task->due_date)
-                                            {{ $task->due_date->format('M d, Y') }}
-                                            @if($task->due_date->isPast() && $task->status !== 'Done')
-                                                <span class="text-red-600 text-sm">(Overdue)</span>
-                                            @elseif($task->due_date->isToday())
-                                                <span class="text-amber-600 text-sm">(Due today)</span>
-                                            @endif
-                                        @else
-                                            <span class="text-gray-400">No due date set</span>
-                                        @endif
-                                    </p>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-500">Assigned To</label>
-                                    <p class="mt-1 text-gray-900">{{ $task->assignee->name ?? 'Unassigned' }}</p>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-500">Project Owner</label>
-                                    <p class="mt-1 text-gray-900">{{ $task->project->user->name }}</p>
-                                </div>
-                            </div>
-
-                            @if($task->description)
-                                <div class="mb-6">
-                                    <label class="block text-sm font-medium text-gray-500 mb-2">Description</label>
-                                    <div class="prose prose-sm max-w-none text-gray-700 bg-gray-50 p-4 rounded-lg whitespace-pre-line">
-                                        {{ $task->description }}
-                                    </div>
-                                </div>
+                <div class="grid grid-cols-2 gap-4 mb-5">
+                    <div>
+                        <p class="gd-label">Status</p>
+                        @php $ts = match($task->status) { 'To Do' => 'todo', 'In Progress' => 'in-progress', 'Review' => 'review', 'Done' => 'done', default => 'todo' }; @endphp
+                        <span class="gd-badge gd-badge-{{ $ts }}">{{ $task->status }}</span>
+                        @if($task->pendingStatusRequest)
+                            <span class="gd-badge gd-badge-warning mt-1 block">Pending: {{ $task->pendingStatusRequest->requested_status }}</span>
+                        @endif
+                    </div>
+                    <div>
+                        <p class="gd-label">Due Date</p>
+                        <p class="text-[13px]" style="font-family:var(--font-mono);color:{{ $task->isOverdue() ? 'var(--color-danger)' : 'var(--color-text)' }}">
+                            {{ $task->due_date ? $task->due_date->format('M d, Y') : '—' }}
+                            @if($task->due_date?->isPast() && $task->status !== 'Done')
+                                <span style="color:var(--color-danger)"> (Overdue)</span>
+                            @elseif($task->due_date?->isToday())
+                                <span style="color:var(--color-orange)"> (Today)</span>
                             @endif
-                        </div>
+                        </p>
                     </div>
-
-                    @if($task->component || $task->prompt_brief || $task->scaffoldTask)
-                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                            <div class="p-6">
-                                <div class="flex items-start justify-between gap-4 mb-4">
-                                    <div>
-                                        <h3 class="text-lg font-bold text-gray-900">AI Scaffold Context</h3>
-                                        <p class="text-sm text-gray-500">
-                                            {{ $task->component ?? 'General component' }}
-                                            @if($task->is_scaffold)
-                                                <span class="ml-2 px-2 py-0.5 rounded-full text-xs bg-indigo-100 text-indigo-700">Scaffold</span>
-                                            @endif
-                                        </p>
-                                    </div>
-                                    @if($task->prompt_section)
-                                        <button type="button" onclick="document.getElementById('promptPanel').classList.toggle('hidden')" class="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-                                            View coding prompt
-                                        </button>
-                                    @endif
-                                </div>
-
-                                @if($task->scaffoldTask)
-                                    <div class="mb-4 rounded-lg border {{ $task->scaffoldTask->isScaffoldComplete() ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50' }} p-4 text-sm">
-                                        <p class="font-medium text-gray-900">
-                                            Depends on scaffold #{{ $task->scaffoldTask->id }}: {{ $task->scaffoldTask->title }}
-                                        </p>
-                                        <p class="mt-1 {{ $task->scaffoldTask->isScaffoldComplete() ? 'text-green-700' : 'text-amber-700' }}">
-                                            {{ $task->scaffoldTask->isScaffoldComplete() ? 'Scaffold is complete.' : 'Scaffold must be completed before this task is marked done or merged.' }}
-                                        </p>
-                                    </div>
-                                @elseif($task->is_scaffold && $task->scaffoldOwner)
-                                    <p class="mb-4 text-sm text-gray-600">Scaffold owner: {{ $task->scaffoldOwner->name }}</p>
-                                @endif
-
-                                @if($task->prompt_brief)
-                                    <p class="text-sm text-gray-700 mb-4">{{ $task->prompt_brief }}</p>
-                                @endif
-
-                                @if(!empty($task->predicted_files))
-                                    <div class="flex flex-wrap gap-2 mb-4">
-                                        @foreach($task->predicted_files as $file)
-                                            <span class="px-2 py-1 rounded bg-gray-100 text-xs text-gray-600">{{ $file }}</span>
-                                        @endforeach
-                                    </div>
-                                @endif
-
-                                @if($task->prompt_section)
-                                    <pre id="promptPanel" class="hidden whitespace-pre-wrap text-xs bg-gray-900 text-gray-100 rounded-lg p-4 overflow-x-auto">{{ $task->prompt_section }}</pre>
-                                @endif
-                            </div>
-                        </div>
-                    @endif
-
-                    <!-- Linked Requirement Card -->
-                    @if($task->requirement)
-                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                            <div class="p-6">
-                                <h3 class="text-lg font-bold text-gray-900 mb-4">📋 Linked Requirement</h3>
-                                <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
-                                    <div class="flex items-start gap-3">
-                                        <span class="px-2 py-1 bg-indigo-600 text-white text-xs font-bold rounded">
-                                            {{ $task->requirement->section_number }}
-                                        </span>
-                                        <div>
-                                            <h4 class="font-semibold text-gray-900">{{ $task->requirement->title }}</h4>
-                                            <p class="text-sm text-gray-600 mt-1">{{ Str::limit($task->requirement->description, 200) }}</p>
-                                            <span class="inline-block mt-2 text-xs px-2 py-1 bg-gray-200 text-gray-700 rounded">
-                                                {{ $task->requirement_type === \App\Models\SrsFunctionalRequirement::class ? 'Functional' : 'Non-Functional' }} Requirement
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-
-                    <!-- SRS Document Reference -->
-                    @if($srsDocument)
-                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                            <div class="p-6">
-                                <div class="flex justify-between items-center mb-4">
-                                    <h3 class="text-lg font-bold text-gray-900">📄 Project SRS Document</h3>
-                                    <a href="{{ route('documentation.srs.edit', $srsDocument) }}" class="text-sm text-indigo-600 hover:underline">View Full SRS →</a>
-                                </div>
-                                <p class="text-sm text-gray-600 mb-4">{{ $srsDocument->title }}</p>
-                                
-                                <!-- Requirements Summary -->
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div class="bg-blue-50 p-3 rounded-lg">
-                                        <div class="text-2xl font-bold text-blue-700">{{ $srsDocument->functionalRequirements->count() }}</div>
-                                        <div class="text-sm text-blue-600">Functional Requirements</div>
-                                    </div>
-                                    <div class="bg-purple-50 p-3 rounded-lg">
-                                        <div class="text-2xl font-bold text-purple-700">{{ $srsDocument->nonFunctionalRequirements->count() }}</div>
-                                        <div class="text-sm text-purple-600">Non-Functional Requirements</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-
-                    <!-- Status Change History -->
-                    @if($task->statusRequests->count())
-                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                            <div class="p-6">
-                                <h3 class="text-lg font-bold text-gray-900 mb-4">📜 Status Change History</h3>
-                                <div class="space-y-3">
-                                    @foreach($task->statusRequests as $request)
-                                        <div class="flex items-start gap-3 p-3 rounded-lg {{ $request->isPending() ? 'bg-amber-50 border border-amber-200' : ($request->isApproved() ? 'bg-green-50' : 'bg-red-50') }}">
-                                            <div class="flex-shrink-0">
-                                                @if($request->isPending())
-                                                    <span class="text-amber-500">⏳</span>
-                                                @elseif($request->isApproved())
-                                                    <span class="text-green-500">✅</span>
-                                                @else
-                                                    <span class="text-red-500">❌</span>
-                                                @endif
-                                            </div>
-                                            <div class="flex-1">
-                                                <p class="text-sm">
-                                                    <span class="font-medium">{{ $request->requester->name }}</span>
-                                                    requested change from 
-                                                    <span class="font-medium">{{ $request->current_status }}</span>
-                                                    to 
-                                                    <span class="font-medium">{{ $request->requested_status }}</span>
-                                                </p>
-                                                @if($request->notes)
-                                                    <p class="text-xs text-gray-600 mt-1">Notes: {{ $request->notes }}</p>
-                                                @endif
-                                                <p class="text-xs text-gray-400 mt-1">
-                                                    {{ $request->created_at->diffForHumans() }}
-                                                    @if($request->reviewed_at)
-                                                        · Reviewed by {{ $request->reviewer->name ?? 'Unknown' }} {{ $request->reviewed_at->diffForHumans() }}
-                                                    @endif
-                                                </p>
-                                                @if($request->review_notes)
-                                                    <p class="text-xs text-gray-600 mt-1">Review notes: {{ $request->review_notes }}</p>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-
-                    <!-- Comments -->
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6">
-                            <x-task.comments :task="$task" />
-                        </div>
+                    <div>
+                        <p class="gd-label">Assigned To</p>
+                        <p class="text-[13px]" style="color:var(--color-text)">{{ $task->assignee->name ?? 'Unassigned' }}</p>
                     </div>
-
-                    <!-- Time Tracking -->
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6">
-                            <x-task.time-logger :task="$task" />
-                        </div>
+                    <div>
+                        <p class="gd-label">Project Owner</p>
+                        <p class="text-[13px]" style="color:var(--color-text)">{{ $task->project->user->name }}</p>
                     </div>
                 </div>
 
-                <!-- Sidebar -->
-                <div class="space-y-6">
-                    <!-- Actions Card -->
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6">
-                            <h3 class="text-lg font-bold text-gray-900 mb-4">Actions</h3>
-                            
-                            @if($isAssignee && !$task->pendingStatusRequest)
-                                <!-- Request Status Change Form (for assignees) -->
-                                <form action="{{ route('tasks.request-status', $task) }}" method="POST" class="space-y-4">
-                                    @csrf
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Request Status Change</label>
-                                        <select name="requested_status" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
-                                            <option value="">Select new status...</option>
-                                            @foreach(['To Do', 'In Progress', 'Review', 'Done'] as $status)
-                                                @if($status !== $task->status)
-                                                    <option value="{{ $status }}">{{ $status }}</option>
-                                                @endif
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
-                                        <textarea name="notes" rows="3" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Explain why you're requesting this change..."></textarea>
-                                    </div>
-                                    <button type="submit" class="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition">
-                                        Submit Request
-                                    </button>
-                                    <p class="text-xs text-gray-500">Status changes require approval from the project owner.</p>
-                                </form>
-                            @elseif($isAssignee && $task->pendingStatusRequest)
-                                <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center">
-                                    <p class="text-amber-800 font-medium">⏳ Pending Request</p>
-                                    <p class="text-sm text-amber-600 mt-1">
-                                        Waiting for owner approval to change status to "{{ $task->pendingStatusRequest->requested_status }}"
-                                    </p>
-                                </div>
-                            @endif
-
-                            @if($isOwner && $task->pendingStatusRequest)
-                                <!-- Review Request Form (for owners) -->
-                                <div class="mt-4 border-t pt-4">
-                                    <h4 class="font-medium text-gray-900 mb-3">Review Pending Request</h4>
-                                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
-                                        <p class="text-sm">
-                                            <span class="font-medium">{{ $task->pendingStatusRequest->requester->name }}</span>
-                                            wants to change status from 
-                                            <span class="font-medium">{{ $task->pendingStatusRequest->current_status }}</span>
-                                            to 
-                                            <span class="font-medium">{{ $task->pendingStatusRequest->requested_status }}</span>
-                                        </p>
-                                        @if($task->pendingStatusRequest->notes)
-                                            <p class="text-xs text-gray-600 mt-2">Notes: {{ $task->pendingStatusRequest->notes }}</p>
-                                        @endif
-                                    </div>
-                                    <form action="{{ route('tasks.review-status-request', $task->pendingStatusRequest) }}" method="POST" class="space-y-3">
-                                        @csrf
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Review Notes (optional)</label>
-                                            <textarea name="review_notes" rows="2" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Add a note..."></textarea>
-                                        </div>
-                                        <div class="flex gap-2">
-                                            <button type="submit" name="action" value="approve" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition">
-                                                ✓ Approve
-                                            </button>
-                                            <button type="submit" name="action" value="reject" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition">
-                                                ✗ Reject
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-                            @endif
-
-                            @if($isOwner && !$task->pendingStatusRequest)
-                                <!-- Direct Status Change (for owners) -->
-                                <form action="{{ route('tasks.update', $task) }}" method="POST" class="mt-4 border-t pt-4">
-                                    @csrf
-                                    @method('PUT')
-                                    <input type="hidden" name="title" value="{{ $task->title }}">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Update Status Directly</label>
-                                    <select name="status" onchange="this.form.submit()" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                                        @foreach(['To Do', 'In Progress', 'Review', 'Done'] as $status)
-                                            <option value="{{ $status }}" {{ $task->status === $status ? 'selected' : '' }}>{{ $status }}</option>
-                                        @endforeach
-                                    </select>
-                                    <p class="text-xs text-gray-500 mt-1">As owner, you can update status directly.</p>
-                                </form>
-                            @endif
-                        </div>
+                @if($task->description)
+                    <div class="mt-5 pt-5" style="border-top:1px solid var(--color-border)">
+                        <p class="gd-label">Description</p>
+                        <div class="text-[13px] leading-relaxed whitespace-pre-line rounded-md p-3" style="background:var(--color-base);color:var(--color-text)">{{ $task->description }}</div>
                     </div>
+                @endif
+            </div>
 
-                    <!-- Other Pending Requests (for owners) -->
-                    @if($isOwner && $pendingRequests->count() > 1)
-                        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                            <div class="p-6">
-                                <h3 class="text-lg font-bold text-gray-900 mb-4">Other Pending Requests</h3>
-                                <div class="space-y-3">
-                                    @foreach($pendingRequests as $request)
-                                        @if($request->task_id !== $task->id)
-                                            <a href="{{ route('tasks.show', $request->task) }}" class="block p-3 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition">
-                                                <p class="font-medium text-sm">{{ $request->task->title }}</p>
-                                                <p class="text-xs text-gray-600">
-                                                    {{ $request->requester->name }} → {{ $request->requested_status }}
-                                                </p>
-                                            </a>
-                                        @endif
-                                    @endforeach
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-
-                    <!-- Quick Info -->
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6">
-                            <h3 class="text-lg font-bold text-gray-900 mb-4">Quick Info</h3>
-                            <dl class="space-y-3 text-sm">
-                                <div class="flex justify-between">
-                                    <dt class="text-gray-500">Task ID</dt>
-                                    <dd class="text-gray-900 font-mono">#{{ $task->id }}</dd>
-                                </div>
-                                <div class="flex justify-between">
-                                    <dt class="text-gray-500">Created</dt>
-                                    <dd class="text-gray-900">{{ $task->created_at->format('M d, Y') }}</dd>
-                                </div>
-                                <div class="flex justify-between">
-                                    <dt class="text-gray-500">Last Updated</dt>
-                                    <dd class="text-gray-900">{{ $task->updated_at->diffForHumans() }}</dd>
-                                </div>
-                                <div class="flex justify-between">
-                                    <dt class="text-gray-500">Your Role</dt>
-                                    <dd class="text-gray-900">
-                                        @if($isOwner && $isAssignee)
-                                            Owner & Assignee
-                                        @elseif($isOwner)
-                                            Project Owner
-                                        @else
-                                            Assignee
-                                        @endif
-                                    </dd>
-                                </div>
-                            </dl>
+            {{-- Linked Requirement --}}
+            @if($task->requirement)
+            <div class="gd-card p-5">
+                <p class="text-[12px] font-semibold uppercase tracking-wider mb-3" style="color:var(--color-text-muted)">Linked Requirement</p>
+                <div class="rounded-md p-4" style="background:color-mix(in srgb, var(--color-accent) 6%, transparent);border:1px solid color-mix(in srgb, var(--color-accent) 15%, transparent)">
+                    <div class="flex items-start gap-3">
+                        <span class="gd-chip text-[11px]" style="background:color-mix(in srgb, var(--color-accent) 15%, transparent);border-color:transparent;color:var(--color-accent);font-weight:600">{{ $task->requirement->section_number }}</span>
+                        <div class="min-w-0">
+                            <p class="text-[13px] font-medium" style="color:var(--color-text)">{{ $task->requirement->title }}</p>
+                            <p class="text-[12px] mt-1" style="color:var(--color-text-muted)">{{ Str::limit($task->requirement->description, 200) }}</p>
+                            <span class="text-[11px] mt-2 gd-chip">
+                                {{ $task->requirement_type === \App\Models\SrsFunctionalRequirement::class ? 'Functional' : 'Non-Functional' }}
+                            </span>
                         </div>
                     </div>
                 </div>
             </div>
+            @endif
+
+            {{-- SRS Reference --}}
+            @if($srsDocument)
+            <div class="gd-card p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-[12px] font-semibold uppercase tracking-wider" style="color:var(--color-text-muted)">SRS Document</p>
+                    <a href="{{ route('documentation.srs.edit', $srsDocument) }}" class="text-[12px] hover:underline" style="color:var(--color-accent)">View</a>
+                </div>
+                <p class="text-[13px] mb-3" style="color:var(--color-text)">{{ $srsDocument->title }}</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="rounded-md p-3 text-center" style="background:color-mix(in srgb, var(--color-accent) 6%, transparent)">
+                        <p class="text-[20px] font-bold" style="font-family:var(--font-mono);color:var(--color-accent)">{{ $srsDocument->functionalRequirements->count() }}</p>
+                        <p class="text-[11px]" style="color:var(--color-text-muted)">Functional</p>
+                    </div>
+                    <div class="rounded-md p-3 text-center" style="background:color-mix(in srgb, var(--color-purple) 6%, transparent)">
+                        <p class="text-[20px] font-bold" style="font-family:var(--font-mono);color:var(--color-purple)">{{ $srsDocument->nonFunctionalRequirements->count() }}</p>
+                        <p class="text-[11px]" style="color:var(--color-text-muted)">Non-Functional</p>
+                    </div>
+                </div>
+            </div>
+            @endif
+
+            {{-- Status Change History --}}
+            @if($task->statusRequests->count())
+            <div class="gd-card p-5">
+                <p class="text-[12px] font-semibold uppercase tracking-wider mb-3" style="color:var(--color-text-muted)">Status History</p>
+                <div class="space-y-2">
+                    @foreach($task->statusRequests as $req)
+                        <div class="flex items-start gap-3 p-3 rounded-md text-[13px]"
+                             style="background:{{ $req->isPending() ? 'color-mix(in srgb, var(--color-warning) 6%, transparent)' : ($req->isApproved() ? 'color-mix(in srgb, var(--color-success) 6%, transparent)' : 'color-mix(in srgb, var(--color-danger) 6%, transparent)') }}">
+                            <span class="mt-0.5 flex-shrink-0">
+                                @if($req->isPending()) <span style="color:var(--color-warning)">&#9679;</span>
+                                @elseif($req->isApproved()) <span style="color:var(--color-success)">&#9679;</span>
+                                @else <span style="color:var(--color-danger)">&#9679;</span>
+                                @endif
+                            </span>
+                            <div class="min-w-0 flex-1">
+                                <p style="color:var(--color-text)">
+                                    <span class="font-medium">{{ $req->requester->name }}</span> requested
+                                    <span class="font-medium">{{ $req->current_status }}</span> &rarr;
+                                    <span class="font-medium">{{ $req->requested_status }}</span>
+                                </p>
+                                @if($req->notes)
+                                    <p class="text-[12px] mt-1" style="color:var(--color-text-muted)">{{ $req->notes }}</p>
+                                @endif
+                                <p class="text-[11px] mt-1" style="font-family:var(--font-mono);color:var(--color-text-faint)">
+                                    {{ $req->created_at->diffForHumans() }}
+                                    @if($req->reviewed_at) &middot; Reviewed {{ $req->reviewed_at->diffForHumans() }} @endif
+                                </p>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
+            {{-- Comments --}}
+            <div class="gd-card p-5">
+                <x-task.comments :task="$task" />
+            </div>
+
+            {{-- Time Tracking --}}
+            <div class="gd-card p-5">
+                <x-task.time-logger :task="$task" />
+            </div>
+        </div>
+
+        {{-- ====== METADATA COLUMN ====== --}}
+        <div class="lg:col-span-3 space-y-6">
+
+            {{-- Actions --}}
+            <div class="gd-card p-5">
+                <p class="text-[12px] font-semibold uppercase tracking-wider mb-4" style="color:var(--color-text-muted)">Actions</p>
+
+                @if($isAssignee && !$task->pendingStatusRequest)
+                    <form action="{{ route('tasks.request-status', $task) }}" method="POST" class="space-y-3">
+                        @csrf
+                        <div>
+                            <p class="gd-label">Request Status Change</p>
+                            <select name="requested_status" class="gd-select h-7 text-[12px]" required>
+                                <option value="">Select status...</option>
+                                @foreach(['To Do', 'In Progress', 'Review', 'Done'] as $st)
+                                    @if($st !== $task->status)
+                                        <option value="{{ $st }}">{{ $st }}</option>
+                                    @endif
+                                @endforeach
+                            </select>
+                        </div>
+                        <textarea name="notes" rows="2" class="gd-textarea text-[12px]" placeholder="Optional notes..."></textarea>
+                        <button type="submit" class="gd-btn gd-btn-primary w-full">Submit Request</button>
+                        <p class="text-[11px] text-center" style="color:var(--color-text-faint)">Requires owner approval</p>
+                    </form>
+                @elseif($isAssignee && $task->pendingStatusRequest)
+                    <div class="rounded-md p-3 text-center" style="background:color-mix(in srgb, var(--color-warning) 8%, transparent);border:1px solid color-mix(in srgb, var(--color-warning) 20%, transparent)">
+                        <p class="text-[13px] font-medium" style="color:var(--color-warning)">Pending Approval</p>
+                        <p class="text-[12px] mt-1" style="color:var(--color-text-muted)">Waiting for &rarr; {{ $task->pendingStatusRequest->requested_status }}</p>
+                    </div>
+                @endif
+
+                @if($isOwner && $task->pendingStatusRequest)
+                    <div class="mt-4 pt-4" style="border-top:1px solid var(--color-border)">
+                        <p class="text-[12px] font-medium mb-3" style="color:var(--color-text)">Review Request</p>
+                        <div class="rounded-md p-3 mb-3 text-[12px]" style="background:color-mix(in srgb, var(--color-warning) 8%, transparent);border:1px solid color-mix(in srgb, var(--color-warning) 20%, transparent)">
+                            <span class="font-medium">{{ $task->pendingStatusRequest->requester->name }}</span>
+                            wants {{ $task->pendingStatusRequest->current_status }} &rarr; {{ $task->pendingStatusRequest->requested_status }}
+                            @if($task->pendingStatusRequest->notes)
+                                <p class="mt-1" style="color:var(--color-text-muted)">{{ $task->pendingStatusRequest->notes }}</p>
+                            @endif
+                        </div>
+                        <form action="{{ route('tasks.review-status-request', $task->pendingStatusRequest) }}" method="POST" class="space-y-2">
+                            @csrf
+                            <textarea name="review_notes" rows="2" class="gd-textarea text-[12px]" placeholder="Review notes..."></textarea>
+                            <div class="flex gap-2">
+                                <button type="submit" name="action" value="approve" class="gd-btn gd-btn-primary flex-1">Approve</button>
+                                <button type="submit" name="action" value="reject" class="gd-btn gd-btn-danger flex-1">Reject</button>
+                            </div>
+                        </form>
+                    </div>
+                @endif
+
+                @if($isOwner && !$task->pendingStatusRequest)
+                    <form action="{{ route('tasks.update', $task) }}" method="POST" class="mt-4 pt-4" style="border-top:1px solid var(--color-border)">
+                        @csrf @method('PUT')
+                        <input type="hidden" name="title" value="{{ $task->title }}">
+                        <p class="gd-label">Direct Status Update</p>
+                        <select name="status" onchange="this.form.submit()" class="gd-select h-7 text-[12px]">
+                            @foreach(['To Do', 'In Progress', 'Review', 'Done'] as $st)
+                                <option value="{{ $st }}" {{ $task->status === $st ? 'selected' : '' }}>{{ $st }}</option>
+                            @endforeach
+                        </select>
+                        <p class="text-[11px] mt-1" style="color:var(--color-text-faint)">As owner, you can update directly</p>
+                    </form>
+                @endif
+            </div>
+
+            {{-- Quick Info --}}
+            <div class="gd-card p-5">
+                <p class="text-[12px] font-semibold uppercase tracking-wider mb-3" style="color:var(--color-text-muted)">Info</p>
+                <dl class="space-y-2 text-[12px]">
+                    <div class="flex justify-between">
+                        <dt style="color:var(--color-text-muted)">Task ID</dt>
+                        <dd style="font-family:var(--font-mono);color:var(--color-text)">T-{{ $task->id }}</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt style="color:var(--color-text-muted)">Created</dt>
+                        <dd style="font-family:var(--font-mono);color:var(--color-text-faint)">{{ $task->created_at->format('M d, Y') }}</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt style="color:var(--color-text-muted)">Updated</dt>
+                        <dd style="font-family:var(--font-mono);color:var(--color-text-faint)">{{ $task->updated_at->diffForHumans() }}</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt style="color:var(--color-text-muted)">Your Role</dt>
+                        <dd style="color:var(--color-text)">
+                            @if($isOwner && $isAssignee) Owner & Assignee
+                            @elseif($isOwner) Project Owner
+                            @else Assignee
+                            @endif
+                        </dd>
+                    </div>
+                    @if($task->estimated_hours)
+                    <div class="flex justify-between">
+                        <dt style="color:var(--color-text-muted)">Estimated</dt>
+                        <dd style="font-family:var(--font-mono);color:var(--color-text)">{{ $task->estimated_hours }}h</dd>
+                    </div>
+                    @endif
+                </dl>
+            </div>
+        </div>
+
+        {{-- ====== AI CONTEXT PANEL (purple tint) ====== --}}
+        <div class="lg:col-span-3 space-y-6">
+            @if($task->component || $task->prompt_brief || $task->scaffoldTask || $task->predicted_files)
+            <div class="gd-card p-5" style="border-top:3px solid color-mix(in srgb, var(--color-purple) 40%, transparent);background:color-mix(in srgb, var(--color-purple) 4%, var(--color-surface))">
+                <div class="flex items-center gap-2 mb-4">
+                    <svg class="h-4 w-4" style="color:var(--color-purple)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z"/></svg>
+                    <p class="text-[12px] font-semibold uppercase tracking-wider" style="color:var(--color-purple)">AI Context</p>
+                </div>
+
+                @if($task->component)
+                    <div class="mb-3">
+                        <p class="gd-label">Component</p>
+                        <span class="gd-chip" style="background:color-mix(in srgb, var(--color-purple) 10%, transparent);border-color:color-mix(in srgb, var(--color-purple) 25%, transparent);color:var(--color-purple)">{{ $task->component }}</span>
+                    </div>
+                @endif
+
+                @if($task->scaffoldTask)
+                    <div class="rounded-md p-3 mb-3 text-[12px]"
+                         style="background:{{ $task->scaffoldTask->isScaffoldComplete() ? 'color-mix(in srgb, var(--color-success) 6%, transparent)' : 'color-mix(in srgb, var(--color-purple) 6%, transparent)' }};border:1px solid {{ $task->scaffoldTask->isScaffoldComplete() ? 'color-mix(in srgb, var(--color-success) 20%, transparent)' : 'color-mix(in srgb, var(--color-purple) 20%, transparent)' }}">
+                        <p class="font-medium" style="color:var(--color-text)">Scaffold #{{ $task->scaffoldTask->id }}</p>
+                        <p class="mt-1" style="color:var(--color-text-muted)">{{ $task->scaffoldTask->title }}</p>
+                        <p class="mt-1" style="color:{{ $task->scaffoldTask->isScaffoldComplete() ? 'var(--color-success)' : 'var(--color-purple)' }}">
+                            {{ $task->scaffoldTask->isScaffoldComplete() ? 'Complete' : 'This scaffold must be completed before this task can be marked done.' }}
+                        </p>
+                    </div>
+                @endif
+
+                @if($task->prompt_brief)
+                    <div class="mb-3">
+                        <p class="gd-label">Brief</p>
+                        <p class="text-[12px]" style="color:var(--color-text-muted)">{{ $task->prompt_brief }}</p>
+                    </div>
+                @endif
+
+                @if(!empty($task->predicted_files))
+                    <div class="mb-3">
+                        <p class="gd-label">Predicted Files</p>
+                        <div class="flex flex-wrap gap-1">
+                            @foreach($task->predicted_files as $file)
+                                <code class="text-[10px] px-2 py-0.5 rounded" style="background:var(--color-base);color:var(--color-text-muted);font-family:var(--font-mono)">{{ $file }}</code>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                @if($task->prompt_section)
+                    <div class="mt-3" x-data="{ show: false }">
+                        <button @click="show = !show" class="gd-btn gd-btn-ghost gd-btn-sm" style="color:var(--color-purple)">
+                            <svg class="h-3.5 w-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                            <span x-text="show ? 'Hide Prompt' : 'View Coding Prompt'"></span>
+                        </button>
+                        <pre x-show="show" x-cloak
+                             x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                             class="mt-3 whitespace-pre-wrap text-[11px] rounded-md p-3 overflow-x-auto"
+                             style="background:var(--color-base);color:var(--color-text);font-family:var(--font-mono);line-height:1.6;border:1px solid var(--color-border)">{{ $task->prompt_section }}</pre>
+                    </div>
+                @endif
+            </div>
+            @endif
         </div>
     </div>
 </x-app-layout>

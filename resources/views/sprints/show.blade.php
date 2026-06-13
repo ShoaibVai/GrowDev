@@ -1,93 +1,84 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <div>
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    {{ $sprint->name }}
-                </h2>
-                <p class="text-sm text-gray-500">{{ $project->name }} — {{ $sprint->start_date->format('M d, Y') }} to {{ $sprint->end_date->format('M d, Y') }}</p>
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="gd-chip">SPRINT-{{ $sprint->id }}</span>
+                <h2 class="text-[18px] font-semibold" style="color:var(--color-text)">{{ $sprint->name }}</h2>
+                @php $sStat = match($sprint->status) { 'active'=>'in-progress', 'planned'=>'todo', 'completed'=>'done', 'cancelled'=>'blocked', default=>'todo' }; @endphp
+                <span class="gd-badge gd-badge-{{ $sStat }}">{{ ucfirst($sprint->status) }}</span>
             </div>
-            <div class="flex items-center space-x-3">
-                <span class="px-3 py-1 rounded-full text-xs font-medium
-                    @if($sprint->status === 'active') bg-green-100 text-green-800
-                    @elseif($sprint->status === 'planned') bg-blue-100 text-blue-800
-                    @elseif($sprint->status === 'completed') bg-gray-100 text-gray-800
-                    @else bg-red-100 text-red-800 @endif">
-                    {{ ucfirst($sprint->status) }}
-                </span>
+            <div class="flex gap-2">
+                <a href="{{ route('sprints.edit', [$project, $sprint]) }}" class="gd-btn gd-btn-secondary gd-btn-sm">Edit</a>
                 @if($sprint->status === 'planned')
                     <form action="{{ route('sprints.start', [$project, $sprint]) }}" method="POST" class="inline">
-                        @csrf
-                        <button type="submit" class="px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700">Start Sprint</button>
+                        @csrf <button class="gd-btn gd-btn-primary gd-btn-sm">Start Sprint</button>
                     </form>
                 @endif
                 @if($sprint->status === 'active')
                     <form action="{{ route('sprints.complete', [$project, $sprint]) }}" method="POST" class="inline">
-                        @csrf
-                        <button type="submit" class="px-3 py-1 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700" onclick="return confirm('Complete this sprint? Incomplete tasks will move back to backlog.')">Complete Sprint</button>
+                        @csrf <button class="gd-btn gd-btn-sm" style="background:var(--color-success);color:#fff">Complete</button>
                     </form>
-                @endif
-                @if(in_array($sprint->status, ['planned', 'active']))
                     <form action="{{ route('sprints.cancel', [$project, $sprint]) }}" method="POST" class="inline">
-                        @csrf
-                        <button type="submit" class="px-3 py-1 bg-red-600 text-white text-sm rounded-md hover:bg-red-700" onclick="return confirm('Cancel this sprint? All tasks will move back to backlog.')">Cancel</button>
+                        @csrf <button class="gd-btn gd-btn-danger gd-btn-sm">Cancel</button>
                     </form>
                 @endif
             </div>
         </div>
     </x-slot>
 
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            @if (session('success'))
-                <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">{{ session('success') }}</div>
-            @endif
-
-            <!-- Sprint Goal -->
-            @if($sprint->goal)
-                <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-6">
-                    <p class="text-sm font-medium text-indigo-800">Sprint Goal</p>
-                    <p class="text-sm text-indigo-700 mt-1">{{ $sprint->goal }}</p>
+    <div class="space-y-6">
+        {{-- Sprint info --}}
+        <div class="gd-card p-5">
+            <div class="flex flex-wrap items-center gap-6 text-[13px]">
+                <div>
+                    <span class="gd-label">Goal</span>
+                    <span style="color:var(--color-text)">{{ $sprint->goal ?: 'No goal set' }}</span>
                 </div>
-            @endif
-
-            <!-- Progress Bar -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-sm font-medium text-gray-700">Progress</span>
-                    <span class="text-sm text-gray-500">{{ $progress['done'] }}/{{ $progress['total'] }} tasks done ({{ $progress['percentage'] }}%)</span>
+                <div>
+                    <span class="gd-label">Timeline</span>
+                    <span style="font-family:var(--font-mono);color:var(--color-text)">{{ $sprint->start_date->format('M d, Y') }} &mdash; {{ $sprint->end_date->format('M d, Y') }}</span>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-2.5">
-                    <div class="bg-indigo-600 h-2.5 rounded-full transition-all duration-500" style="width: {{ $progress['percentage'] }}%"></div>
+                <div>
+                    <span class="gd-label">Project</span>
+                    <a href="{{ route('projects.show', $project) }}" style="color:var(--color-accent)">{{ $project->name }}</a>
                 </div>
             </div>
-
-            <!-- Kanban-style task columns -->
-            <div class="grid grid-cols-4 gap-4">
-                @foreach(['To Do', 'In Progress', 'Review', 'Done'] as $status)
-                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">{{ $status }}</h3>
-                        <div class="space-y-2 min-h-[200px]">
-                            @forelse(($tasksByStatus->get($status, collect())) as $task)
-                                <a href="{{ route('tasks.show', $task) }}" class="block p-3 bg-white rounded border border-gray-200 hover:shadow-md transition-shadow">
-                                    <div class="text-sm font-medium text-gray-900">{{ $task->title }}</div>
-                                    <div class="flex items-center justify-between mt-2">
-                                        <span class="text-xs text-gray-500">{{ $task->assignee->name ?? 'Unassigned' }}</span>
-                                        <span class="text-xs px-2 py-0.5 rounded-full
-                                            @if($task->priority === 'Critical') bg-red-100 text-red-800
-                                            @elseif($task->priority === 'High') bg-yellow-100 text-yellow-800
-                                            @else bg-gray-100 text-gray-800 @endif">
-                                            {{ $task->priority }}
-                                        </span>
-                                    </div>
-                                </a>
-                            @empty
-                                <p class="text-sm text-gray-400 text-center py-8">No tasks</p>
-                            @endforelse
-                        </div>
+            @if($progress['total'] > 0)
+                <div class="mt-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[12px] font-medium" style="color:var(--color-text)">Progress</span>
+                        <span class="text-[11px]" style="font-family:var(--font-mono);color:var(--color-text-muted)">{{ $progress['done'] }}/{{ $progress['total'] }} ({{ $progress['percentage'] }}%)</span>
                     </div>
-                @endforeach
-            </div>
+                    <div class="gd-progress">
+                        <div class="gd-progress-bar" style="width:{{ $progress['percentage'] }}%;
+                            background:{{ $progress['percentage']>=70?'linear-gradient(90deg,var(--color-accent),var(--color-success))':($progress['percentage']>=30?'linear-gradient(90deg,var(--color-warning),var(--color-accent))':'linear-gradient(90deg,var(--color-danger),var(--color-warning))') }}"></div>
+                    </div>
+                </div>
+            @endif
+        </div>
+
+        {{-- Tasks by status --}}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            @foreach(['To Do', 'In Progress', 'Review', 'Done'] as $status)
+                @php $ts = match($status) { 'To Do'=>'todo', 'In Progress'=>'in-progress', 'Review'=>'review', 'Done'=>'done', default=>'todo' }; @endphp
+                <div class="gd-card p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="gd-badge gd-badge-{{ $ts }}">{{ $status }}</span>
+                        <span class="text-[11px] font-semibold tabular-nums" style="font-family:var(--font-mono);color:var(--color-text-muted)">{{ $tasksByStatus->get($status)?->count() ?? 0 }}</span>
+                    </div>
+                    <div class="space-y-1.5 max-h-60 overflow-y-auto">
+                        @foreach($tasksByStatus->get($status, collect()) as $task)
+                            <a href="{{ route('tasks.show', $task) }}" class="flex items-center gap-2 p-2 rounded hover:bg-gd-surface-3 transition-colors duration-120">
+                                <span class="gd-chip text-[9px]">T-{{ $task->id }}</span>
+                                <span class="text-[12px] truncate" style="color:var(--color-text)">{{ $task->title }}</span>
+                                @if($task->assignee)
+                                    <span class="gd-avatar gd-avatar-sm ml-auto flex-shrink-0" style="font-size:9px">{{ substr($task->assignee->name, 0, 1) }}</span>
+                                @endif
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            @endforeach
         </div>
     </div>
 </x-app-layout>
