@@ -156,7 +156,8 @@ return [
     |
     */
 
-    'domain' => env('SESSION_DOMAIN'),
+    // Hardcode null if the environment provides .herokuapp.com (browsers reject public suffix domains)
+    'domain' => str_contains(env('SESSION_DOMAIN', ''), '.herokuapp.com') ? null : env('SESSION_DOMAIN'),
 
     /*
     |--------------------------------------------------------------------------

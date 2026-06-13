@@ -29,9 +29,10 @@ class CacheHeaders
             return $response;
         }
 
-        // NEVER cache pages that have a session (they contain CSRF tokens that become stale).
+        // NEVER cache pages that have cookies (like session cookies)
         // This prevents 419 Page Expired errors from browser-cached login/register pages.
-        if ($request->hasSession() && $request->session()->isStarted()) {
+        $cookies = $response->headers->getCookies();
+        if (count($cookies) > 0 || $request->hasSession()) {
             $response->header('Cache-Control', 'no-cache, no-store, must-revalidate, private');
             $response->header('Pragma', 'no-cache');
             $response->header('Expires', '0');
@@ -47,4 +48,5 @@ class CacheHeaders
         return $response;
     }
 }
+
 
