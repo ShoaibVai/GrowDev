@@ -1,8 +1,8 @@
 <x-guest-layout>
     <!-- Sign Up Page Header -->
     <div class="mb-6 text-center">
-        <h2 class="text-2xl font-bold text-gray-900">Create Profile</h2>
-        <p class="mt-2 text-sm text-gray-600">Sign up to get started</p>
+        <h2 class="text-2xl font-bold" style="font-family:var(--font-mono);color:var(--color-text);">Create Profile</h2>
+        <p class="mt-2 text-sm" style="color:var(--color-text-muted);">Sign up to get started</p>
     </div>
 
     <form method="POST" action="{{ route('register') }}">
@@ -46,7 +46,7 @@
         </div>
 
         <div class="flex items-center justify-between mt-6">
-            <a class="text-sm text-gray-600 hover:text-gray-900 hover:underline" href="{{ route('login') }}">
+            <a class="text-sm hover:underline focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:outline-none" href="{{ route('login') }}" style="color:var(--color-text-muted);">
                 {{ __('Already registered?') }}
             </a>
 

@@ -1,14 +1,14 @@
 <x-guest-layout>
     <!-- Header -->
     <div class="mb-6 text-center">
-        <h2 class="text-2xl font-bold text-gray-900">Set New Password</h2>
-        <p class="mt-2 text-sm text-gray-600">Enter your new password below</p>
+        <h2 class="text-2xl font-bold" style="font-family:var(--font-mono);color:var(--color-text);">Set New Password</h2>
+        <p class="mt-2 text-sm" style="color:var(--color-text-muted);">Enter your new password below</p>
     </div>
 
     <!-- Success Notice -->
-    <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative text-sm" role="alert">
+    <div class="mb-4 px-4 py-3 rounded relative text-sm" style="background-color:color-mix(in srgb, var(--color-success) 15%, transparent);border:1px solid var(--color-success);color:var(--color-success);" role="alert">
         <div class="flex items-start">
-            <svg class="w-5 h-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" style="color:var(--color-success);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
             <div>
@@ -19,8 +19,8 @@
     </div>
 
     <!-- User Info -->
-    <div class="mb-4 p-3 bg-gray-50 border border-gray-300 rounded">
-        <p class="text-sm text-gray-700">
+    <div class="mb-4 p-3 rounded" style="background-color:var(--color-surface-2);border:1px solid var(--color-border);">
+        <p class="text-sm" style="color:var(--color-text);">
             <strong>Account:</strong> {{ $user->name }} ({{ $user->email }})
         </p>
     </div>
@@ -45,7 +45,7 @@
         </div>
 
         <!-- Password Requirements -->
-        <div class="mt-3 text-xs text-gray-600 bg-indigo-50 p-3 rounded border border-indigo-200">
+        <div class="mt-3 text-xs p-3 rounded" style="color:var(--color-text-muted);background-color:color-mix(in srgb, var(--color-accent) 10%, transparent);border:1px solid var(--color-accent);">
             <strong class="block mb-1">Password Requirements:</strong>
             <ul class="list-disc list-inside space-y-1">
                 <li>Minimum 8 characters</li>
@@ -64,8 +64,8 @@
     </form>
 
     <!-- Security Info -->
-    <div class="mt-6 text-xs text-gray-500 text-center space-y-1">
-        <p>🔒 Your session is secure and will expire in 5 minutes</p>
-        <p>🛡️ You'll need to log in with your new password</p>
+    <div class="mt-6 text-xs text-center space-y-1" style="color:var(--color-text-muted);">
+        <p>Your session is secure and will expire in 5 minutes</p>
+        <p>You'll need to log in with your new password</p>
     </div>
 </x-guest-layout>

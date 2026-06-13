@@ -1,14 +1,14 @@
 <x-guest-layout>
     <!-- Header -->
     <div class="mb-6 text-center">
-        <h2 class="text-2xl font-bold text-gray-900">Reset Your Password</h2>
-        <p class="mt-2 text-sm text-gray-600">Authenticate with your email and authenticator app</p>
+        <h2 class="text-2xl font-bold" style="font-family:var(--font-mono);color:var(--color-text);">Reset Your Password</h2>
+        <p class="mt-2 text-sm" style="color:var(--color-text-muted);">Authenticate with your email and authenticator app</p>
     </div>
 
     <!-- Instructions -->
-    <div class="mb-4 bg-indigo-50 border border-indigo-200 text-indigo-800 px-4 py-3 rounded relative text-sm" role="alert">
+    <div class="mb-4 px-4 py-3 rounded relative text-sm" style="background-color:color-mix(in srgb, var(--color-accent) 10%, transparent);border:1px solid var(--color-accent);color:var(--color-accent);" role="alert">
         <div class="flex items-start">
-            <svg class="w-5 h-5 text-indigo-600 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" style="color:var(--color-accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
             </svg>
             <div>
@@ -34,9 +34,9 @@
         <!-- TOTP Code -->
         <div class="mt-4">
             <x-input-label for="totp_code" :value="__('Authenticator Code')" />
-            <div class="mb-2 text-xs text-gray-600 bg-yellow-50 p-3 rounded border border-yellow-300">
+            <div class="mb-2 text-xs p-3 rounded" style="color:var(--color-text-muted);background-color:color-mix(in srgb, var(--color-warning) 10%, transparent);border:1px solid color-mix(in srgb, var(--color-warning) 50%, transparent);">
                 <div class="flex items-start">
-                    <svg class="w-5 h-5 text-yellow-600 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" style="color:var(--color-warning);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                     </svg>
                     <div>
@@ -49,23 +49,23 @@
                     </div>
                 </div>
             </div>
-            <x-text-input 
-                id="totp_code" 
-                class="block mt-1 w-full font-mono text-2xl text-center tracking-widest" 
-                type="text" 
-                name="totp_code" 
-                :value="old('totp_code')" 
-                required 
+            <x-text-input
+                id="totp_code"
+                class="block mt-1 w-full font-mono text-2xl text-center tracking-widest"
+                type="text"
+                name="totp_code"
+                :value="old('totp_code')"
+                required
                 placeholder="000000"
                 maxlength="6"
                 pattern="[0-9]{6}"
                 autocomplete="off" />
-            <p class="mt-1 text-xs text-gray-500">Enter the 6-digit code from your authenticator app</p>
+            <p class="mt-1 text-xs" style="color:var(--color-text-muted);">Enter the 6-digit code from your authenticator app</p>
             <x-input-error :messages="$errors->get('totp_code')" class="mt-2" />
         </div>
 
         <div class="flex items-center justify-end mt-6">
-            <a href="{{ route('login') }}" class="text-sm text-gray-600 hover:text-gray-900 mr-4">
+            <a href="{{ route('login') }}" class="text-sm mr-4 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:outline-none" style="color:var(--color-text-muted);">
                 Back to Login
             </a>
             <x-primary-button>
@@ -75,18 +75,18 @@
     </form>
 
     <!-- Help Section -->
-    <div class="mt-6 p-4 bg-gray-50 border border-gray-300 rounded text-sm">
-        <h4 class="font-semibold text-gray-900 mb-2">Lost your authenticator app?</h4>
-        <p class="text-gray-600 text-xs">
-            If you no longer have access to your authenticator app, please contact support for account recovery assistance. 
+    <div class="mt-6 p-4 rounded text-sm" style="background-color:var(--color-surface-2);border:1px solid var(--color-border);">
+        <h4 class="font-semibold mb-2" style="color:var(--color-text);">Lost your authenticator app?</h4>
+        <p class="text-xs" style="color:var(--color-text-muted);">
+            If you no longer have access to your authenticator app, please contact support for account recovery assistance.
             You'll need to verify your identity through alternative methods.
         </p>
     </div>
 
     <!-- Security Info -->
-    <div class="mt-4 text-xs text-gray-500 text-center space-y-1">
-        <p>🔒 Instant authentication - no waiting for emails</p>
-        <p>🛡️ TOTP verification required for password reset</p>
-        <p>📱 Your authenticator generates codes offline</p>
+    <div class="mt-4 text-xs text-center space-y-1" style="color:var(--color-text-muted);">
+        <p>Instant authentication - no waiting for emails</p>
+        <p>TOTP verification required for password reset</p>
+        <p>Your authenticator generates codes offline</p>
     </div>
 </x-guest-layout>

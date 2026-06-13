@@ -3,19 +3,22 @@
 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
     <form method="GET" action="{{ $route }}" class="flex items-center gap-2 flex-1" id="list-controls-form">
         <input type="search" name="q" value="{{ request()->q ?? $query }}" placeholder="Search..."
-               class="border rounded-md px-3 py-2 w-full focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500"
+               style="background-color: var(--color-surface-2); border: 1px solid var(--color-border); color: var(--color-text); padding: 0.5rem 0.75rem; border-radius: 0.375rem; width: 100%;"
+               class="focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:outline-none"
                aria-label="Search">
-        <button type="submit" class="px-3 py-2 bg-indigo-600 text-white rounded">Search</button>
+        <button type="submit" style="background-color: var(--color-accent); color: white; padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-weight: 600; white-space: nowrap;">Search</button>
 
         @foreach($extraFilters as $name => $list)
-            <select name="{{ $name }}" class="ml-2 border rounded-md px-3 py-2">
+            <select name="{{ $name }}" class="ml-2 focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:outline-none"
+                    style="background-color: var(--color-surface-2); border: 1px solid var(--color-border); color: var(--color-text); padding: 0.5rem 0.75rem; border-radius: 0.375rem;">
                 <option value="">All</option>
                 @foreach($list as $val => $label)
                     <option value="{{ $val }}" {{ request($name) == $val ? 'selected' : '' }}>{{ $label }}</option>
                 @endforeach
             </select>
         @endforeach
-        <select name="sort" onchange="document.getElementById('list-controls-form').submit()" class="ml-2 border rounded-md px-3 py-2">
+        <select name="sort" onchange="document.getElementById('list-controls-form').submit()" class="ml-2 focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:outline-none"
+                style="background-color: var(--color-surface-2); border: 1px solid var(--color-border); color: var(--color-text); padding: 0.5rem 0.75rem; border-radius: 0.375rem;">
             <option value="latest" {{ request('sort') == 'latest' ? 'selected' : '' }}>Latest</option>
             <option value="oldest" {{ request('sort') == 'oldest' ? 'selected' : '' }}>Oldest</option>
             <option value="name_asc" {{ request('sort') == 'name_asc' ? 'selected' : '' }}>Name A-Z</option>
@@ -27,8 +30,14 @@
         <!-- sort select moved into the form above -->
 
         <div class="inline-flex rounded-md shadow-sm" role="tablist" aria-label="View toggle">
-            <a href="{{ request()->fullUrlWithQuery(['view' => 'grid']) }}" class="px-3 py-2 rounded-l-md {{ request('view', $view) == 'grid' ? 'bg-indigo-600 text-white' : 'bg-white border' }}" role="tab" aria-selected="{{ request('view', $view) == 'grid' ? 'true' : 'false' }}" title="Grid view">🔲</a>
-            <a href="{{ request()->fullUrlWithQuery(['view' => 'list']) }}" class="px-3 py-2 rounded-r-md {{ request('view', $view) == 'list' ? 'bg-indigo-600 text-white' : 'bg-white border' }}" role="tab" aria-selected="{{ request('view', $view) == 'list' ? 'true' : 'false' }}" title="List view">📋</a>
+            <a href="{{ request()->fullUrlWithQuery(['view' => 'grid']) }}" 
+               class="focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:outline-none"
+               style="padding: 0.5rem 0.75rem; border-radius: 0.375rem 0 0 0.375rem; {{ request('view', $view) == 'grid' ? 'background-color: var(--color-accent); color: white;' : 'background-color: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text);' }}"
+               role="tab" aria-selected="{{ request('view', $view) == 'grid' ? 'true' : 'false' }}" title="Grid view">🔲</a>
+            <a href="{{ request()->fullUrlWithQuery(['view' => 'list']) }}" 
+               class="focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:outline-none"
+               style="padding: 0.5rem 0.75rem; border-radius: 0 0.375rem 0.375rem 0; {{ request('view', $view) == 'list' ? 'background-color: var(--color-accent); color: white;' : 'background-color: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text);' }}"
+               role="tab" aria-selected="{{ request('view', $view) == 'list' ? 'true' : 'false' }}" title="List view">📋</a>
         </div>
         @if(isset($slot) && trim($slot))
             <div class="ml-4">{{ $slot }}</div>

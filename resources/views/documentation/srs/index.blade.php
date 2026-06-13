@@ -1,11 +1,13 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            <h2 style="font-family: var(--font-mono); font-weight: 600; font-size: 1.25rem; color: var(--color-text); line-height: 1.3;">
                 📋 {{ __('SRS Documents') }}
             </h2>
             <a href="{{ route('documentation.srs.create') }}" 
-               class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold">
+               style="background-color: var(--color-accent); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600; transition: background-color 0.2s;"
+               onmouseover="this.style.backgroundColor='color-mix(in srgb, var(--color-accent) 80%, black)'"
+               onmouseout="this.style.backgroundColor='var(--color-accent)'">
                 + {{ __('Create New SRS') }}
             </a>
         </div>
@@ -15,7 +17,7 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <!-- Messages -->
             @if (session('success'))
-                <div class="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
+                <div style="background-color: color-mix(in srgb, var(--color-success) 15%, transparent); border: 1px solid var(--color-success); color: var(--color-success); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
                     {{ session('success') }}
                 </div>
             @endif
@@ -23,7 +25,9 @@
             <!-- Controls -->
             <x-list-controls :route="route('documentation.srs.index')" :query="request()->q" :sort="request()->sort" :view="request()->view ?? 'grid'">
                 <a href="{{ route('documentation.srs.create') }}" 
-                   class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold">
+                   style="background-color: var(--color-accent); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600; transition: background-color 0.2s;"
+                   onmouseover="this.style.backgroundColor='color-mix(in srgb, var(--color-accent) 80%, black)'"
+                   onmouseout="this.style.backgroundColor='var(--color-accent)'">
                     + {{ __('Create New SRS') }}
                 </a>
             </x-list-controls>
@@ -31,28 +35,28 @@
             <!-- SRS Documents List -->
             @if ($srsDocuments->count())
                 @if(request('view') == 'list')
-                    <div class="bg-white rounded-lg shadow overflow-hidden">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
+                    <div style="background-color: var(--color-surface); border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden;">
+                        <table class="min-w-full" style="border-collapse: collapse;">
+                            <thead style="background-color: var(--color-surface-2);">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requirements</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                                    <th class="px-6 py-3"></th>
+                                    <th style="padding: 0.75rem 1.5rem; text-align: left; font-size: 0.75rem; font-weight: 500; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Title</th>
+                                    <th style="padding: 0.75rem 1.5rem; text-align: left; font-size: 0.75rem; font-weight: 500; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Requirements</th>
+                                    <th style="padding: 0.75rem 1.5rem; text-align: left; font-size: 0.75rem; font-weight: 500; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Created</th>
+                                    <th style="padding: 0.75rem 1.5rem;"></th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
+                            <tbody style="background-color: var(--color-surface); border-top: 1px solid var(--color-border);">
                                 @foreach($srsDocuments as $srs)
-                                    <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900">{{ $srs->title }}</div>
-                                            <div class="text-sm text-gray-500">{{ \Illuminate\Support\Str::limit($srs->description, 100) }}</div>
+                                    <tr style="border-bottom: 1px solid var(--color-border);">
+                                        <td style="padding: 1rem 1.5rem; white-space: nowrap;">
+                                            <div style="font-size: 0.875rem; font-weight: 500; color: var(--color-text);">{{ $srs->title }}</div>
+                                            <div style="font-size: 0.875rem; color: var(--color-text-muted);">{{ \Illuminate\Support\Str::limit($srs->description, 100) }}</div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $srs->functionalRequirements->count() }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $srs->created_at->format('M d, Y') }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <a href="{{ route('documentation.srs.edit', $srs) }}" class="text-blue-600 hover:underline">Edit</a>
-                                            <a href="{{ route('documentation.srs.pdf', $srs) }}" class="text-green-600 hover:underline ml-4">PDF</a>
+                                        <td style="padding: 1rem 1.5rem; white-space: nowrap; font-size: 0.875rem; color: var(--color-text-muted);">{{ $srs->functionalRequirements->count() }}</td>
+                                        <td style="padding: 1rem 1.5rem; white-space: nowrap; font-size: 0.875rem; color: var(--color-text-muted);">{{ $srs->created_at->format('M d, Y') }}</td>
+                                        <td style="padding: 1rem 1.5rem; white-space: nowrap; text-align: right; font-size: 0.875rem; font-weight: 500;">
+                                            <a href="{{ route('documentation.srs.edit', $srs) }}" style="color: var(--color-accent); text-decoration: underline;">Edit</a>
+                                            <a href="{{ route('documentation.srs.pdf', $srs) }}" style="color: var(--color-success); text-decoration: underline; margin-left: 1rem;">PDF</a>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -67,15 +71,17 @@
                     </div>
                 @endif
         @else
-            <div class="text-center py-12 bg-white rounded-lg shadow">
-                <div class="mx-auto mb-4 w-24 h-24 flex items-center justify-center bg-indigo-50 rounded-full">
-                    <svg class="w-12 h-12 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div style="text-align: center; padding: 3rem 0; background-color: var(--color-surface); border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div style="margin: 0 auto 1rem; width: 6rem; height: 6rem; display: flex; align-items: center; justify-content: center; background-color: color-mix(in srgb, var(--color-accent) 15%, transparent); border-radius: 50%;">
+                    <svg style="width: 3rem; height: 3rem; color: var(--color-accent);" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
                 </div>
-                <p class="text-gray-600 text-lg mb-4">No SRS documents yet.</p>
+                <p style="color: var(--color-text); font-size: 1.125rem; margin-bottom: 1rem;">No SRS documents yet.</p>
                 <a href="{{ route('documentation.srs.create') }}" 
-                   class="inline-block px-6 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition">
+                   style="display: inline-block; padding: 0.5rem 1.5rem; background-color: var(--color-accent); color: white; border-radius: 0.5rem; transition: background-color 0.2s;"
+                   onmouseover="this.style.backgroundColor='color-mix(in srgb, var(--color-accent) 80%, black)'"
+                   onmouseout="this.style.backgroundColor='var(--color-accent)'">
                     Create Your First SRS
                 </a>
             </div>

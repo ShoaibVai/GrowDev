@@ -1,5 +1,5 @@
 <x-guest-layout>
-    <div class="mb-4 text-sm text-gray-600">
+    <div class="mb-4 text-sm" style="color:var(--color-text-muted);">
         {{ __('This account has two-factor authentication enabled. Please enter the 6-digit code from your authenticator app.') }}
     </div>
 
