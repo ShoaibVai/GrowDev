@@ -29,7 +29,16 @@ class CacheHeaders
             return $response;
         }
 
-        // Only cache public GET requests with successful responses
+        // NEVER cache pages that have a session (they contain CSRF tokens that become stale).
+        // This prevents 419 Page Expired errors from browser-cached login/register pages.
+        if ($request->hasSession() && $request->session()->isStarted()) {
+            $response->header('Cache-Control', 'no-cache, no-store, must-revalidate, private');
+            $response->header('Pragma', 'no-cache');
+            $response->header('Expires', '0');
+            return $response;
+        }
+
+        // Only cache truly static public GET requests with successful responses
         if ($request->method() === 'GET' && $response->getStatusCode() === 200) {
             $response->header('Cache-Control', "public, max-age={$maxAge}");
             $response->header('Expires', gmdate('D, d M Y H:i:s', time() + $maxAge) . ' GMT');
@@ -38,3 +47,4 @@ class CacheHeaders
         return $response;
     }
 }
+
