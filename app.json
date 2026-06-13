@@ -14,7 +14,7 @@
             "value": "https://growdev-backend.herokuapp.com"
         },
         "LOG_CHANNEL": {
-            "value": "stack"
+            "value": "stderr"
         },
         "LOG_LEVEL": {
             "value": "error"
@@ -25,6 +25,9 @@
         "SESSION_DRIVER": {
             "value": "database"
         },
+        "SESSION_SECURE_COOKIE": {
+            "value": "true"
+        },
         "QUEUE_CONNECTION": {
             "value": "database"
         },
@@ -33,6 +36,9 @@
         }
     },
     "buildpacks": [
+        {
+            "url": "heroku/nodejs"
+        },
         {
             "url": "heroku/php"
         }
