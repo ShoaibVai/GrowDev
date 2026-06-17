@@ -17,7 +17,7 @@
                 <div class="flex items-center justify-between text-[13px]">
                     <span>
                         <span style="color:var(--color-text);font-weight:500">{{ $inv->team->name }}</span>
-                        <span class="text-[11px] ml-2" style="font-family:var(--font-mono);color:var(--color-text-faint)">invited by {{ $inv->inviter->name }}</span>
+                        <span class="text-[11px] ml-2" style="font-family:var(--font-mono);color:var(--color-text-faint)">invited by {{ $inv->inviter?->name ?? 'Unknown' }}</span>
                     </span>
                     <div class="flex gap-2">
                         <a href="{{ route('invitations.accept', $inv->token) }}" class="gd-btn gd-btn-primary gd-btn-sm">Accept</a>

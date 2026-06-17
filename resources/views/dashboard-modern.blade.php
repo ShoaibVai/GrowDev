@@ -5,7 +5,7 @@
                 <p class="text-[22px] font-semibold" style="font-family:var(--font-sans);color:var(--color-text)">
                     Good {{ now()->hour < 12 ? 'morning' : (now()->hour < 17 ? 'afternoon' : 'evening') }}, <span style="color:var(--color-text)">{{ Auth::user()->name }}</span>.
                 </p>
-                @if($activeSprints->first())
+                @if($activeSprints->first() && $activeSprints->first()->end_date)
                     <p class="mt-1 text-[13px]" style="font-family:var(--font-mono);color:var(--color-text-muted)">
                         {{ $activeSprints->first()->name }} &middot; {{ $activeSprints->first()->end_date->diffInDays(now()) }}d remaining
                     </p>
@@ -82,7 +82,7 @@
                     <div class="flex items-center justify-between text-[13px]">
                         <span>
                             <span style="color:var(--color-text)">{{ $inv->team->name }}</span>
-                            <span class="text-[11px] ml-2" style="color:var(--color-text-muted);font-family:var(--font-mono)">invited by {{ $inv->inviter->name }}</span>
+                            <span class="text-[11px] ml-2" style="color:var(--color-text-muted);font-family:var(--font-mono)">invited by {{ $inv->inviter?->name ?? 'Unknown' }}</span>
                         </span>
                         <div class="flex gap-2">
                             <a href="{{ route('invitations.accept', $inv->token) }}" class="gd-btn gd-btn-primary gd-btn-sm">Accept</a>

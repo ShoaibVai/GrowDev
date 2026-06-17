@@ -195,20 +195,27 @@
                     <svg class="h-[18px] w-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                     </svg>
-                    @php $unreadCount = Auth::user()->unreadNotifications->count(); @endphp
+                    @php
+                        try { $unreadCount = Auth::user()->unreadNotifications->count(); }
+                        catch (\Throwable $e) { $unreadCount = 0; }
+                    @endphp
                     @if($unreadCount > 0)
                         <span class="absolute top-0.5 right-0.5 w-2 h-2 rounded-full" style="background:var(--color-danger)"></span>
                     @endif
                 </button>
                 <div x-show="open" x-cloak
                      x-transition:enter="transition ease-out duration-160" x-transition:enter-start="opacity-0 scale-97" x-transition:enter-end="opacity-100 scale-100"
-                     class="absolute right-0 mt-2 gd-dropdown w-80" style="min-width:320px">
+                      class="absolute right-0 mt-2 gd-dropdown w-80" style="min-width:320px">
                     <div class="px-4 py-3 flex justify-between items-center" style="border-bottom:1px solid var(--color-border)">
                         <span class="text-[13px] font-semibold" style="color:var(--color-text)">Notifications</span>
                         <a href="{{ route('notifications.index') }}" class="text-[12px] hover:underline" style="color:var(--color-accent)">View all</a>
                     </div>
                     <div class="max-h-72 overflow-y-auto">
-                        @forelse(Auth::user()->notifications->take(5) as $n)
+                        @php
+                            try { $notifications = Auth::user()->notifications->take(5); }
+                            catch (\Throwable $e) { $notifications = collect(); }
+                        @endphp
+                        @forelse($notifications as $n)
                             @php $d = $n->data; $type = $d['type'] ?? 'default'; @endphp
                             <a href="{{ route('notifications.read', $n->id) }}"
                                class="block px-4 py-3 hover:bg-gd-surface-3 transition-colors duration-120" style="{{ $n->read_at ? '' : 'border-left:2px solid var(--color-accent)' }}">
