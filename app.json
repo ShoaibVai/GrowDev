@@ -4,6 +4,10 @@
     "repository": "https://github.com/ShoaibVai/GrowDev",
     "keywords": ["laravel", "php", "project-management"],
     "env": {
+        "APP_KEY": {
+            "description": "The application key used for encryption.",
+            "generator": "secret"
+        },
         "APP_ENV": {
             "value": "production"
         },
