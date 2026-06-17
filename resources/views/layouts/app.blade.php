@@ -179,7 +179,7 @@
                                 <p class="text-[10px] font-semibold uppercase px-2 py-1 mt-1" style="color:var(--color-text-faint)">Tasks</p>
                                 <template x-for="t in results.tasks.slice(0,4)">
                                     <a :href="'/tasks/'+t.id" class="block px-2 py-1.5 rounded text-[13px] hover:bg-gd-surface-3" style="color:var(--color-text)">
-                                        <span class="gd-chip text-[10px] mr-1.5">T-{{ '{{t.id}}' }}</span>
+                                        <span class="gd-chip text-[10px] mr-1.5">T-<span x-text="t.id"></span></span>
                                         <span x-text="t.title"></span>
                                     </a>
                                 </template>
