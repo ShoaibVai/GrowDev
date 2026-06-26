@@ -25,24 +25,27 @@
 - [Configuration](#-configuration)
 - [Usage](#-usage)
 - [Documentation](#-documentation)
+- [Testing](#-testing)
 - [Contributing](#-contributing)
-- [Team Contribution](#-team-contribution)
 - [License](#-license)
 
 ---
 
 ## 🌟 Overview
 
-GrowDev is a modern, full-stack project management platform designed specifically for software development teams. It combines traditional project management features with AI-powered task generation, comprehensive requirement tracking, and team collaboration tools.
+GrowDev is a modern, full-stack project management platform designed for software development teams. It combines Kanban boards, AI-powered task generation, comprehensive requirement tracking, sprint management, time tracking, and team collaboration tools.
 
 ### Key Highlights
 
-- 🤖 **AI-Powered Task Generation** using Google Gemini API
-- 📊 **Kanban Board** for visual project tracking
+- 🤖 **AI-Powered Task Generation** using OpenRouter (200+ models)
+- 📊 **Kanban Board** with drag-and-drop via SortableJS
 - 📝 **SRS Documentation** with functional & non-functional requirements
 - 👥 **Team Management** with role-based access control
 - 📈 **Progress Tracking** with real-time updates
 - 🔔 **Smart Notifications** with digest options
+- 🎯 **Sprint Management** with lifecycle tracking
+- ⏱️ **Time Tracking** with timer controls
+- 🎨 **Animated UI** with scroll effects, page transitions & toast notifications
 - 📱 **Responsive Design** works on all devices
 
 ---
@@ -51,17 +54,21 @@ GrowDev is a modern, full-stack project management platform designed specificall
 
 ### Project Management
 - Create and manage multiple projects
-- Kanban board with drag-and-drop functionality
+- Kanban board with drag-and-drop functionality (SortableJS)
 - Task dependencies and relationships
 - Priority and status tracking
-- Time estimation and tracking
+- Time estimation and tracking with timer (start/pause/resume/stop)
+- Sprint planning and lifecycle management (plan, start, complete, cancel)
+- Task status change approval workflow (request/review/approve/reject)
+- Task activity log with full history of changes
 
 ### AI Task Generation
-- Automatic task creation from requirements
+- Automatic task creation from project requirements
 - Intelligent role assignment
 - Workload balancing across team
 - Smart dependency detection
-- See: [AI Features Documentation](docs/features/GEMINI_INTEGRATION.md)
+- Powered by OpenRouter (GPT-4, Claude 3, Llama 2, Mistral, and 200+ models)
+- See: [OpenRouter Integration Guide](docs/OPENROUTER_INTEGRATION.md)
 
 ### Requirements Management
 - Software Requirements Specification (SRS) documents
@@ -69,25 +76,52 @@ GrowDev is a modern, full-stack project management platform designed specificall
 - Non-functional requirements with metrics
 - Acceptance criteria management
 - Traceability between requirements and tasks
+- SRS PDF export
 
 ### Team Collaboration
 - Team creation and management
 - Role-based permissions (10+ system roles)
-- Team member invitations
-- Activity tracking and history
+- Team member invitations with token-based links and expiry
+- Per-task threaded comments
+- Activity tracking and full history
 - Real-time notifications
 
-### Documentation
-- Project documentation with templates
-- Diagram support (UML, ERD, etc.)
-- Markdown editor
-- Version history
+### Sprint Management
+- Sprint planning with goal setting
+- Lifecycle management (plan, start, complete, cancel)
+- Automatic progress tracking
+- Task assignment across sprints
 
-### User Profiles
-- Professional profile with skills
-- Education and certifications
-- Work experience tracking
+### Documentation
+- Project documentation with templates (SRS, SDD, etc.)
+- Mermaid diagram editor with SVG export and syntax validation
+- Markdown editor
+- Documentation version history and cloning
+
+### User Profiles & Settings
+- Professional profile with skills and certifications
+- Education and work experience tracking
 - Project portfolio
+- Theme preference (dark/light mode)
+- CV/Profile PDF export
+- Two-factor authentication (TOTP)
+- Email digest preferences (frequency, time, day)
+
+### Global Search
+- Full-text search across projects, tasks, and users
+
+### Admin Panel
+- Admin dashboard with system overview
+- Data export functionality
+- CI/CD scaffold gate integration
+
+### UI/UX Enhancements
+- Toast notification system (anime.js)
+- Scroll-triggered animations (AOS)
+- Form animations (floating labels, validation, loading states)
+- Typing text effects (Typed.js)
+- Button ripples, card hover effects, counter animations
+- Animated progress bars and page transitions
 
 ---
 
@@ -100,6 +134,7 @@ GrowDev is a modern, full-stack project management platform designed specificall
 - **Laravel Sanctum** - API Authentication
 - **Laravel Queue** - Background Jobs
 - **Laravel Notifications** - Email & Digest System
+- **Laravel Echo** - Real-time Events
 
 ### Frontend
 - **Blade Templates** - Server-side Rendering
@@ -107,16 +142,25 @@ GrowDev is a modern, full-stack project management platform designed specificall
 - **Alpine.js** - Lightweight JavaScript Framework
 - **Vite 7.x** - Modern Build Tool
 - **Axios** - HTTP Client
+- **SortableJS** - Drag-and-drop
+- **anime.js** - Animation library
+- **AOS** - Scroll animations
+- **Typed.js** - Typing text effects
+- **Mermaid** - Diagram rendering
 
 ### AI Integration
-- **Google Gemini API** - AI Task Generation (Gemini Flash Latest)
-- **Direct API Integration** - Frontend AI calls
+- **OpenRouter** - Multi-model AI gateway (GPT-4, Claude 3, Llama 2, Mistral, 200+ models)
+- **Backend Proxy** - Secure AI API calls through Laravel
 
 ### Development Tools
 - **PHPUnit** - Testing Framework
 - **Laravel Pint** - Code Style
 - **NPM** - Package Management
 - **Git** - Version Control
+
+### Deployment
+- **Vercel** - Frontend hosting
+- **Heroku** - Backend hosting
 
 ---
 
@@ -266,11 +310,10 @@ MAIL_MAILER=smtp
 MAIL_HOST=mailpit
 MAIL_PORT=1025
 
-# AI Configuration
-GEMINI_API_KEY=your-api-key-here
-GEMINI_PROJECT=growdev
-GEMINI_PROJECT_NAME=projects/your-project-id
-GEMINI_PROJECT_NUMBER=your-project-number
+# AI Configuration (OpenRouter)
+OPENROUTER_API_KEY=your-api-key-here
+VITE_OPENROUTER_API_KEY=your-api-key-here
+VITE_OPENROUTER_MODEL=openai/gpt-4o-mini
 
 # Queue Configuration
 QUEUE_CONNECTION=database
@@ -324,7 +367,7 @@ After seeding, use these credentials:
 5. Review and edit generated tasks
 6. Save tasks to your project
 
-See: [AI Integration Guide](docs/features/PUTER_INTEGRATION.md)
+See: [OpenRouter Integration Guide](docs/OPENROUTER_INTEGRATION.md)
 
 ---
 
@@ -336,8 +379,10 @@ Comprehensive documentation is available in the [`docs/`](docs/) directory:
 - **[🏗️ Project Structure](docs/PROJECT_STRUCTURE.md)** - Architecture and organization guide
 - **[⚡ Quick Reference](docs/QUICK_REFERENCE.md)** - Common commands and shortcuts
 - **[🚀 Installation Guide](docs/setup/INSTALLATION.md)** - Detailed setup instructions
-- **[🤖 AI Features](docs/features/GEMINI_INTEGRATION.md)** - AI task generation guide
+- **[🤖 AI Features](docs/OPENROUTER_INTEGRATION.md)** - OpenRouter AI integration guide
+- **[🎨 UI Animations](docs/UI_ANIMATIONS.md)** - Animation system documentation
 - **[📝 Organization Summary](docs/ORGANIZATION_SUMMARY.md)** - Recent improvements
+- **[🚀 Deployment](docs/VERCEL_DEPLOYMENT.md)** - Vercel/Heroku deployment guide
 
 ---
 
@@ -383,18 +428,7 @@ If you discover any security vulnerabilities, please email security@growdev.com 
 
 ---
 
-## � Team Contribution
-
-We would like to acknowledge the following contributors for their work on GrowDev:
-
-| Contributor | Role | Key Contributions |
-|------------|------|-------------------|
-| **Shoaib Ibna Omar** | Lead Developer | • **Core Architecture**: Project setup, Auth system, Database design<br>• **AI Integration**: Gemini API task generation<br>• **Features**: Kanban Board, SRS System, Team Management, Notifications<br>• **Frontend**: Dashboard UI, CV Management<br>• **Documentation**: Comprehensive guides and API docs |
-| **Mansura Yeasmin** | Backend Developer | • **Security**: Implemented cache control headers for authenticated pages<br>• **Data Management**: Database seeding and initial data setup |
-
----
-
-## �📝 License
+## 📝 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
@@ -405,14 +439,14 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Laravel Framework
 - Tailwind CSS
 - Alpine.js
-- Google Gemini AI
+- OpenRouter AI
 - All contributors and supporters
 
 ---
 
 <div align="center">
 
-**Made with ❤️ by the GrowDev Team**
+**Made with ❤️ by Shoaib Ibna Omar**
 
 [Website](https://growdev.com) • [Documentation](docs/) • [Report Bug](issues) • [Request Feature](issues)
 
