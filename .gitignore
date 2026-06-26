@@ -26,3 +26,14 @@ Thumbs.db
 # Environment files with real credentials
 .env.production.local
 .env.local
+
+# Agentic AI development artifacts
+/agents/
+/skills/
+/commands/
+/references/
+/hooks/
+/.sixth/
+/docs/
+/scripts/
+AGENTS.md
